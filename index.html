@@ -45,7 +45,7 @@ body, html {height: 100%}
 -->
 
 <!-- Information -->
-<div class="w3-container w3-padding-64 w3-lime w3-opacity w3-center" id="wedding">
+<div class="w3-container w3-padding-64 w3-lime w3-opacity w3-center" id="information">
   <div class="w3-content">
     <div class="w3-row">
       <div class="w3-half">
@@ -64,15 +64,14 @@ body, html {height: 100%}
 
 
 <!-- Add Google Maps -->
-<div id="googleMap" class="w3-grayscale-max" style="width:100%;height:400px;"></div>
+<div id="googleMap" style="width:100%;height:500px;"></div>
 <script>
 function myMap()
 {
   myCenter=new google.maps.LatLng(43.448336,-80.5666298);
   var mapOptions= {
     center:myCenter,
-    zoom:12, scrollwheel: true, draggable: true,
-    mapTypeId:google.maps.MapTypeId.ROADMAP
+    zoom:17
   };
   var map=new google.maps.Map(document.getElementById("googleMap"),mapOptions);
 
