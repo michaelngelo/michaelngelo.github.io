@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<title>W3.CSS Template</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Amatic+SC">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Raleway">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<style>
+body,h1 {font-family: "Amatic SC", sans-serif}
+h2 {font-family: "Raleway", sans-serif}
+body, html {height: 100%}
+
+.bgimg, .bgimg2 {
+    min-height: 100%;
+    background-position: center;
+    background-size: cover;
+}
+.bgimg {background-image: url("https://www.w3schools.com/w3images/forestbridge.jpg")}
+</style>
+<body>
+
+<!-- Header / Home-->
+<header class="w3-display-container w3-wide bgimg w3-grayscale-min" id="home">
+	<div class="w3-jumbo w3-margin-top w3-margin-right w3-display-topright w3-text-lime">
+    <i class="fa fa-facebook-official w3-hover-opacity"></i>
+    <i class="fa fa-instagram w3-hover-opacity"></i>
+    <i class="fa fa-twitter w3-hover-opacity"></i>
+  </div>
+  <div class="w3-display-middle w3-text-white w3-center">
+    <h1 class="w3-jumbo">KWCAC Youth Fellowship Open House</h1>
+  </div>
+</header>
+
+
+
+<!-- Background photo --
+<div class="w3-display-container bgimg2">
+  <div class="w3-display-middle w3-text-white w3-center">
+    <h1 class="w3-jumbo">You Are Invited</h1><br>
+    <h2>Of course..</h2>
+  </div>
+</div>
+-->
+
+<!-- Information -->
+<div class="w3-container w3-padding-64 w3-lime w3-opacity w3-center" id="wedding">
+  <div class="w3-content">
+    <div class="w3-row">
+      <div class="w3-half">
+        <h1>When</h1>
+        <h2>2017 Sep 24th</h2>
+        <h2>7:00pm</h2>
+      </div>
+      <div class="w3-half">
+        <h1>Where</h1>
+        <h2>Kitchener-Waterloo</h2>
+        <h2>Chinese Alliance Church</h2>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- Add Google Maps -->
+<div id="googleMap" class="w3-grayscale-max" style="width:100%;height:400px;"></div>
+<script>
+function myMap()
+{
+  myCenter=new google.maps.LatLng(41.878114, -87.629798);
+  var mapOptions= {
+    center:myCenter,
+    zoom:12, scrollwheel: false, draggable: false,
+    mapTypeId:google.maps.MapTypeId.ROADMAP
+  };
+  var map=new google.maps.Map(document.getElementById("googleMap"),mapOptions);
+
+  var marker = new google.maps.Marker({
+    position: myCenter,
+  });
+  marker.setMap(map);
+}
+
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBu-916DdpKAjTmJNIgngS6HL_kDIKU0aU&callback=myMap"></script>
+<!--
+To use this code on your website, get a free API key from Google.
+Read more at: https://www.w3schools.com/graphics/google_maps_basic.asp
+-->
+
+<div class="w3-hide-small" style="margin-bottom:32px"> </div>
+</body>
+</html>
