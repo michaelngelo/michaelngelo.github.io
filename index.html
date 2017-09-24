@@ -14,15 +14,17 @@ body, html {height: 100%}
 
 .bgimg1, .bgimg2 {
     background-position: center;
-    background-size: cover;
 }
 .bgimg1 {
   background-image: url("tree.jpg");
-  min-height: 80%;
+  min-height: 100%;
+  background-size: cover;
 }
 .bgimg2 {
-  background-image: url("cloud.jpg");
-  min-height: 50%;
+  background-image: url("poster.jpg");
+  min-height: 150%;
+  background-size: contain;
+  background-repeat:no-repeat;
 }
 </style>
 <body>
@@ -37,6 +39,9 @@ body, html {height: 100%}
   </div>
 </header>
 
+<!-- Background photo -->
+<div class="w3-display-container w3-sand w3-opacity-min bgimg2">
+</div>
 
 <!-- Information -->
 <div class="w3-container w3-padding-64 w3-lime w3-opacity w3-center" id="information">
@@ -53,16 +58,6 @@ body, html {height: 100%}
         <h2>Chinese Alliance Church</h2>
       </div>
     </div>
-  </div>
-</div>
-
-
-
-<!-- Background photo -->
-<div class="w3-display-container bgimg2">
-  <div class="w3-display-middle w3-center">
-    <h1 class="w3-jumbo w3-text-sand">Meet New Friends</h1>
-    <h1 class="w3-jumbo w3-text-sand">Food and Drinks</h2>
   </div>
 </div>
 
@@ -92,6 +87,5 @@ To use this code on your website, get a free API key from Google.
 Read more at: https://www.w3schools.com/graphics/google_maps_basic.asp
 -->
 
-<div class="w3-hide-small" style="margin-bottom:32px"> </div>
 </body>
 </html>
