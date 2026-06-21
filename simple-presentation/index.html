@@ -31,7 +31,7 @@
             <input type="color" id="bg-color-picker" value="#111111">
             <label for="text-color-picker">文字顏色:</label>
             <input type="color" id="text-color-picker" value="#ffffff">
-            <button id="start-btn">進入幻燈片模式 📺</button>
+            <button id="start-btn">進入幻燈片模式</button>
         </div>
 
         <div id="input-container" class="input-grid">
@@ -56,10 +56,36 @@
             const fontSizeValue = document.getElementById('font-size-value');
             const bgColorPicker = document.getElementById('bg-color-picker');
             const textColorPicker = document.getElementById('text-color-picker');
+            
+            const APP_STATE_KEY = 'textSlideshowState';
 
             let pages = [];
             let activePageId = null;
             let nextId = 1;
+
+            // --- State Management ---
+            function saveState() {
+                const state = {
+                    pages,
+                    activePageId,
+                    nextId
+                };
+                localStorage.setItem(APP_STATE_KEY, JSON.stringify(state));
+            }
+
+            function loadState() {
+                const savedState = localStorage.getItem(APP_STATE_KEY);
+                if (savedState) {
+                    const state = JSON.parse(savedState);
+                    pages = state.pages;
+                    activePageId = state.activePageId;
+                    nextId = state.nextId;
+                } else {
+                    // If no saved state, create a default page
+                    addPage(false); // don't save state yet, it will be saved in renderApp
+                }
+                renderApp();
+            }
 
             function getActivePage() {
                 return pages.find(p => p.id === activePageId);
@@ -70,25 +96,27 @@
                 if (!activePage) return;
                 const textareas = Array.from(inputContainer.querySelectorAll('textarea'));
                 activePage.texts = textareas.map(t => t.value);
+                saveState();
             }
 
-            function addPage() {
+            function addPage(shouldSave = true) {
                 saveCurrentPageText();
                 const newPage = {
                     id: nextId++,
                     columns: 2,
                     texts: ['這是第 1 欄的展示文字。', '這是第 2 欄的展示文字。'],
-                    gridTemplate: 'repeat(2, 1fr)' 
+                    gridTemplate: 'repeat(2, 1fr)'
                 };
                 pages.push(newPage);
-                selectPage(newPage.id);
+                selectPage(newPage.id, shouldSave);
             }
 
-            function selectPage(pageId) {
+            function selectPage(pageId, shouldSave = true) {
                 if (activePageId === pageId) return;
                 saveCurrentPageText();
                 activePageId = pageId;
                 renderApp();
+                 if (shouldSave) saveState();
             }
 
             function deletePage(pageId) {
@@ -102,6 +130,7 @@
                 } else {
                     renderApp();
                 }
+                saveState();
             }
 
             function renderEditor() {
@@ -123,7 +152,7 @@
                         <label>第 ${i + 1} 欄內容</label>
                         <textarea id="text-input-${i}">${textValue}</textarea>
                     `;
-                    
+
                     if (i < activePage.columns - 1) {
                         const handle = document.createElement('div');
                         handle.className = 'editor-resize-handle';
@@ -147,8 +176,8 @@
                 renderEditor();
             }
 
-            // Event Listeners
-            tabManager.addEventListener('page-added', addPage);
+            // --- Event Listeners ---
+            tabManager.addEventListener('page-added', () => addPage());
             tabManager.addEventListener('page-selected', e => selectPage(e.detail.pageId));
             tabManager.addEventListener('page-deleted', e => deletePage(e.detail.pageId));
 
@@ -158,7 +187,7 @@
                 saveCurrentPageText();
                 const newColCount = parseInt(columnSelect.value);
                 activePage.columns = newColCount;
-                activePage.gridTemplate = `repeat(${newColCount}, 1fr)`; 
+                activePage.gridTemplate = `repeat(${newColCount}, 1fr)`;
 
                 while (activePage.texts.length < newColCount) {
                     activePage.texts.push(`這是第 ${activePage.texts.length + 1} 欄的展示文字。`);
@@ -167,6 +196,7 @@
                     activePage.texts.pop();
                 }
                 renderEditor();
+                saveState(); 
             });
 
             inputContainer.addEventListener('input', saveCurrentPageText);
@@ -211,6 +241,7 @@
                 const activePage = getActivePage();
                 if (activePage) {
                     activePage.gridTemplate = inputContainer.style.gridTemplateColumns;
+                    saveState(); 
                 }
                 document.body.classList.remove('resizing');
                 if (activeHandle) {
@@ -221,7 +252,7 @@
                 window.removeEventListener('mouseup', stopEditorResize);
             }
 
-            // --- Slideshow Logic ---
+            // --- Slideshow & Style Logic ---
             function updateEditorColors() {
                 const bgColor = bgColorPicker.value;
                 const textColor = textColorPicker.value;
@@ -250,7 +281,7 @@
                 slideshowScreen.style.setProperty('--slideshow-font-size', `${fontSize}rem`);
                 slideshowScreen.style.setProperty('--slideshow-bg', bgColor);
                 slideshowScreen.style.setProperty('--slideshow-text-color', textColor);
-                
+
                 slideshowRenderArea.style.gridTemplateColumns = activePage.gridTemplate || `repeat(${activePage.columns}, 1fr)`;
                 slideshowRenderArea.innerHTML = '';
 
@@ -286,7 +317,7 @@
             textColorPicker.addEventListener('input', updateEditorColors);
 
             // --- Init ---
-            addPage(); // Start with one page
+            loadState(); 
         });
     </script>
 </body>
