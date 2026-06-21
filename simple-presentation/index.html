@@ -71,13 +71,14 @@
                 const textareas = Array.from(inputContainer.querySelectorAll('textarea'));
                 activePage.texts = textareas.map(t => t.value);
             }
-            
+
             function addPage() {
                 saveCurrentPageText();
                 const newPage = {
                     id: nextId++,
                     columns: 2,
-                    texts: ['這是第 1 欄的展示文字。', '這是第 2 欄的展示文字。']
+                    texts: ['這是第 1 欄的展示文字。', '這是第 2 欄的展示文字。'],
+                    gridTemplate: 'repeat(2, 1fr)' 
                 };
                 pages.push(newPage);
                 selectPage(newPage.id);
@@ -102,7 +103,7 @@
                     renderApp();
                 }
             }
-            
+
             function renderEditor() {
                 const activePage = getActivePage();
                 if (!activePage) {
@@ -111,7 +112,7 @@
                 }
 
                 columnSelect.value = activePage.columns;
-                inputContainer.style.gridTemplateColumns = `repeat(${activePage.columns}, 1fr)`;
+                inputContainer.style.gridTemplateColumns = activePage.gridTemplate || `repeat(${activePage.columns}, 1fr)`;
                 inputContainer.innerHTML = '';
 
                 for (let i = 0; i < activePage.columns; i++) {
@@ -122,6 +123,15 @@
                         <label>第 ${i + 1} 欄內容</label>
                         <textarea id="text-input-${i}">${textValue}</textarea>
                     `;
+                    
+                    if (i < activePage.columns - 1) {
+                        const handle = document.createElement('div');
+                        handle.className = 'editor-resize-handle';
+                        handle.dataset.handleIndex = i;
+                        handle.addEventListener('mousedown', initEditorResize);
+                        inputBox.appendChild(handle);
+                    }
+
                     inputContainer.appendChild(inputBox);
                 }
                 updateEditorFontSize();
@@ -145,22 +155,73 @@
             columnSelect.addEventListener('change', () => {
                 const activePage = getActivePage();
                 if (!activePage) return;
-                saveCurrentPageText(); // Save existing text first
-                activePage.columns = parseInt(columnSelect.value);
-                // Adjust texts array to match new column count
-                while(activePage.texts.length < activePage.columns) {
+                saveCurrentPageText();
+                const newColCount = parseInt(columnSelect.value);
+                activePage.columns = newColCount;
+                activePage.gridTemplate = `repeat(${newColCount}, 1fr)`; 
+
+                while (activePage.texts.length < newColCount) {
                     activePage.texts.push(`這是第 ${activePage.texts.length + 1} 欄的展示文字。`);
                 }
-                while(activePage.texts.length > activePage.columns) {
+                while (activePage.texts.length > newColCount) {
                     activePage.texts.pop();
                 }
                 renderEditor();
             });
-            
+
             inputContainer.addEventListener('input', saveCurrentPageText);
 
+            // --- Resizing Logic ---
+            let activeHandle = null;
+            let initialX, initialWidths, handleIndex;
 
-            // --- The rest of the functions (slideshow, resizing, etc.) ---
+            function initEditorResize(e) {
+                e.preventDefault();
+                document.body.classList.add('resizing');
+                activeHandle = e.currentTarget;
+                activeHandle.classList.add('active');
+
+                handleIndex = parseInt(activeHandle.dataset.handleIndex);
+                const columns = Array.from(inputContainer.children);
+
+                initialX = e.clientX;
+                initialWidths = columns.map(c => c.getBoundingClientRect().width);
+
+                window.addEventListener('mousemove', doEditorResize);
+                window.addEventListener('mouseup', stopEditorResize);
+            }
+
+            function doEditorResize(e) {
+                const deltaX = e.clientX - initialX;
+                const newLeftWidth = initialWidths[handleIndex] + deltaX;
+                const newRightWidth = initialWidths[handleIndex + 1] - deltaX;
+
+                if (newLeftWidth < 50 || newRightWidth < 50) return;
+
+                const newTemplate = initialWidths.map((w, i) => {
+                    if (i === handleIndex) return `${newLeftWidth}px`;
+                    if (i === handleIndex + 1) return `${newRightWidth}px`;
+                    return `${w}px`;
+                }).join(' ');
+
+                inputContainer.style.gridTemplateColumns = newTemplate;
+            }
+
+            function stopEditorResize() {
+                const activePage = getActivePage();
+                if (activePage) {
+                    activePage.gridTemplate = inputContainer.style.gridTemplateColumns;
+                }
+                document.body.classList.remove('resizing');
+                if (activeHandle) {
+                    activeHandle.classList.remove('active');
+                    activeHandle = null;
+                }
+                window.removeEventListener('mousemove', doEditorResize);
+                window.removeEventListener('mouseup', stopEditorResize);
+            }
+
+            // --- Slideshow Logic ---
             function updateEditorColors() {
                 const bgColor = bgColorPicker.value;
                 const textColor = textColorPicker.value;
@@ -180,17 +241,17 @@
 
             startBtn.addEventListener('click', () => {
                 const activePage = getActivePage();
-                if(!activePage) return;
+                if (!activePage) return;
 
                 const fontSize = fontSizeSlider.value;
                 const bgColor = bgColorPicker.value;
                 const textColor = textColorPicker.value;
-                
+
                 slideshowScreen.style.setProperty('--slideshow-font-size', `${fontSize}rem`);
                 slideshowScreen.style.setProperty('--slideshow-bg', bgColor);
                 slideshowScreen.style.setProperty('--slideshow-text-color', textColor);
-
-                slideshowRenderArea.style.gridTemplateColumns = `repeat(${activePage.columns}, 1fr)`;
+                
+                slideshowRenderArea.style.gridTemplateColumns = activePage.gridTemplate || `repeat(${activePage.columns}, 1fr)`;
                 slideshowRenderArea.innerHTML = '';
 
                 activePage.texts.forEach(text => {
@@ -223,7 +284,7 @@
             fontSizeSlider.addEventListener('input', updateEditorFontSize);
             bgColorPicker.addEventListener('input', updateEditorColors);
             textColorPicker.addEventListener('input', updateEditorColors);
-            
+
             // --- Init ---
             addPage(); // Start with one page
         });
