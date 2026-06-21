@@ -4,221 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>文字幻燈片展示器</title>
-    <style>
-        html {
-            height: 100%;
-        }
-        :root {
-            --bg-color: #f5f7fa;
-            --text-color: #333;
-            --card-bg: #ffffff;
-            --primary-color: #007bff;
-            --primary-dark-color: #0056b3;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 20px;
-            transition: all 0.3s ease;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            box-sizing: border-box;
-        }
-
-        body.resizing {
-            cursor: col-resize;
-            user-select: none;
-        }
-
-        /* 設定區域 */
-        .container {
-            max-width: 1200px;
-            margin-inline: auto;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-        }
-
-        header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .controls {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 20px;
-            align-items: center;
-        }
-
-        select, button, input[type="color"], input[type="range"] {
-            padding: 10px;
-            font-size: 16px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        input[type="color"] {
-            padding: 5px;
-        }
-        
-        input[type="range"] {
-            flex-grow: 0.2;
-        }
-
-        button {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            font-weight: bold;
-        }
-
-        button:hover {
-            background-color: var(--primary-dark-color);
-        }
-
-        /* 欄位輸入區域 */
-        .input-grid {
-            display: grid;
-            gap: 20px;
-            margin-bottom: 0;
-            flex: 1;
-        }
-
-        .input-box {
-            background: var(--card-bg);
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            position: relative; /* For resize handle positioning */
-        }
-
-        .editor-resize-handle {
-            position: absolute;
-            top: 0;
-            right: -20px; /* Position handle to fill the 20px gap */
-            width: 20px;
-            height: 100%;
-            cursor: col-resize;
-            z-index: 10;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .editor-resize-handle::before {
-            content: "";
-            width: 6px;
-            height: 40px;
-            background-color: rgba(0, 0, 0, 0.15);
-            border-radius: 3px;
-            transition: background-color 0.2s ease;
-        }
-
-        .editor-resize-handle:hover::before {
-            background-color: var(--primary-color);
-        }
-
-        .editor-resize-handle.active::before {
-            background-color: var(--primary-dark-color);
-        }
-
-        .input-box label {
-            font-weight: bold;
-            color: #666;
-        }
-
-        textarea {
-            width: 100%;
-            flex-grow: 1;
-            padding: 12px;
-            box-sizing: border-box;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            /* font-size, background-color, color will be set dynamically */
-            transition: background-color 0.3s, color 0.3s;
-            resize: none;
-        }
-
-        /* 幻燈片全螢幕模式 */
-        .slideshow-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background-color: var(--slideshow-bg, #111);
-            color: var(--slideshow-text-color, #fff);
-            z-index: 9999;
-            padding-block: 40px;
-            padding-inline: 20px;
-            box-sizing: border-box;
-        }
-
-        .slideshow-content {
-            display: grid;
-            gap: 40px;
-            width: 100%;
-            height: 100%;
-            max-width: 1400px;
-            margin-inline: auto;
-        }
-        
-        .slide-column {
-            position: relative;
-            overflow-y: auto;
-            height: 100%;
-            text-align: start;
-            padding-inline: 10px;
-            box-sizing: border-box;
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-        
-        .slide-column::-webkit-scrollbar {
-            display: none;
-        }
-
-        .slide-column:not(:last-child)::after {
-            content: '';
-            position: absolute;
-            top: 5%;
-            bottom: 5%;
-            right: -20px; /* Half of the 40px gap */
-            width: 1px;
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        .slide-text {
-            font-size: var(--slideshow-font-size, clamp(2rem, 5vw, 4rem));
-            font-weight: bold;
-            line-height: 1.4;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
-
-        .exit-hint {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: #666;
-            font-size: 14px;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
+    <script src="main.js" defer></script>
 </head>
 <body>
 
@@ -227,11 +14,13 @@
             <h1>文字幻燈片展示器</h1>
         </header>
 
+        <tab-manager id="tab-manager"></tab-manager>
+
         <div class="controls">
             <label for="column-select">欄位數量:</label>
             <select id="column-select">
                 <option value="1">1</option>
-                <option value="2" selected>2</option>
+                <option value="2">2</option>
                 <option value="3">3</option>
             </select>
             <label for="font-size-slider">字體大小:</label>
@@ -256,170 +45,188 @@
     </div>
 
     <script>
-        const columnSelect = document.getElementById('column-select');
-        const inputContainer = document.getElementById('input-container');
-        const startBtn = document.getElementById('start-btn');
-        const slideshowScreen = document.getElementById('slideshow-screen');
-        const slideshowRenderArea = document.getElementById('slideshow-render-area');
-        const fontSizeSlider = document.getElementById('font-size-slider');
-        const fontSizeValue = document.getElementById('font-size-value');
-        const bgColorPicker = document.getElementById('bg-color-picker');
-        const textColorPicker = document.getElementById('text-color-picker');
+        document.addEventListener('DOMContentLoaded', () => {
+            const tabManager = document.getElementById('tab-manager');
+            const columnSelect = document.getElementById('column-select');
+            const inputContainer = document.getElementById('input-container');
+            const startBtn = document.getElementById('start-btn');
+            const slideshowScreen = document.getElementById('slideshow-screen');
+            const slideshowRenderArea = document.getElementById('slideshow-render-area');
+            const fontSizeSlider = document.getElementById('font-size-slider');
+            const fontSizeValue = document.getElementById('font-size-value');
+            const bgColorPicker = document.getElementById('bg-color-picker');
+            const textColorPicker = document.getElementById('text-color-picker');
 
-        let activeHandle = null;
+            let pages = [];
+            let activePageId = null;
+            let nextId = 1;
 
-        function updateEditorColors() {
-            const bgColor = bgColorPicker.value;
-            const textColor = textColorPicker.value;
-            document.querySelectorAll('#input-container textarea').forEach(textarea => {
-                textarea.style.backgroundColor = bgColor;
-                textarea.style.color = textColor;
-            });
-        }
+            function getActivePage() {
+                return pages.find(p => p.id === activePageId);
+            }
 
-        function updateEditorFontSize() {
-            const newSize = parseFloat(fontSizeSlider.value);
-            fontSizeValue.textContent = `${newSize.toFixed(1)} rem`;
-            document.querySelectorAll('#input-container textarea').forEach(textarea => {
-                textarea.style.fontSize = `${newSize}rem`;
-            });
-        }
+            function saveCurrentPageText() {
+                const activePage = getActivePage();
+                if (!activePage) return;
+                const textareas = Array.from(inputContainer.querySelectorAll('textarea'));
+                activePage.texts = textareas.map(t => t.value);
+            }
+            
+            function addPage() {
+                saveCurrentPageText();
+                const newPage = {
+                    id: nextId++,
+                    columns: 2,
+                    texts: ['這是第 1 欄的展示文字。', '這是第 2 欄的展示文字。']
+                };
+                pages.push(newPage);
+                selectPage(newPage.id);
+            }
 
-        function updateInputGrid() {
-            const numCols = parseInt(columnSelect.value);
-            inputContainer.style.gridTemplateColumns = `repeat(${numCols}, 1fr)`;
+            function selectPage(pageId) {
+                if (activePageId === pageId) return;
+                saveCurrentPageText();
+                activePageId = pageId;
+                renderApp();
+            }
 
-            const currentTexts = Array.from(inputContainer.querySelectorAll('textarea')).map(t => t.value);
-            inputContainer.innerHTML = '';
-
-            for (let i = 0; i < numCols; i++) {
-                const existingValue = currentTexts[i] || `這是第 ${i + 1} 欄的展示文字。`;
-                const inputBox = document.createElement('div');
-                inputBox.className = 'input-box';
-                inputBox.innerHTML = `
-                    <label>第 ${i + 1} 欄內容</label>
-                    <textarea id="text-input-${i}">${existingValue}</textarea>
-                `;
-
-                if (i < numCols - 1) {
-                    const handle = document.createElement('div');
-                    handle.className = 'editor-resize-handle';
-                    handle.dataset.handleIndex = i;
-                    handle.addEventListener('mousedown', initEditorResize);
-                    inputBox.appendChild(handle);
+            function deletePage(pageId) {
+                if (pages.length <= 1) {
+                    alert("You must have at least one page.");
+                    return;
+                }
+                pages = pages.filter(p => p.id !== pageId);
+                if (activePageId === pageId) {
+                    selectPage(pages[0].id);
+                } else {
+                    renderApp();
+                }
+            }
+            
+            function renderEditor() {
+                const activePage = getActivePage();
+                if (!activePage) {
+                    inputContainer.innerHTML = '';
+                    return;
                 }
 
-                inputContainer.appendChild(inputBox);
-            }
-            // After creating the grid, apply the current styles
-            updateEditorFontSize();
-            updateEditorColors();
-        }
+                columnSelect.value = activePage.columns;
+                inputContainer.style.gridTemplateColumns = `repeat(${activePage.columns}, 1fr)`;
+                inputContainer.innerHTML = '';
 
-        startBtn.addEventListener('click', () => {
-            const fontSize = fontSizeSlider.value;
-            const bgColor = bgColorPicker.value;
-            const textColor = textColorPicker.value;
+                for (let i = 0; i < activePage.columns; i++) {
+                    const textValue = activePage.texts[i] || '';
+                    const inputBox = document.createElement('div');
+                    inputBox.className = 'input-box';
+                    inputBox.innerHTML = `
+                        <label>第 ${i + 1} 欄內容</label>
+                        <textarea id="text-input-${i}">${textValue}</textarea>
+                    `;
+                    inputContainer.appendChild(inputBox);
+                }
+                updateEditorFontSize();
+                updateEditorColors();
+            }
+
+            function renderTabs() {
+                tabManager.renderTabs(pages, activePageId);
+            }
+
+            function renderApp() {
+                renderTabs();
+                renderEditor();
+            }
+
+            // Event Listeners
+            tabManager.addEventListener('page-added', addPage);
+            tabManager.addEventListener('page-selected', e => selectPage(e.detail.pageId));
+            tabManager.addEventListener('page-deleted', e => deletePage(e.detail.pageId));
+
+            columnSelect.addEventListener('change', () => {
+                const activePage = getActivePage();
+                if (!activePage) return;
+                saveCurrentPageText(); // Save existing text first
+                activePage.columns = parseInt(columnSelect.value);
+                // Adjust texts array to match new column count
+                while(activePage.texts.length < activePage.columns) {
+                    activePage.texts.push(`這是第 ${activePage.texts.length + 1} 欄的展示文字。`);
+                }
+                while(activePage.texts.length > activePage.columns) {
+                    activePage.texts.pop();
+                }
+                renderEditor();
+            });
             
-            slideshowScreen.style.setProperty('--slideshow-font-size', `${fontSize}rem`);
-            slideshowScreen.style.setProperty('--slideshow-bg', bgColor);
-            slideshowScreen.style.setProperty('--slideshow-text-color', textColor);
+            inputContainer.addEventListener('input', saveCurrentPageText);
 
-            const numCols = parseInt(columnSelect.value);
-            const editorGridTemplate = window.getComputedStyle(inputContainer).gridTemplateColumns;
-            slideshowRenderArea.style.gridTemplateColumns = editorGridTemplate;
-            slideshowRenderArea.innerHTML = '';
 
-            for (let i = 0; i < numCols; i++) {
-                const txt = document.getElementById(`text-input-${i}`).value;
-
-                const columnWrapper = document.createElement('div');
-                columnWrapper.className = 'slide-column';
-
-                const textElement = document.createElement('div');
-                textElement.className = 'slide-text';
-                textElement.textContent = txt;
-
-                columnWrapper.appendChild(textElement);
-                slideshowRenderArea.appendChild(columnWrapper);
+            // --- The rest of the functions (slideshow, resizing, etc.) ---
+            function updateEditorColors() {
+                const bgColor = bgColorPicker.value;
+                const textColor = textColorPicker.value;
+                document.querySelectorAll('#input-container textarea').forEach(textarea => {
+                    textarea.style.backgroundColor = bgColor;
+                    textarea.style.color = textColor;
+                });
             }
 
-            slideshowScreen.style.display = 'block';
-            document.documentElement.requestFullscreen?.();
+            function updateEditorFontSize() {
+                const newSize = parseFloat(fontSizeSlider.value);
+                fontSizeValue.textContent = `${newSize.toFixed(1)} rem`;
+                document.querySelectorAll('#input-container textarea').forEach(textarea => {
+                    textarea.style.fontSize = `${newSize}rem`;
+                });
+            }
+
+            startBtn.addEventListener('click', () => {
+                const activePage = getActivePage();
+                if(!activePage) return;
+
+                const fontSize = fontSizeSlider.value;
+                const bgColor = bgColorPicker.value;
+                const textColor = textColorPicker.value;
+                
+                slideshowScreen.style.setProperty('--slideshow-font-size', `${fontSize}rem`);
+                slideshowScreen.style.setProperty('--slideshow-bg', bgColor);
+                slideshowScreen.style.setProperty('--slideshow-text-color', textColor);
+
+                slideshowRenderArea.style.gridTemplateColumns = `repeat(${activePage.columns}, 1fr)`;
+                slideshowRenderArea.innerHTML = '';
+
+                activePage.texts.forEach(text => {
+                    const columnWrapper = document.createElement('div');
+                    columnWrapper.className = 'slide-column';
+                    const textElement = document.createElement('div');
+                    textElement.className = 'slide-text';
+                    textElement.textContent = text;
+                    columnWrapper.appendChild(textElement);
+                    slideshowRenderArea.appendChild(columnWrapper);
+                });
+
+                slideshowScreen.style.display = 'block';
+                document.documentElement.requestFullscreen?.();
+            });
+
+            slideshowScreen.addEventListener('click', (e) => {
+                if (e.target === slideshowScreen) exitSlideshow();
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && slideshowScreen.style.display === 'block') exitSlideshow();
+            });
+
+            function exitSlideshow() {
+                slideshowScreen.style.display = 'none';
+                document.exitFullscreen?.();
+            }
+
+            fontSizeSlider.addEventListener('input', updateEditorFontSize);
+            bgColorPicker.addEventListener('input', updateEditorColors);
+            textColorPicker.addEventListener('input', updateEditorColors);
+            
+            // --- Init ---
+            addPage(); // Start with one page
         });
-
-        let initialX, initialWidths, handleIndex, leftColumn, rightColumn;
-
-        function initEditorResize(e) {
-            e.preventDefault();
-            document.body.classList.add('resizing');
-            activeHandle = e.currentTarget;
-            activeHandle.classList.add('active');
-            
-            handleIndex = parseInt(activeHandle.dataset.handleIndex);
-            const columns = Array.from(inputContainer.children);
-            leftColumn = columns[handleIndex];
-            rightColumn = columns[handleIndex + 1];
-
-            initialX = e.clientX;
-            initialWidths = columns.map(c => c.getBoundingClientRect().width);
-            
-            window.addEventListener('mousemove', doEditorResize);
-            window.addEventListener('mouseup', stopEditorResize);
-        }
-
-        function doEditorResize(e) {
-            const deltaX = e.clientX - initialX;
-            const newLeftWidth = initialWidths[handleIndex] + deltaX;
-            const newRightWidth = initialWidths[handleIndex + 1] - deltaX;
-            
-            if (newLeftWidth < 50 || newRightWidth < 50) return;
-
-            const newTemplate = initialWidths.map((w, i) => {
-                if (i === handleIndex) return `${newLeftWidth}px`;
-                if (i === handleIndex + 1) return `${newRightWidth}px`;
-                return `${w}px`;
-            }).join(' ');
-
-            inputContainer.style.gridTemplateColumns = newTemplate;
-        }
-
-        function stopEditorResize() {
-            document.body.classList.remove('resizing');
-            if (activeHandle) {
-                activeHandle.classList.remove('active');
-                activeHandle = null;
-            }
-            window.removeEventListener('mousemove', doEditorResize);
-            window.removeEventListener('mouseup', stopEditorResize);
-        }
-
-        slideshowScreen.addEventListener('click', (e) => {
-            if (e.target === slideshowScreen) {
-                exitSlideshow();
-            }
-        });
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && slideshowScreen.style.display === 'block') {
-                exitSlideshow();
-            }
-        });
-
-        function exitSlideshow() {
-            slideshowScreen.style.display = 'none';
-            document.exitFullscreen?.();
-        }
-
-        // --- Event Listeners and Initial Setup ---
-        columnSelect.addEventListener('change', updateInputGrid);
-        fontSizeSlider.addEventListener('input', updateEditorFontSize);
-        bgColorPicker.addEventListener('input', updateEditorColors);
-        textColorPicker.addEventListener('input', updateEditorColors);
-        
-        // Initialize
-        updateInputGrid();
-
     </script>
 </body>
 </html>
