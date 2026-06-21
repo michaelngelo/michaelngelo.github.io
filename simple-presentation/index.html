@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>文字幻燈片展示器</title>
     <style>
+        html {
+            height: 100%;
+        }
         :root {
             --bg-color: #f5f7fa;
             --text-color: #333;
@@ -20,6 +23,10 @@
             margin: 0;
             padding: 20px;
             transition: all 0.3s ease;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
         }
 
         body.resizing {
@@ -31,6 +38,10 @@
         .container {
             max-width: 1200px;
             margin: 0 auto;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
         }
 
         header {
@@ -79,7 +90,8 @@
         .input-grid {
             display: grid;
             gap: 20px;
-            margin-bottom: 30px;
+            margin-bottom: 0;
+            flex: 1;
         }
 
         .input-box {
@@ -130,14 +142,14 @@
 
         textarea {
             width: 100%;
-            height: 200px;
+            flex-grow: 1;
             padding: 12px;
             box-sizing: border-box;
             border: 1px solid #ddd;
             border-radius: 8px;
             /* font-size, background-color, color will be set dynamically */
-            resize: vertical;
             transition: background-color 0.3s, color 0.3s;
+            resize: none;
         }
 
         /* 幻燈片全螢幕模式 */
