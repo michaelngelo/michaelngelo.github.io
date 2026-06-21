@@ -31,7 +31,7 @@
             <input type="color" id="bg-color-picker" value="#111111">
             <label for="text-color-picker">文字顏色:</label>
             <input type="color" id="text-color-picker" value="#ffffff">
-            <button id="start-btn">進入幻燈片模式</button>
+            <button id="start-btn">進入幻燈片模式 📺</button>
         </div>
 
         <div id="input-container" class="input-grid">
@@ -80,9 +80,13 @@
                     pages = state.pages;
                     activePageId = state.activePageId;
                     nextId = state.nextId;
+                     // A quick migration for older states that didn't have colors
+                    pages.forEach(p => {
+                        if (!p.bgColor) p.bgColor = '#111111';
+                        if (!p.textColor) p.textColor = '#ffffff';
+                    });
                 } else {
-                    // If no saved state, create a default page
-                    addPage(false); // don't save state yet, it will be saved in renderApp
+                    addPage(false);
                 }
                 renderApp();
             }
@@ -105,18 +109,20 @@
                     id: nextId++,
                     columns: 2,
                     texts: ['這是第 1 欄的展示文字。', '這是第 2 欄的展示文字。'],
-                    gridTemplate: 'repeat(2, 1fr)'
+                    gridTemplate: 'repeat(2, 1fr)',
+                    bgColor: '#111111',
+                    textColor: '#ffffff'
                 };
                 pages.push(newPage);
                 selectPage(newPage.id, shouldSave);
             }
 
             function selectPage(pageId, shouldSave = true) {
-                if (activePageId === pageId) return;
+                if (activePageId === pageId && shouldSave) return; // No change if already active
                 saveCurrentPageText();
                 activePageId = pageId;
                 renderApp();
-                 if (shouldSave) saveState();
+                if (shouldSave) saveState();
             }
 
             function deletePage(pageId) {
@@ -126,7 +132,7 @@
                 }
                 pages = pages.filter(p => p.id !== pageId);
                 if (activePageId === pageId) {
-                    selectPage(pages[0].id);
+                    selectPage(pages[0].id, false); // Select first page, don't re-save
                 } else {
                     renderApp();
                 }
@@ -140,7 +146,11 @@
                     return;
                 }
 
+                // Update controls to match active page
                 columnSelect.value = activePage.columns;
+                bgColorPicker.value = activePage.bgColor;
+                textColorPicker.value = activePage.textColor;
+
                 inputContainer.style.gridTemplateColumns = activePage.gridTemplate || `repeat(${activePage.columns}, 1fr)`;
                 inputContainer.innerHTML = '';
 
@@ -199,6 +209,18 @@
                 saveState(); 
             });
 
+            function handleColorChange() {
+                const activePage = getActivePage();
+                if (!activePage) return;
+                activePage.bgColor = bgColorPicker.value;
+                activePage.textColor = textColorPicker.value;
+                updateEditorColors();
+                saveState();
+            }
+
+            bgColorPicker.addEventListener('input', handleColorChange);
+            textColorPicker.addEventListener('input', handleColorChange);
+
             inputContainer.addEventListener('input', saveCurrentPageText);
 
             // --- Resizing Logic ---
@@ -254,11 +276,11 @@
 
             // --- Slideshow & Style Logic ---
             function updateEditorColors() {
-                const bgColor = bgColorPicker.value;
-                const textColor = textColorPicker.value;
+                const activePage = getActivePage();
+                if (!activePage) return;
                 document.querySelectorAll('#input-container textarea').forEach(textarea => {
-                    textarea.style.backgroundColor = bgColor;
-                    textarea.style.color = textColor;
+                    textarea.style.backgroundColor = activePage.bgColor;
+                    textarea.style.color = activePage.textColor;
                 });
             }
 
@@ -275,12 +297,10 @@
                 if (!activePage) return;
 
                 const fontSize = fontSizeSlider.value;
-                const bgColor = bgColorPicker.value;
-                const textColor = textColorPicker.value;
 
                 slideshowScreen.style.setProperty('--slideshow-font-size', `${fontSize}rem`);
-                slideshowScreen.style.setProperty('--slideshow-bg', bgColor);
-                slideshowScreen.style.setProperty('--slideshow-text-color', textColor);
+                slideshowScreen.style.setProperty('--slideshow-bg', activePage.bgColor);
+                slideshowScreen.style.setProperty('--slideshow-text-color', activePage.textColor);
 
                 slideshowRenderArea.style.gridTemplateColumns = activePage.gridTemplate || `repeat(${activePage.columns}, 1fr)`;
                 slideshowRenderArea.innerHTML = '';
@@ -313,8 +333,6 @@
             }
 
             fontSizeSlider.addEventListener('input', updateEditorFontSize);
-            bgColorPicker.addEventListener('input', updateEditorColors);
-            textColorPicker.addEventListener('input', updateEditorColors);
 
             // --- Init ---
             loadState(); 
