@@ -46,9 +46,37 @@ header {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 15px;
+    gap: 12px 16px;
     margin-bottom: 20px;
     align-items: center;
+    width: 100%;
+}
+
+.control-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+}
+
+.control-group--range {
+    min-width: 280px;
+}
+
+.control-group label {
+    white-space: nowrap;
+}
+
+.control-group select,
+.control-group button,
+.control-group input[type="color"] {
+    min-width: 0;
+}
+
+.control-group input[type="range"] {
+    width: min(220px, 100%);
+    flex: 1 1 140px;
 }
 
 select, button, input[type="color"], input[type="range"] {
