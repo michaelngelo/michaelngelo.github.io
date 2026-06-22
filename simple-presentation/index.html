@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>文字幻燈片展示器</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+HK:wght@400;500;700&family=Chiron+Sung+HK:wght@400;500;700&family=Source+Han+Sans+TC:wght@400;500;700&family=ZCOOL+Xiaowei&family=Ma+Shan+Zheng&family=Klee+One:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <script src="main.js" defer></script>
 </head>
@@ -26,6 +29,21 @@
             <label for="font-size-slider">字體大小:</label>
             <input type="range" id="font-size-slider" min="1" max="10" step="0.1" value="3">
             <span id="font-size-value">3.0 rem</span>
+            <label for="font-family-select">字體樣式:</label>
+            <select id="font-family-select">
+                <option value='&quot;Noto Serif HK&quot;, serif' selected>Noto Serif Hong Kong（線上字型）</option>
+                <option value='&quot;ZCOOL Xiaowei&quot;, serif'>ZCOOL Xiaowei（線上字型）</option>
+                <option value='&quot;Chiron Sung HK&quot;, serif'>Chiron Sung HK（線上字型）</option>
+                <option value='&quot;LXGW WenKai TC&quot;, sans-serif'>LXGW WenKai TC（線上字型）</option>
+                <option value='&quot;Klee One&quot;, sans-serif'>Klee One（線上字型）</option>
+                <option value='&quot;Ma Shan Zheng&quot;, cursive'>Ma Shan Zheng（線上字型）</option>
+                <option value='&quot;Noto Sans TC&quot;, sans-serif'>Noto Sans TC（線上字型）</option>
+                <option value='&quot;Source Han Sans TC&quot;, sans-serif'>Source Han Sans TC（線上字型）</option>
+                <option value='&quot;PingFang TC&quot;, sans-serif'>PingFang TC</option>
+                <option value='Microsoft JhengHei, &quot;PingFang TC&quot;, sans-serif'>微軟正黑體</option>
+                <option value='&quot;MingLiU&quot;, serif'>細明體</option>
+                <option value='system-ui, sans-serif'>系統預設</option>
+            </select>
 
             <label for="bg-color-picker">背景顏色:</label>
             <input type="color" id="bg-color-picker" value="#111111">
@@ -59,6 +77,7 @@
             const slideshowRenderArea = document.getElementById('slideshow-render-area');
             const fontSizeSlider = document.getElementById('font-size-slider');
             const fontSizeValue = document.getElementById('font-size-value');
+            const fontFamilySelect = document.getElementById('font-family-select');
             const bgColorPicker = document.getElementById('bg-color-picker');
             const textColorPicker = document.getElementById('text-color-picker');
             const prevSlideBtn = document.getElementById('prev-slide-btn');
@@ -67,6 +86,7 @@
             const slidePageIndicator = document.getElementById('slide-page-indicator');
             
             const APP_STATE_KEY = 'textSlideshowState';
+            const DEFAULT_FONT_FAMILY = '"Noto Serif HK", serif';
 
             let pages = [];
             let activePageId = null;
@@ -92,6 +112,7 @@
                     pages.forEach(p => {
                         if (!p.bgColor) p.bgColor = '#111111';
                         if (!p.textColor) p.textColor = '#ffffff';
+                        if (!p.fontFamily) p.fontFamily = DEFAULT_FONT_FAMILY;
                     });
                 } else {
                     addPage(false);
@@ -119,7 +140,8 @@
                     texts: ['這是第 1 欄的展示文字。', '這是第 2 欄的展示文字。'],
                     gridTemplate: 'repeat(2, 1fr)',
                     bgColor: '#111111',
-                    textColor: '#ffffff'
+                    textColor: '#ffffff',
+                    fontFamily: DEFAULT_FONT_FAMILY
                 };
                 pages.push(newPage);
                 selectPage(newPage.id, shouldSave);
@@ -157,6 +179,7 @@
                 columnSelect.value = activePage.columns;
                 bgColorPicker.value = activePage.bgColor;
                 textColorPicker.value = activePage.textColor;
+                fontFamilySelect.value = activePage.fontFamily || DEFAULT_FONT_FAMILY;
                 inputContainer.style.gridTemplateColumns = activePage.gridTemplate || `repeat(${activePage.columns}, 1fr)`;
                 inputContainer.innerHTML = '';
                 for (let i = 0; i < activePage.columns; i++) {
@@ -175,6 +198,7 @@
                 }
                 updateEditorFontSize();
                 updateEditorColors();
+                updateEditorFontFamily();
             }
 
             function renderTabs() {
@@ -219,6 +243,13 @@
 
             bgColorPicker.addEventListener('input', handleColorChange);
             textColorPicker.addEventListener('input', handleColorChange);
+            fontFamilySelect.addEventListener('change', () => {
+                const activePage = getActivePage();
+                if (!activePage) return;
+                activePage.fontFamily = fontFamilySelect.value;
+                updateEditorFontFamily();
+                saveState();
+            });
             inputContainer.addEventListener('input', () => { saveCurrentPageText(); saveState(); });
 
             // --- Resizing Logic ---
@@ -277,12 +308,21 @@
                 });
             }
 
+            function updateEditorFontFamily() {
+                const activePage = getActivePage();
+                if (!activePage) return;
+                document.querySelectorAll('#input-container textarea').forEach(textarea => {
+                    textarea.style.fontFamily = activePage.fontFamily || DEFAULT_FONT_FAMILY;
+                });
+            }
+
             function renderSlideshowPage(page) {
                 const pageIndex = pages.findIndex(p => p.id === page.id);
                 slidePageIndicator.textContent = `第 ${pageIndex + 1} / ${pages.length} 頁`;
 
                 const fontSize = fontSizeSlider.value;
                 slideshowScreen.style.setProperty('--slideshow-font-size', `${fontSize}rem`);
+                slideshowScreen.style.setProperty('--slideshow-font-family', page.fontFamily || DEFAULT_FONT_FAMILY);
                 slideshowScreen.style.setProperty('--slideshow-bg', page.bgColor);
                 slideshowScreen.style.setProperty('--slideshow-text-color', page.textColor);
                 slideshowRenderArea.style.gridTemplateColumns = page.gridTemplate || `repeat(${page.columns}, 1fr)`;
