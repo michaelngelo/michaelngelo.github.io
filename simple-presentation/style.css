@@ -221,6 +221,23 @@ textarea {
     border-radius: 20px;
 }
 
+.exit-btn {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    width: 36px;
+    height: 36px;
+    border-radius: 999px;
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.exit-btn:hover {
+    background: rgba(255, 255, 255, 0.18);
+}
+
 .slide-nav-btn {
     background: rgba(255, 255, 255, 0.1);
     color: white;
@@ -247,6 +264,4 @@ textarea {
     margin-right: 10px;
 }
 
-.exit-hint {
-    color: #ccc;
-}
+
