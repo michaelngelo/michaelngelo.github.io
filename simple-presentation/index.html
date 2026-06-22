@@ -39,9 +39,14 @@
         </div>
     </div>
 
-    <div id="slideshow-screen" class="slideshow-overlay">
+    <div id="slideshow-screen" class="slideshow-overlay" style="display: none;">
+        <button class="slide-nav-btn" id="prev-slide-btn">&lt;</button>
         <div id="slideshow-render-area" class="slideshow-content"></div>
-        <div class="exit-hint">點擊任意處 或 按下 ESC 鍵退出</div>
+        <button class="slide-nav-btn" id="next-slide-btn">&gt;</button>
+        <div class="slideshow-footer">
+            <div class="page-indicator" id="slide-page-indicator"></div>
+            <div class="exit-hint">點擊背景、按下 ESC 鍵、或使用方向鍵 左右 切換頁面</div>
+        </div>
     </div>
 
     <script>
@@ -56,6 +61,9 @@
             const fontSizeValue = document.getElementById('font-size-value');
             const bgColorPicker = document.getElementById('bg-color-picker');
             const textColorPicker = document.getElementById('text-color-picker');
+            const prevSlideBtn = document.getElementById('prev-slide-btn');
+            const nextSlideBtn = document.getElementById('next-slide-btn');
+            const slidePageIndicator = document.getElementById('slide-page-indicator');
             
             const APP_STATE_KEY = 'textSlideshowState';
 
@@ -80,7 +88,6 @@
                     pages = state.pages;
                     activePageId = state.activePageId;
                     nextId = state.nextId;
-                     // A quick migration for older states that didn't have colors
                     pages.forEach(p => {
                         if (!p.bgColor) p.bgColor = '#111111';
                         if (!p.textColor) p.textColor = '#ffffff';
@@ -100,7 +107,7 @@
                 if (!activePage) return;
                 const textareas = Array.from(inputContainer.querySelectorAll('textarea'));
                 activePage.texts = textareas.map(t => t.value);
-                saveState();
+                // saveState() is called by the parent function
             }
 
             function addPage(shouldSave = true) {
@@ -118,7 +125,7 @@
             }
 
             function selectPage(pageId, shouldSave = true) {
-                if (activePageId === pageId && shouldSave) return; // No change if already active
+                if (activePageId === pageId && shouldSave) return;
                 saveCurrentPageText();
                 activePageId = pageId;
                 renderApp();
@@ -130,13 +137,14 @@
                     alert("You must have at least one page.");
                     return;
                 }
+                const deletedPageIndex = pages.findIndex(p => p.id === pageId);
                 pages = pages.filter(p => p.id !== pageId);
                 if (activePageId === pageId) {
-                    selectPage(pages[0].id, false); // Select first page, don't re-save
-                } else {
-                    renderApp();
+                    const newActivePage = pages[Math.max(0, deletedPageIndex - 1)];
+                    selectPage(newActivePage.id, false);
                 }
                 saveState();
+                renderApp();
             }
 
             function renderEditor() {
@@ -145,24 +153,16 @@
                     inputContainer.innerHTML = '';
                     return;
                 }
-
-                // Update controls to match active page
                 columnSelect.value = activePage.columns;
                 bgColorPicker.value = activePage.bgColor;
                 textColorPicker.value = activePage.textColor;
-
                 inputContainer.style.gridTemplateColumns = activePage.gridTemplate || `repeat(${activePage.columns}, 1fr)`;
                 inputContainer.innerHTML = '';
-
                 for (let i = 0; i < activePage.columns; i++) {
                     const textValue = activePage.texts[i] || '';
                     const inputBox = document.createElement('div');
                     inputBox.className = 'input-box';
-                    inputBox.innerHTML = `
-                        <label>第 ${i + 1} 欄內容</label>
-                        <textarea id="text-input-${i}">${textValue}</textarea>
-                    `;
-
+                    inputBox.innerHTML = `<label>第 ${i + 1} 欄內容</label><textarea id="text-input-${i}">${textValue}</textarea>`;
                     if (i < activePage.columns - 1) {
                         const handle = document.createElement('div');
                         handle.className = 'editor-resize-handle';
@@ -170,7 +170,6 @@
                         handle.addEventListener('mousedown', initEditorResize);
                         inputBox.appendChild(handle);
                     }
-
                     inputContainer.appendChild(inputBox);
                 }
                 updateEditorFontSize();
@@ -198,7 +197,6 @@
                 const newColCount = parseInt(columnSelect.value);
                 activePage.columns = newColCount;
                 activePage.gridTemplate = `repeat(${newColCount}, 1fr)`;
-
                 while (activePage.texts.length < newColCount) {
                     activePage.texts.push(`這是第 ${activePage.texts.length + 1} 欄的展示文字。`);
                 }
@@ -220,45 +218,34 @@
 
             bgColorPicker.addEventListener('input', handleColorChange);
             textColorPicker.addEventListener('input', handleColorChange);
-
-            inputContainer.addEventListener('input', saveCurrentPageText);
+            inputContainer.addEventListener('input', () => { saveCurrentPageText(); saveState(); });
 
             // --- Resizing Logic ---
-            let activeHandle = null;
-            let initialX, initialWidths, handleIndex;
-
+            let activeHandle = null, initialX, initialWidths, handleIndex;
             function initEditorResize(e) {
                 e.preventDefault();
                 document.body.classList.add('resizing');
                 activeHandle = e.currentTarget;
                 activeHandle.classList.add('active');
-
                 handleIndex = parseInt(activeHandle.dataset.handleIndex);
                 const columns = Array.from(inputContainer.children);
-
                 initialX = e.clientX;
                 initialWidths = columns.map(c => c.getBoundingClientRect().width);
-
                 window.addEventListener('mousemove', doEditorResize);
                 window.addEventListener('mouseup', stopEditorResize);
             }
-
             function doEditorResize(e) {
                 const deltaX = e.clientX - initialX;
                 const newLeftWidth = initialWidths[handleIndex] + deltaX;
                 const newRightWidth = initialWidths[handleIndex + 1] - deltaX;
-
                 if (newLeftWidth < 50 || newRightWidth < 50) return;
-
                 const newTemplate = initialWidths.map((w, i) => {
                     if (i === handleIndex) return `${newLeftWidth}px`;
                     if (i === handleIndex + 1) return `${newRightWidth}px`;
                     return `${w}px`;
                 }).join(' ');
-
                 inputContainer.style.gridTemplateColumns = newTemplate;
             }
-
             function stopEditorResize() {
                 const activePage = getActivePage();
                 if (activePage) {
@@ -266,10 +253,8 @@
                     saveState(); 
                 }
                 document.body.classList.remove('resizing');
-                if (activeHandle) {
-                    activeHandle.classList.remove('active');
-                    activeHandle = null;
-                }
+                if (activeHandle) activeHandle.classList.remove('active');
+                activeHandle = null;
                 window.removeEventListener('mousemove', doEditorResize);
                 window.removeEventListener('mouseup', stopEditorResize);
             }
@@ -283,7 +268,6 @@
                     textarea.style.color = activePage.textColor;
                 });
             }
-
             function updateEditorFontSize() {
                 const newSize = parseFloat(fontSizeSlider.value);
                 fontSizeValue.textContent = `${newSize.toFixed(1)} rem`;
@@ -292,20 +276,17 @@
                 });
             }
 
-            startBtn.addEventListener('click', () => {
-                const activePage = getActivePage();
-                if (!activePage) return;
+            function renderSlideshowPage(page) {
+                const pageIndex = pages.findIndex(p => p.id === page.id);
+                slidePageIndicator.textContent = `第 ${pageIndex + 1} / ${pages.length} 頁`;
 
                 const fontSize = fontSizeSlider.value;
-
                 slideshowScreen.style.setProperty('--slideshow-font-size', `${fontSize}rem`);
-                slideshowScreen.style.setProperty('--slideshow-bg', activePage.bgColor);
-                slideshowScreen.style.setProperty('--slideshow-text-color', activePage.textColor);
-
-                slideshowRenderArea.style.gridTemplateColumns = activePage.gridTemplate || `repeat(${activePage.columns}, 1fr)`;
+                slideshowScreen.style.setProperty('--slideshow-bg', page.bgColor);
+                slideshowScreen.style.setProperty('--slideshow-text-color', page.textColor);
+                slideshowRenderArea.style.gridTemplateColumns = page.gridTemplate || `repeat(${page.columns}, 1fr)`;
                 slideshowRenderArea.innerHTML = '';
-
-                activePage.texts.forEach(text => {
+                page.texts.forEach(text => {
                     const columnWrapper = document.createElement('div');
                     columnWrapper.className = 'slide-column';
                     const textElement = document.createElement('div');
@@ -314,8 +295,24 @@
                     columnWrapper.appendChild(textElement);
                     slideshowRenderArea.appendChild(columnWrapper);
                 });
+            }
 
-                slideshowScreen.style.display = 'block';
+            function changeSlide(direction) {
+                const currentIndex = pages.findIndex(p => p.id === activePageId);
+                let nextIndex = (direction === 'next') ? currentIndex + 1 : currentIndex - 1;
+                if (nextIndex >= pages.length) nextIndex = 0; // Loop to start
+                if (nextIndex < 0) nextIndex = pages.length - 1; // Loop to end
+                
+                activePageId = pages[nextIndex].id;
+                renderSlideshowPage(getActivePage());
+                saveState();
+            }
+
+            startBtn.addEventListener('click', () => {
+                const activePage = getActivePage();
+                if (!activePage) return;
+                renderSlideshowPage(activePage);
+                slideshowScreen.style.display = 'flex';
                 document.documentElement.requestFullscreen?.();
             });
 
@@ -323,13 +320,21 @@
                 if (e.target === slideshowScreen) exitSlideshow();
             });
 
+            prevSlideBtn.addEventListener('click', () => changeSlide('prev'));
+            nextSlideBtn.addEventListener('click', () => changeSlide('next'));
+
             document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && slideshowScreen.style.display === 'block') exitSlideshow();
+                if (slideshowScreen.style.display === 'flex') {
+                    if (e.key === 'ArrowLeft') changeSlide('prev');
+                    if (e.key === 'ArrowRight') changeSlide('next');
+                    if (e.key === 'Escape') exitSlideshow();
+                }
             });
 
             function exitSlideshow() {
                 slideshowScreen.style.display = 'none';
                 document.exitFullscreen?.();
+                renderApp(); // Sync editor to the last viewed slide
             }
 
             fontSizeSlider.addEventListener('input', updateEditorFontSize);
