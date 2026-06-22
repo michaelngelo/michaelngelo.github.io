@@ -199,6 +199,7 @@ textarea {
 
 .slide-text {
     font-size: var(--slideshow-font-size, clamp(2rem, 5vw, 4rem));
+    font-family: var(--slideshow-font-family, "Noto Serif HK", "Noto Sans TC", sans-serif);
     font-weight: bold;
     line-height: 1.4;
     white-space: pre-wrap;
