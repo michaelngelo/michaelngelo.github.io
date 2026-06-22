@@ -149,6 +149,30 @@ button:hover {
     .control-group--range span {
         flex: 0 0 auto;
     }
+
+    .input-box {
+        padding: 14px;
+    }
+
+    textarea {
+        min-height: 240px;
+    }
+
+    .slide-nav-btn {
+        width: 52px;
+        padding: 0;
+        font-size: 2rem;
+        height: auto;
+        align-self: stretch;
+    }
+
+    #prev-slide-btn {
+        margin-left: 0;
+    }
+
+    #next-slide-btn {
+        margin-right: 0;
+    }
 }
 
 /* 欄位輸入區域 */
