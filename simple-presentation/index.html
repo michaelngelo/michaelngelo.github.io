@@ -31,7 +31,7 @@
             <input type="color" id="bg-color-picker" value="#111111">
             <label for="text-color-picker">文字顏色:</label>
             <input type="color" id="text-color-picker" value="#ffffff">
-            <button id="start-btn">進入幻燈片模式 📺</button>
+            <button id="start-btn">進入幻燈片模式</button>
         </div>
 
         <div id="input-container" class="input-grid">
@@ -44,8 +44,8 @@
         <div id="slideshow-render-area" class="slideshow-content"></div>
         <button class="slide-nav-btn" id="next-slide-btn">&gt;</button>
         <div class="slideshow-footer">
+            <button class="exit-btn" id="exit-slideshow-btn" aria-label="關閉幻燈片" title="關閉幻燈片">×</button>
             <div class="page-indicator" id="slide-page-indicator"></div>
-            <div class="exit-hint">點擊背景、按下 ESC 鍵、或使用方向鍵 左右 切換頁面</div>
         </div>
     </div>
 
@@ -63,6 +63,7 @@
             const textColorPicker = document.getElementById('text-color-picker');
             const prevSlideBtn = document.getElementById('prev-slide-btn');
             const nextSlideBtn = document.getElementById('next-slide-btn');
+            const exitSlideshowBtn = document.getElementById('exit-slideshow-btn');
             const slidePageIndicator = document.getElementById('slide-page-indicator');
             
             const APP_STATE_KEY = 'textSlideshowState';
@@ -322,6 +323,7 @@
 
             prevSlideBtn.addEventListener('click', () => changeSlide('prev'));
             nextSlideBtn.addEventListener('click', () => changeSlide('next'));
+            exitSlideshowBtn.addEventListener('click', exitSlideshow);
 
             document.addEventListener('keydown', (e) => {
                 if (slideshowScreen.style.display === 'flex') {
