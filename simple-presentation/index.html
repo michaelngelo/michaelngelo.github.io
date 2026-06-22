@@ -124,6 +124,7 @@
                         if (!p.bgColor) p.bgColor = '#111111';
                         if (!p.textColor) p.textColor = '#ffffff';
                         if (!p.fontFamily) p.fontFamily = DEFAULT_FONT_FAMILY;
+                        if (!p.fontSize) p.fontSize = 3;
                     });
                 } else {
                     addPage(false);
@@ -152,7 +153,8 @@
                     gridTemplate: 'repeat(2, 1fr)',
                     bgColor: '#111111',
                     textColor: '#ffffff',
-                    fontFamily: DEFAULT_FONT_FAMILY
+                    fontFamily: DEFAULT_FONT_FAMILY,
+                    fontSize: 3
                 };
                 pages.push(newPage);
                 selectPage(newPage.id, shouldSave);
@@ -191,6 +193,8 @@
                 bgColorPicker.value = activePage.bgColor;
                 textColorPicker.value = activePage.textColor;
                 fontFamilySelect.value = activePage.fontFamily || DEFAULT_FONT_FAMILY;
+                fontSizeSlider.value = activePage.fontSize || 3;
+                fontSizeValue.textContent = `${(activePage.fontSize || 3).toFixed(1)} rem`;
                 inputContainer.style.gridTemplateColumns = activePage.gridTemplate || `repeat(${activePage.columns}, 1fr)`;
                 inputContainer.innerHTML = '';
                 for (let i = 0; i < activePage.columns; i++) {
@@ -261,6 +265,13 @@
                 updateEditorFontFamily();
                 saveState();
             });
+            fontSizeSlider.addEventListener('input', () => {
+                const activePage = getActivePage();
+                if (!activePage) return;
+                activePage.fontSize = parseFloat(fontSizeSlider.value);
+                updateEditorFontSize();
+                saveState();
+            });
             inputContainer.addEventListener('input', () => { saveCurrentPageText(); saveState(); });
 
             // --- Resizing Logic ---
@@ -312,7 +323,10 @@
                 });
             }
             function updateEditorFontSize() {
-                const newSize = parseFloat(fontSizeSlider.value);
+                const activePage = getActivePage();
+                if (!activePage) return;
+                const newSize = activePage.fontSize || 3;
+                fontSizeSlider.value = newSize;
                 fontSizeValue.textContent = `${newSize.toFixed(1)} rem`;
                 document.querySelectorAll('#input-container textarea').forEach(textarea => {
                     textarea.style.fontSize = `${newSize}rem`;
@@ -331,7 +345,7 @@
                 const pageIndex = pages.findIndex(p => p.id === page.id);
                 slidePageIndicator.textContent = `第 ${pageIndex + 1} / ${pages.length} 頁`;
 
-                const fontSize = fontSizeSlider.value;
+                const fontSize = page.fontSize || 3;
                 slideshowScreen.style.setProperty('--slideshow-font-size', `${fontSize}rem`);
                 slideshowScreen.style.setProperty('--slideshow-font-family', page.fontFamily || DEFAULT_FONT_FAMILY);
                 slideshowScreen.style.setProperty('--slideshow-bg', page.bgColor);
@@ -389,8 +403,6 @@
                 document.exitFullscreen?.();
                 renderApp(); // Sync editor to the last viewed slide
             }
-
-            fontSizeSlider.addEventListener('input', updateEditorFontSize);
 
             // --- Init ---
             loadState(); 
