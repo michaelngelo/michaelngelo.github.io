@@ -12,8 +12,21 @@ class TabManager extends HTMLElement {
           background-color: #e9ecef;
           border-radius: 8px;
           margin-bottom: 16px;
+          overflow-x: auto;
+          overflow-y: hidden;
+          flex-wrap: nowrap;
+          scrollbar-width: thin;
+        }
+        .tabs-container::-webkit-scrollbar {
+          height: 8px;
+        }
+        .tabs-container::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 999px;
         }
         .tab {
+          flex: 0 0 auto;
+          min-width: 0;
           padding: 8px 16px;
           cursor: pointer;
           border-radius: 6px;
@@ -22,6 +35,7 @@ class TabManager extends HTMLElement {
           display: flex;
           align-items: center;
           gap: 8px;
+          white-space: nowrap;
         }
         .tab.active {
           background-color: #ffffff;
@@ -37,6 +51,7 @@ class TabManager extends HTMLElement {
           line-height: 1;
         }
         .add-page-btn {
+          flex: 0 0 auto;
           padding: 8px 12px;
           font-size: 16px;
           font-weight: bold;

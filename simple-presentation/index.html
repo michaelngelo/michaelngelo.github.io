@@ -20,36 +20,47 @@
         <tab-manager id="tab-manager"></tab-manager>
 
         <div class="controls">
-            <label for="column-select">欄位數量:</label>
-            <select id="column-select">
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-            </select>
-            <label for="font-size-slider">字體大小:</label>
-            <input type="range" id="font-size-slider" min="1" max="10" step="0.1" value="3">
-            <span id="font-size-value">3.0 rem</span>
-            <label for="font-family-select">字體樣式:</label>
-            <select id="font-family-select">
-                <option value='&quot;Noto Serif HK&quot;, serif' selected>Noto Serif Hong Kong（線上字型）</option>
-                <option value='&quot;ZCOOL Xiaowei&quot;, serif'>ZCOOL Xiaowei（線上字型）</option>
-                <option value='&quot;Chiron Sung HK&quot;, serif'>Chiron Sung HK（線上字型）</option>
-                <option value='&quot;LXGW WenKai TC&quot;, sans-serif'>LXGW WenKai TC（線上字型）</option>
-                <option value='&quot;Klee One&quot;, sans-serif'>Klee One（線上字型）</option>
-                <option value='&quot;Ma Shan Zheng&quot;, cursive'>Ma Shan Zheng（線上字型）</option>
-                <option value='&quot;Noto Sans TC&quot;, sans-serif'>Noto Sans TC（線上字型）</option>
-                <option value='&quot;Source Han Sans TC&quot;, sans-serif'>Source Han Sans TC（線上字型）</option>
-                <option value='&quot;PingFang TC&quot;, sans-serif'>PingFang TC</option>
-                <option value='Microsoft JhengHei, &quot;PingFang TC&quot;, sans-serif'>微軟正黑體</option>
-                <option value='&quot;MingLiU&quot;, serif'>細明體</option>
-                <option value='system-ui, sans-serif'>系統預設</option>
-            </select>
-
-            <label for="bg-color-picker">背景顏色:</label>
-            <input type="color" id="bg-color-picker" value="#111111">
-            <label for="text-color-picker">文字顏色:</label>
-            <input type="color" id="text-color-picker" value="#ffffff">
-            <button id="start-btn">進入幻燈片模式</button>
+            <div class="control-group">
+                <label for="column-select">欄位數量:</label>
+                <select id="column-select">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                </select>
+            </div>
+            <div class="control-group control-group--range">
+                <label for="font-size-slider">字體大小:</label>
+                <input type="range" id="font-size-slider" min="1" max="10" step="0.1" value="3">
+                <span id="font-size-value">3.0 rem</span>
+            </div>
+            <div class="control-group">
+                <label for="font-family-select">字體樣式:</label>
+                <select id="font-family-select">
+                    <option value='&quot;Noto Serif HK&quot;, serif' selected>Noto Serif Hong Kong（線上字型）</option>
+                    <option value='&quot;ZCOOL Xiaowei&quot;, serif'>ZCOOL Xiaowei（線上字型）</option>
+                    <option value='&quot;Chiron Sung HK&quot;, serif'>Chiron Sung HK（線上字型）</option>
+                    <option value='&quot;LXGW WenKai TC&quot;, sans-serif'>LXGW WenKai TC（線上字型）</option>
+                    <option value='&quot;Klee One&quot;, sans-serif'>Klee One（線上字型）</option>
+                    <option value='&quot;Ma Shan Zheng&quot;, cursive'>Ma Shan Zheng（線上字型）</option>
+                    <option value='&quot;Noto Sans TC&quot;, sans-serif'>Noto Sans TC（線上字型）</option>
+                    <option value='&quot;Source Han Sans TC&quot;, sans-serif'>Source Han Sans TC（線上字型）</option>
+                    <option value='&quot;PingFang TC&quot;, sans-serif'>PingFang TC</option>
+                    <option value='Microsoft JhengHei, &quot;PingFang TC&quot;, sans-serif'>微軟正黑體</option>
+                    <option value='&quot;MingLiU&quot;, serif'>細明體</option>
+                    <option value='system-ui, sans-serif'>系統預設</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label for="bg-color-picker">背景顏色:</label>
+                <input type="color" id="bg-color-picker" value="#111111">
+            </div>
+            <div class="control-group">
+                <label for="text-color-picker">文字顏色:</label>
+                <input type="color" id="text-color-picker" value="#ffffff">
+            </div>
+            <div class="control-group">
+                <button id="start-btn">進入幻燈片模式</button>
+            </div>
         </div>
 
         <div id="input-container" class="input-grid">
