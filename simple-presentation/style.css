@@ -107,6 +107,50 @@ button:hover {
     background-color: var(--primary-dark-color);
 }
 
+@media (max-width: 768px) {
+    body {
+        padding: 12px;
+    }
+
+    .controls {
+        justify-content: stretch;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .control-group {
+        width: 100%;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .control-group label {
+        flex: 0 0 100%;
+    }
+
+    .control-group select,
+    .control-group input[type="color"],
+    .control-group button,
+    .control-group input[type="range"] {
+        width: 100%;
+        flex: 1 1 100%;
+    }
+
+    .control-group--range {
+        min-width: 0;
+    }
+
+    .control-group--range input[type="range"] {
+        flex: 1 1 0;
+        width: auto;
+    }
+
+    .control-group--range span {
+        flex: 0 0 auto;
+    }
+}
+
 /* 欄位輸入區域 */
 .input-grid {
     display: grid;
