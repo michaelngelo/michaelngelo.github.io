@@ -88,6 +88,34 @@ select, button, input[type="color"], input[type="range"] {
     transition: background 0.2s;
 }
 
+.color-picker-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 132px;
+    background-color: #fff;
+    color: var(--text-color);
+    border: 1px solid #ccc;
+    font-weight: 500;
+}
+
+.color-picker-btn:hover {
+    background-color: #f5f7fa;
+}
+
+.color-swatch {
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    border: 2px solid rgba(0,0,0,0.15);
+    flex-shrink: 0;
+    background-color: #fff;
+}
+
+.color-picker-label {
+    font-size: 14px;
+}
+
 input[type="color"] {
     padding: 5px;
 }
