@@ -52,11 +52,19 @@
             </div>
             <div class="control-group">
                 <label for="bg-color-picker">背景顏色:</label>
-                <input type="color" id="bg-color-picker" value="#111111">
+                <button type="button" class="color-picker-btn" id="bg-color-picker-btn" data-color-input="bg-color-picker" aria-label="選擇背景顏色">
+                    <span class="color-swatch" id="bg-color-swatch"></span>
+                    <span class="color-picker-label">選擇</span>
+                </button>
+                <input type="color" id="bg-color-picker" value="#111111" hidden>
             </div>
             <div class="control-group">
                 <label for="text-color-picker">文字顏色:</label>
-                <input type="color" id="text-color-picker" value="#ffffff">
+                <button type="button" class="color-picker-btn" id="text-color-picker-btn" data-color-input="text-color-picker" aria-label="選擇文字顏色">
+                    <span class="color-swatch" id="text-color-swatch"></span>
+                    <span class="color-picker-label">選擇</span>
+                </button>
+                <input type="color" id="text-color-picker" value="#ffffff" hidden>
             </div>
             <div class="control-group">
                 <button id="start-btn">進入幻燈片模式</button>
@@ -91,6 +99,10 @@
             const fontFamilySelect = document.getElementById('font-family-select');
             const bgColorPicker = document.getElementById('bg-color-picker');
             const textColorPicker = document.getElementById('text-color-picker');
+            const bgColorButton = document.getElementById('bg-color-picker-btn');
+            const textColorButton = document.getElementById('text-color-picker-btn');
+            const bgColorSwatch = document.getElementById('bg-color-swatch');
+            const textColorSwatch = document.getElementById('text-color-swatch');
             const prevSlideBtn = document.getElementById('prev-slide-btn');
             const nextSlideBtn = document.getElementById('next-slide-btn');
             const exitSlideshowBtn = document.getElementById('exit-slideshow-btn');
@@ -190,8 +202,7 @@
                     return;
                 }
                 columnSelect.value = activePage.columns;
-                bgColorPicker.value = activePage.bgColor;
-                textColorPicker.value = activePage.textColor;
+                updateColorPickerButtons();
                 fontFamilySelect.value = activePage.fontFamily || DEFAULT_FONT_FAMILY;
                 fontSizeSlider.value = activePage.fontSize || 3;
                 fontSizeValue.textContent = `${(activePage.fontSize || 3).toFixed(1)} rem`;
@@ -247,15 +258,27 @@
                 saveState(); 
             });
 
+            function updateColorPickerButtons() {
+                const activePage = getActivePage();
+                if (!activePage) return;
+                bgColorPicker.value = activePage.bgColor;
+                textColorPicker.value = activePage.textColor;
+                bgColorSwatch.style.backgroundColor = activePage.bgColor;
+                textColorSwatch.style.backgroundColor = activePage.textColor;
+            }
+
             function handleColorChange() {
                 const activePage = getActivePage();
                 if (!activePage) return;
                 activePage.bgColor = bgColorPicker.value;
                 activePage.textColor = textColorPicker.value;
+                updateColorPickerButtons();
                 updateEditorColors();
                 saveState();
             }
 
+            bgColorButton.addEventListener('click', () => bgColorPicker.click());
+            textColorButton.addEventListener('click', () => textColorPicker.click());
             bgColorPicker.addEventListener('input', handleColorChange);
             textColorPicker.addEventListener('input', handleColorChange);
             fontFamilySelect.addEventListener('change', () => {
