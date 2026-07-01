@@ -1,25 +1,47 @@
 html {
     height: 100%;
 }
+
 :root {
-    --bg-color: #f5f7fa;
-    --text-color: #333;
-    --card-bg: #ffffff;
-    --primary-color: #007bff;
-    --primary-dark-color: #0056b3;
+    --bg-color: #0f172a;
+    --bg-accent: #111827;
+    --text-color: #172033;
+    --muted-color: #64748b;
+    --card-bg: rgba(255, 255, 255, 0.94);
+    --surface-soft: rgba(248, 250, 252, 0.95);
+    --border-color: rgba(15, 23, 42, 0.12);
+    --primary-color: #5b7cff;
+    --primary-dark-color: #4a65d8;
+    --shadow: 0 20px 45px rgba(15, 23, 42, 0.12);
+}
+
+* {
+    box-sizing: border-box;
 }
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    background-color: var(--bg-color);
+    background:
+        radial-gradient(circle at top left, rgba(91, 124, 255, 0.22), transparent 24%),
+        linear-gradient(135deg, var(--bg-accent) 0%, var(--bg-color) 55%, #1e293b 100%);
     color: var(--text-color);
     margin: 0;
     padding: 20px;
     transition: all 0.3s ease;
-    height: 100%;
+    min-height: 100%;
     display: flex;
     flex-direction: column;
-    box-sizing: border-box;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image: linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+    background-size: 24px 24px;
+    opacity: 0.16;
+    pointer-events: none;
+    z-index: -1;
 }
 
 body.resizing {
@@ -29,27 +51,53 @@ body.resizing {
 
 /* 設定區域 */
 .container {
-    max-width: 1200px;
+    max-width: 1260px;
     margin-inline: auto;
     flex: 1;
     display: flex;
     flex-direction: column;
     width: 100%;
+    padding: 24px;
+    border-radius: 28px;
+    background: rgba(255, 255, 255, 0.78);
+    backdrop-filter: blur(22px);
+    box-shadow: var(--shadow);
+    border: 1px solid rgba(255, 255, 255, 0.72);
 }
 
 header {
-    text-align: center;
-    margin-bottom: 30px;
+    text-align: left;
+    margin-bottom: 24px;
+    padding: 8px 8px 16px;
+}
+
+header h1 {
+    margin: 0 0 8px;
+    font-size: clamp(1.8rem, 3vw, 2.5rem);
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    color: #0f172a;
+}
+
+.header-subtitle {
+    margin: 0;
+    color: var(--muted-color);
+    font-size: 0.98rem;
 }
 
 .controls {
     display: flex;
     flex-wrap: wrap;
-    justify-content: center;
+    justify-content: space-between;
     gap: 12px 16px;
     margin-bottom: 20px;
     align-items: center;
     width: 100%;
+    padding: 16px 18px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.88);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 10px 35px rgba(15, 23, 42, 0.06);
 }
 
 .control-group {
@@ -61,11 +109,14 @@ header {
 }
 
 .control-group--range {
-    min-width: 280px;
+    min-width: 300px;
 }
 
 .control-group label {
     white-space: nowrap;
+    font-size: 0.95rem;
+    color: var(--muted-color);
+    font-weight: 600;
 }
 
 .control-group select,
@@ -80,12 +131,40 @@ header {
 }
 
 select, button, input[type="color"], input[type="range"] {
-    padding: 10px;
-    font-size: 16px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
+    padding: 10px 12px;
+    font-size: 15px;
+    border-radius: 999px;
+    border: 1px solid var(--border-color);
     cursor: pointer;
-    transition: background 0.2s;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+select, input[type="range"] {
+    background-color: rgba(255, 255, 255, 0.95);
+}
+
+select:hover, input[type="range"]:hover {
+    border-color: rgba(91, 124, 255, 0.35);
+}
+
+button {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark-color));
+    color: white;
+    border: none;
+    font-weight: 700;
+    box-shadow: 0 10px 25px rgba(91, 124, 255, 0.24);
+}
+
+button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 30px rgba(91, 124, 255, 0.28);
+}
+
+button:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 2px solid rgba(91, 124, 255, 0.35);
+    outline-offset: 2px;
 }
 
 .color-picker-btn {
@@ -93,23 +172,25 @@ select, button, input[type="color"], input[type="range"] {
     align-items: center;
     gap: 8px;
     min-width: 132px;
-    background-color: #fff;
+    background: rgba(255, 255, 255, 0.96);
     color: var(--text-color);
-    border: 1px solid #ccc;
-    font-weight: 500;
+    border: 1px solid var(--border-color);
+    font-weight: 600;
+    box-shadow: none;
 }
 
 .color-picker-btn:hover {
-    background-color: #f5f7fa;
+    background: rgba(245, 247, 255, 0.96);
 }
 
 .color-swatch {
     width: 24px;
     height: 24px;
     border-radius: 999px;
-    border: 2px solid rgba(0,0,0,0.15);
+    border: 2px solid rgba(15, 23, 42, 0.18);
     flex-shrink: 0;
     background-color: #fff;
+    box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.08);
 }
 
 .color-picker-label {
@@ -117,27 +198,24 @@ select, button, input[type="color"], input[type="range"] {
 }
 
 input[type="color"] {
-    padding: 5px;
+    padding: 4px;
+    min-height: 44px;
+    width: 44px;
 }
 
 input[type="range"] {
     flex-grow: 0.2;
-}
-
-button {
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-    font-weight: bold;
-}
-
-button:hover {
-    background-color: var(--primary-dark-color);
+    accent-color: var(--primary-color);
 }
 
 @media (max-width: 768px) {
     body {
         padding: 12px;
+    }
+
+    .container {
+        padding: 16px;
+        border-radius: 20px;
     }
 
     .controls {
@@ -183,7 +261,7 @@ button:hover {
     }
 
     textarea {
-        min-height: 400px;
+        min-height: 320px;
     }
 
     .slide-nav-btn {
@@ -209,24 +287,26 @@ button:hover {
     gap: 20px;
     margin-bottom: 0;
     flex: 1;
+    padding-top: 6px;
 }
 
 .input-box {
-    background: var(--card-bg);
+    background: linear-gradient(145deg, var(--card-bg), var(--surface-soft));
     padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    border-radius: 18px;
+    box-shadow: 0 16px 35px rgba(15, 23, 42, 0.08);
+    border: 1px solid rgba(15, 23, 42, 0.06);
     display: flex;
     flex-direction: column;
     gap: 10px;
-    position: relative; /* For resize handle positioning */
+    position: relative;
 }
 
 .editor-resize-handle {
     position: absolute;
     top: 0;
-    right: -20px; /* Position handle to fill the 20px gap */
-    width: 20px;
+    right: -18px;
+    width: 18px;
     height: 100%;
     cursor: col-resize;
     z-index: 10;
@@ -237,36 +317,47 @@ button:hover {
 
 .editor-resize-handle::before {
     content: "";
-    width: 6px;
-    height: 40px;
-    background-color: rgba(0, 0, 0, 0.15);
-    border-radius: 3px;
-    transition: background-color 0.2s ease;
+    width: 4px;
+    height: 44px;
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.18), rgba(15, 23, 42, 0.08));
+    border-radius: 999px;
+    transition: background-color 0.2s ease, transform 0.2s ease;
 }
 
 .editor-resize-handle:hover::before {
-    background-color: var(--primary-color);
+    background: linear-gradient(180deg, rgba(91, 124, 255, 0.82), rgba(91, 124, 255, 0.42));
+    transform: scaleY(1.05);
 }
 
 .editor-resize-handle.active::before {
-    background-color: var(--primary-dark-color);
+    background: linear-gradient(180deg, var(--primary-dark-color), var(--primary-color));
 }
 
 .input-box label {
-    font-weight: bold;
-    color: #666;
+    font-weight: 700;
+    color: var(--muted-color);
+    letter-spacing: 0.01em;
 }
 
 textarea {
     width: 100%;
     flex-grow: 1;
-    padding: 12px;
+    padding: 14px 16px;
     box-sizing: border-box;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    /* font-size, background-color, color will be set dynamically */
-    transition: background-color 0.3s, color 0.3s;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-radius: 14px;
+    background: rgba(248, 250, 252, 0.96);
+    color: var(--text-color);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, color 0.2s ease;
     resize: none;
+    min-height: 220px;
+    box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.05);
+}
+
+textarea:focus {
+    border-color: rgba(91, 124, 255, 0.4);
+    box-shadow: 0 0 0 4px rgba(91, 124, 255, 0.16);
+    background-color: white;
 }
 
 /* 幻燈片全螢幕模式 */
@@ -277,7 +368,7 @@ textarea {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background-color: var(--slideshow-bg, #111);
+    background: radial-gradient(circle at top, rgba(91, 124, 255, 0.22), transparent 30%), linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(2, 6, 23, 0.96));
     color: var(--slideshow-text-color, #fff);
     z-index: 9999;
     padding-block: 40px;
@@ -316,18 +407,19 @@ textarea {
     position: absolute;
     top: 5%;
     bottom: 5%;
-    right: -20px; /* Half of the 40px gap */
+    right: -20px;
     width: 1px;
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.16);
 }
 
 .slide-text {
     font-size: var(--slideshow-font-size, clamp(2rem, 5vw, 4rem));
     font-family: var(--slideshow-font-family, "Noto Serif HK", "Noto Sans TC", sans-serif);
-    font-weight: bold;
-    line-height: 1.4;
+    font-weight: 700;
+    line-height: 1.45;
     white-space: pre-wrap;
     word-wrap: break-word;
+    text-shadow: 0 8px 24px rgba(0, 0, 0, 0.24);
 }
 
 .slideshow-footer {
@@ -339,28 +431,31 @@ textarea {
     flex-direction: column;
     align-items: center;
     gap: 8px;
-    color: #999;
+    color: rgba(255, 255, 255, 0.8);
     font-size: 14px;
-    background: rgba(0,0,0,0.3);
+    background: rgba(255, 255, 255, 0.09);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(10px);
     padding: 8px 16px;
-    border-radius: 20px;
+    border-radius: 999px;
 }
 
 .exit-btn {
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.1);
     color: #fff;
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     width: 36px;
     height: 36px;
     border-radius: 999px;
     font-size: 1rem;
     line-height: 1;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: background 0.2s ease, transform 0.2s ease;
 }
 
 .exit-btn:hover {
     background: rgba(255, 255, 255, 0.18);
+    transform: scale(1.03);
 }
 
 .slide-nav-btn {
@@ -375,11 +470,13 @@ textarea {
     display: flex;
     align-items: center;
     border-radius: 0;
-    transition: background 0.2s;
+    transition: background 0.2s ease, transform 0.2s ease;
+    backdrop-filter: blur(8px);
 }
 
 .slide-nav-btn:hover {
     background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
 }
 
 #prev-slide-btn {
