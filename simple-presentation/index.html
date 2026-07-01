@@ -207,7 +207,8 @@
                 fontFamilySelect.value = activePage.fontFamily || DEFAULT_FONT_FAMILY;
                 fontSizeSlider.value = activePage.fontSize || 3;
                 fontSizeValue.textContent = `${(activePage.fontSize || 3).toFixed(1)} rem`;
-                inputContainer.style.gridTemplateColumns = activePage.gridTemplate || `repeat(${activePage.columns}, 1fr)`;
+                inputContainer.style.gridTemplateColumns = activePage.gridTemplate || `repeat(${activePage.columns}, minmax(0, 1fr))`;
+                inputContainer.style.setProperty('--editor-columns', activePage.columns);
                 inputContainer.innerHTML = '';
                 for (let i = 0; i < activePage.columns; i++) {
                     const textValue = activePage.texts[i] || '';
@@ -248,7 +249,7 @@
                 saveCurrentPageText();
                 const newColCount = parseInt(columnSelect.value);
                 activePage.columns = newColCount;
-                activePage.gridTemplate = `repeat(${newColCount}, 1fr)`;
+                activePage.gridTemplate = `repeat(${newColCount}, minmax(0, 1fr))`;
                 while (activePage.texts.length < newColCount) {
                     activePage.texts.push(`這是第 ${activePage.texts.length + 1} 欄的展示文字。`);
                 }
