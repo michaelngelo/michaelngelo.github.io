@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hopf Fibration Explorer</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #0a0a0a;
+            color: #eeeeee;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+        }
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(20, 20, 20, 0.85);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #333;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            max-width: 800px;
+            backdrop-filter: blur(5px);
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            min-width: 150px;
+        }
+        label {
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #aaa;
+        }
+        input[type="range"], select, button {
+            width: 100%;
+            background: #222;
+            color: #fff;
+            border: 1px solid #444;
+            padding: 5px;
+            border-radius: 4px;
+        }
+        button {
+            cursor: pointer;
+            background: #007bff;
+            border: none;
+            padding: 10px;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+
+<div id="canvas-container"></div>
+
+<div id="controls">
+    <div class="control-group">
+        <label>Animation</label>
+        <button id="toggle-play">Pause</button>
+    </div>
+    <div class="control-group">
+        <label for="rot-type">4D Motion Type</label>
+        <select id="rot-type">
+            <option value="combined">Combined Dynamics</option>
+            <option value="rigid">Rigid Rotation Only</option>
+            <option value="flow">Intrinsic Flow Only</option>
+        </select>
+    </div>
+    <div class="control-group">
+        <label for="speed">Speed</label>
+        <input type="range" id="speed" min="0" max="0.05" step="0.001" value="0.015">
+    </div>
+    <div class="control-group">
+        <label for="shells">Nested Shells (Tori)</label>
+        <input type="range" id="shells" min="1" max="6" step="1" value="3">
+    </div>
+    <div class="control-group">
+        <label for="density">Fibers per Shell</label>
+        <input type="range" id="density" min="4" max="32" step="1" value="16">
+    </div>
+</div>
+
+<!-- Load Three.js and OrbitControls -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+<script>
+    // --- Application State ---
+    let isPlaying = true;
+    let time = 0;
+    let fibers = [];
+
+    // --- DOM Elements ---
+    const toggleBtn = document.getElementById('toggle-play');
+    const rotTypeSelect = document.getElementById('rot-type');
+    const speedInput = document.getElementById('speed');
+    const shellsInput = document.getElementById('shells');
+    const densityInput = document.getElementById('density');
+
+    // --- Three.js Setup ---
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    
+    // Add subtle background fog to give depth to the 3D space
+    scene.fog = new THREE.FogExp2(0x0a0a0a, 0.05);
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 5, 10);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    container.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+
+    // --- Core Mathematics: Stereographic Projection ---
+    // Maps a point from the 3-sphere (S3) in 4D space down to 3D space.
+    function stereographicProjection(x1, x2, x3, x4) {
+        // We project from the "north pole" where x4 = 1. 
+        // A tiny offset prevents division by zero.
+        const denominator = 1.0 - x4; 
+        const d = Math.max(denominator, 0.0001);
+        
+        // The resulting 3D coordinates
+        return new THREE.Vector3(
+            x1 / d, 
+            x2 / d, 
+            x3 / d
+        );
+    }
+
+    // --- Fiber Generation Logic ---
+    function buildFibers() {
+        // Clean up old fibers
+        fibers.forEach(fiber => scene.remove(fiber.line));
+        fibers = [];
+
+        const numShells = parseInt(shellsInput.value);
+        const fibersPerShell = parseInt(densityInput.value);
+        const pointsPerFiber = 100; // Resolution of the curve
+
+        // Eta defines the angle for the torus shell (0 to PI/2).
+        // We avoid 0 and PI/2 to prevent rendering straight lines or single unlinked circles.
+        for (let i = 1; i <= numShells; i++) {
+            const eta = (i / (numShells + 1)) * (Math.PI / 2);
+            
+            // Map the shell index to a distinct hue for the color gradient
+            const hue = (i / numShells) * 0.8; // 0.0 to 0.8 creates a nice spectrum
+            const color = new THREE.Color().setHSL(hue, 0.9, 0.6);
+            const material = new THREE.LineBasicMaterial({ color: color, linewidth: 2, transparent: true, opacity: 0.8 });
+
+            for (let j = 0; j < fibersPerShell; j++) {
+                // Xi dictates the position of the specific fiber along the torus
+                const xi = (j / fibersPerShell) * Math.PI * 2;
+                
+                const geometry = new THREE.BufferGeometry();
+                const positions = new Float32Array(pointsPerFiber * 3);
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+                const line = new THREE.Line(geometry, material);
+                scene.add(line);
+
+                fibers.push({
+                    line: line,
+                    eta: eta,
+                    xi: xi,
+                    pointsCount: pointsPerFiber
+                });
+            }
+        }
+    }
+
+    // --- Animation Loop ---
+    function updateFiberGeometries() {
+        const rotType = rotTypeSelect.value;
+
+        fibers.forEach(fiber => {
+            const positions = fiber.line.geometry.attributes.position.array;
+            
+            for (let k = 0; k < fiber.pointsCount; k++) {
+                // 't' draws the circle in 4D (0 to 2PI)
+                let t = (k / (fiber.pointsCount - 1)) * Math.PI * 2;
+                
+                let current_t = t;
+                let current_xi = fiber.xi;
+
+                // Apply 4D Rotations based on user selection
+                if (rotType === 'flow' || rotType === 'combined') {
+                    // Intrinsic flow modifies the position ALONG the fiber
+                    current_t += time; 
+                }
+                if (rotType === 'rigid' || rotType === 'combined') {
+                    // Rigid rotation modifies the base angle of the fiber structure
+                    current_xi += time; 
+                }
+
+                // Parametric equations for the Hopf Fibration in S3
+                const x1 = Math.sin(fiber.eta) * Math.cos(current_xi + current_t);
+                const x2 = Math.sin(fiber.eta) * Math.sin(current_xi + current_t);
+                const x3 = Math.cos(fiber.eta) * Math.cos(current_t);
+                const x4 = Math.cos(fiber.eta) * Math.sin(current_t);
+
+                // Project S3 to R3
+                const projectedPoint = stereographicProjection(x1, x2, x3, x4);
+
+                // Update vertex array
+                positions[k * 3] = projectedPoint.x;
+                positions[k * 3 + 1] = projectedPoint.y;
+                positions[k * 3 + 2] = projectedPoint.z;
+            }
+            
+            // Flag geometry for WebGL update
+            fiber.line.geometry.attributes.position.needsUpdate = true;
+            fiber.line.geometry.computeBoundingSphere();
+        });
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+
+        if (isPlaying) {
+            time += parseFloat(speedInput.value);
+            updateFiberGeometries();
+        }
+
+        controls.update();
+        renderer.render(scene, camera);
+    }
+
+    // --- Event Listeners ---
+    toggleBtn.addEventListener('click', () => {
+        isPlaying = !isPlaying;
+        toggleBtn.textContent = isPlaying ? 'Pause' : 'Play';
+    });
+
+    shellsInput.addEventListener('input', buildFibers);
+    densityInput.addEventListener('input', buildFibers);
+    
+    // When changing rotation type, update immediately even if paused
+    rotTypeSelect.addEventListener('change', () => {
+        if (!isPlaying) updateFiberGeometries();
+    });
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // --- Initialization ---
+    buildFibers();
+    updateFiberGeometries(); // Initial draw
+    animate();
+
+</script>
+</body>
+</html>
