@@ -167,6 +167,9 @@
     let time = 0;
     let fibers = [];
 
+    const FLOW_SPEED = 1.6;
+    const RIGID_SPEED = 0.7;
+
     // --- DOM Elements ---
     const toggleBtn = document.getElementById('toggle-play');
     const rotTypeSelect = document.getElementById('rot-type');
@@ -273,8 +276,6 @@
     // --- Animation Loop ---
     function updateFiberGeometries() {
         const rotType = rotTypeSelect.value;
-        const isFlow = rotType === 'flow' || rotType === 'combined';
-        const isRigid = rotType === 'rigid' || rotType === 'combined';
 
         fibers.forEach(fiber => {
             const positions = fiber.line.geometry.attributes.position.array;
@@ -288,20 +289,13 @@
                 let current_xi = fiber.xi;
 
                 // Intrinsic flow moves points along the fiber.
-                if (isFlow) {
-                    current_t += time * 1.6;
+                if (rotType === 'flow' || rotType === 'combined') {
+                    current_t += time * FLOW_SPEED;
                 }
 
                 // Rigid rotation turns the whole fiber in S3.
-                if (isRigid) {
-                    current_xi += time * 0.9;
-                }
-
-                if (rotType === 'flow') {
-                    current_xi = fiber.xi; // keep the fiber orientation fixed for pure flow
-                }
-                if (rotType === 'rigid') {
-                    current_t = t; // keep the fiber parametric phase fixed for pure rigid motion
+                if (rotType === 'rigid' || rotType === 'combined') {
+                    current_xi += time * RIGID_SPEED;
                 }
 
                 // Parametric equations for the Hopf Fibration in S3
