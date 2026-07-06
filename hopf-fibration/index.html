@@ -238,8 +238,13 @@
             
             // Map the shell index to a distinct hue for the color gradient
             const hue = (i / numShells) * 0.8; // 0.0 to 0.8 creates a nice spectrum
-            const color = new THREE.Color().setHSL(hue, 0.9, 0.6);
-            const material = new THREE.LineBasicMaterial({ color: color, linewidth: 2, transparent: true, opacity: 0.8 });
+            const baseColor = new THREE.Color().setHSL(hue, 0.9, 0.6);
+            const material = new THREE.LineBasicMaterial({
+                vertexColors: true,
+                linewidth: 2,
+                transparent: true,
+                opacity: 0.9
+            });
 
             for (let j = 0; j < fibersPerShell; j++) {
                 // Xi dictates the position of the specific fiber along the torus
@@ -247,7 +252,9 @@
                 
                 const geometry = new THREE.BufferGeometry();
                 const positions = new Float32Array(pointsPerFiber * 3);
+                const colors = new Float32Array(pointsPerFiber * 3);
                 geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
                 const line = new THREE.Line(geometry, material);
                 scene.add(line);
@@ -256,6 +263,7 @@
                     line: line,
                     eta: eta,
                     xi: xi,
+                    baseColor: baseColor,
                     pointsCount: pointsPerFiber
                 });
             }
@@ -268,6 +276,7 @@
 
         fibers.forEach(fiber => {
             const positions = fiber.line.geometry.attributes.position.array;
+            const colors = fiber.line.geometry.attributes.color.array;
             
             for (let k = 0; k < fiber.pointsCount; k++) {
                 // 't' draws the circle in 4D (0 to 2PI)
@@ -279,11 +288,15 @@
                 // Apply 4D Rotations based on user selection
                 if (rotType === 'flow' || rotType === 'combined') {
                     // Intrinsic flow modifies the position ALONG the fiber
-                    current_t += time; 
+                    current_t += time * 1.6;
                 }
                 if (rotType === 'rigid' || rotType === 'combined') {
                     // Rigid rotation modifies the base angle of the fiber structure
-                    current_xi += time; 
+                    current_xi += time * 0.9;
+                }
+
+                if (rotType === 'flow') {
+                    current_xi = fiber.xi; // keep the fiber orientation fixed for pure flow
                 }
 
                 // Parametric equations for the Hopf Fibration in S3
@@ -299,10 +312,18 @@
                 positions[k * 3] = projectedPoint.x;
                 positions[k * 3 + 1] = projectedPoint.y;
                 positions[k * 3 + 2] = projectedPoint.z;
+
+                // Highlight the flow direction using a traveling pulse along the fiber.
+                const phase = current_t * 2 + time * 3;
+                const pulse = 0.25 + 0.75 * Math.pow(Math.sin(phase), 10);
+                colors[k * 3] = fiber.baseColor.r * pulse;
+                colors[k * 3 + 1] = fiber.baseColor.g * pulse;
+                colors[k * 3 + 2] = fiber.baseColor.b * pulse;
             }
             
             // Flag geometry for WebGL update
             fiber.line.geometry.attributes.position.needsUpdate = true;
+            fiber.line.geometry.attributes.color.needsUpdate = true;
             fiber.line.geometry.computeBoundingSphere();
         });
     }
