@@ -273,6 +273,8 @@
     // --- Animation Loop ---
     function updateFiberGeometries() {
         const rotType = rotTypeSelect.value;
+        const isFlow = rotType === 'flow' || rotType === 'combined';
+        const isRigid = rotType === 'rigid' || rotType === 'combined';
 
         fibers.forEach(fiber => {
             const positions = fiber.line.geometry.attributes.position.array;
@@ -285,18 +287,21 @@
                 let current_t = t;
                 let current_xi = fiber.xi;
 
-                // Apply 4D Rotations based on user selection
-                if (rotType === 'flow' || rotType === 'combined') {
-                    // Intrinsic flow modifies the position ALONG the fiber
+                // Intrinsic flow moves points along the fiber.
+                if (isFlow) {
                     current_t += time * 1.6;
                 }
-                if (rotType === 'rigid' || rotType === 'combined') {
-                    // Rigid rotation modifies the base angle of the fiber structure
+
+                // Rigid rotation turns the whole fiber in S3.
+                if (isRigid) {
                     current_xi += time * 0.9;
                 }
 
                 if (rotType === 'flow') {
                     current_xi = fiber.xi; // keep the fiber orientation fixed for pure flow
+                }
+                if (rotType === 'rigid') {
+                    current_t = t; // keep the fiber parametric phase fixed for pure rigid motion
                 }
 
                 // Parametric equations for the Hopf Fibration in S3
@@ -313,9 +318,15 @@
                 positions[k * 3 + 1] = projectedPoint.y;
                 positions[k * 3 + 2] = projectedPoint.z;
 
-                // Highlight the flow direction using a traveling pulse along the fiber.
-                const phase = current_t * 2 + time * 3;
-                const pulse = 0.25 + 0.75 * Math.pow(Math.sin(phase), 10);
+                // Visual styling per mode
+                let pulse;
+                if (rotType === 'rigid') {
+                    pulse = 0.85 + 0.1 * Math.sin(t * 2);
+                } else {
+                    const phase = current_t * 2 + time * 3;
+                    pulse = 0.25 + 0.75 * Math.pow(Math.sin(phase), 10);
+                }
+
                 colors[k * 3] = fiber.baseColor.r * pulse;
                 colors[k * 3 + 1] = fiber.baseColor.g * pulse;
                 colors[k * 3 + 2] = fiber.baseColor.b * pulse;
