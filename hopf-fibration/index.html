@@ -62,13 +62,75 @@
             transition: background 0.2s;
         }
         button:hover { background: #0056b3; }
+        #controls-toggle {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            right: auto;
+            transform: translateX(-50%);
+            z-index: 20;
+            background: rgba(0, 123, 255, 0.95);
+            color: #fff;
+            border: none;
+            border-radius: 999px;
+            padding: 12px 18px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+        }
+        #controls-toggle[aria-expanded="true"] {
+            display: none;
+        }
+        #close-controls {
+            display: none;
+            background: transparent;
+            border: 1px solid #555;
+            color: #eee;
+            padding: 8px 12px;
+            border-radius: 8px;
+            align-self: flex-end;
+            cursor: pointer;
+        }
+        @media (max-width: 700px) {
+            #controls {
+                left: 0;
+                right: 0;
+                bottom: 0;
+                transform: translateY(100%);
+                border-radius: 16px 16px 0 0;
+                max-height: 45vh;
+                opacity: 0;
+                visibility: hidden;
+                overflow-y: auto;
+                padding: 18px;
+                width: 100%;
+                box-sizing: border-box;
+                transition: transform 0.25s ease, opacity 0.25s ease;
+            }
+            #controls.open {
+                transform: translateY(0);
+                opacity: 1;
+                visibility: visible;
+            }
+            #controls-toggle {
+                display: block;
+            }
+            #close-controls {
+                display: inline-flex;
+                margin-bottom: 10px;
+            }
+        }
     </style>
 </head>
 <body>
 
 <div id="canvas-container"></div>
+<button id="controls-toggle" aria-expanded="false" aria-controls="controls">Controls</button>
 
 <div id="controls">
+    <button id="close-controls">Close</button>
     <div class="control-group">
         <label>Animation</label>
         <button id="toggle-play">Pause</button>
@@ -111,6 +173,18 @@
     const speedInput = document.getElementById('speed');
     const shellsInput = document.getElementById('shells');
     const densityInput = document.getElementById('density');
+    const controlsToggle = document.getElementById('controls-toggle');
+    const closeControlsBtn = document.getElementById('close-controls');
+    const controlsPanel = document.getElementById('controls');
+
+    function setControlsOpen(isOpen) {
+        controlsPanel.classList.toggle('open', isOpen);
+        controlsToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        controlsToggle.textContent = isOpen ? 'Close' : 'Controls';
+    }
+
+    controlsToggle.addEventListener('click', () => setControlsOpen(!controlsPanel.classList.contains('open')));
+    closeControlsBtn.addEventListener('click', () => setControlsOpen(false));
 
     // --- Three.js Setup ---
     const container = document.getElementById('canvas-container');
