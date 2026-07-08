@@ -121,6 +121,24 @@ header h1 {
     white-space: nowrap;
 }
 
+.bg-image-preview {
+    width: 100px;
+    min-width: 100px;
+    height: 64px;
+    border-radius: 16px;
+    background-color: rgba(148, 163, 184, 0.12);
+    background-position: center;
+    background-size: cover;
+    border: 1px dashed rgba(148, 163, 184, 0.6);
+    transition: opacity 0.2s ease, border-color 0.2s ease;
+    opacity: 0.7;
+}
+
+.bg-image-preview.has-image {
+    opacity: 1;
+    border-color: rgba(148, 163, 184, 0.9);
+}
+
 .control-group--range {
     min-width: 300px;
 }
@@ -287,6 +305,27 @@ input[type="range"] {
 
     .control-group--range span {
         flex: 0 0 auto;
+    }
+
+    .control-group--color-pair {
+        display: grid;
+        gap: 10px;
+        width: 100%;
+    }
+
+    .control-group--color-pair .color-picker-block {
+        display: grid;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .control-group--color-pair .color-picker-btn,
+    .control-group--color-pair .clear-image-btn {
+        width: 100%;
+        flex: 1 1 auto;
+        justify-content: center;
+        padding: 12px 14px;
+        min-height: 48px;
     }
 
     .input-box {

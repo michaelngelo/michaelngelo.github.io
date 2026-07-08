@@ -75,6 +75,7 @@
                     <span class="color-picker-label" id="bg-image-picker-label">選擇</span>
                 </button>
                 <button type="button" class="clear-image-btn" id="clear-bg-image-btn" aria-label="清除背景圖片">清除</button>
+                <div class="bg-image-preview" id="bg-image-preview" aria-hidden="true"></div>
                 <input type="file" id="bg-image-picker" accept="image/*" hidden>
             </div>
             <div class="control-group">
@@ -249,9 +250,12 @@
             function updateBackgroundImageControls() {
                 const activePage = getActivePage();
                 if (!activePage) return;
+                const bgImagePreview = document.getElementById('bg-image-preview');
                 bgImagePicker.value = '';
                 bgImagePickerLabel.textContent = activePage.bgImage ? '已選擇' : '選擇';
                 clearBgImageBtn.disabled = !activePage.bgImage;
+                bgImagePreview.style.backgroundImage = activePage.bgImage ? `url('${activePage.bgImage}')` : 'none';
+                bgImagePreview.classList.toggle('has-image', Boolean(activePage.bgImage));
             }
 
             function handleBgImageUpload(event) {
@@ -451,6 +455,41 @@
                 saveState();
             }
 
+            let touchStartX = 0;
+            let touchStartY = 0;
+            let touchEndX = 0;
+            let touchEndY = 0;
+
+            function handleSlideshowTouchStart(event) {
+                if (event.touches.length !== 1) return;
+                touchStartX = event.touches[0].clientX;
+                touchStartY = event.touches[0].clientY;
+                touchEndX = touchStartX;
+                touchEndY = touchStartY;
+            }
+
+            function handleSlideshowTouchMove(event) {
+                if (event.touches.length !== 1) return;
+                touchEndX = event.touches[0].clientX;
+                touchEndY = event.touches[0].clientY;
+            }
+
+            function handleSlideshowTouchEnd() {
+                const deltaX = touchEndX - touchStartX;
+                const deltaY = touchEndY - touchStartY;
+                const absDeltaX = Math.abs(deltaX);
+                const absDeltaY = Math.abs(deltaY);
+                const swipeThreshold = 40;
+
+                if (absDeltaX > swipeThreshold && absDeltaX > absDeltaY) {
+                    if (deltaX > 0) {
+                        changeSlide('prev');
+                    } else {
+                        changeSlide('next');
+                    }
+                }
+            }
+
             startBtn.addEventListener('click', () => {
                 const activePage = getActivePage();
                 if (!activePage) return;
@@ -466,6 +505,9 @@
             prevSlideBtn.addEventListener('click', () => changeSlide('prev'));
             nextSlideBtn.addEventListener('click', () => changeSlide('next'));
             exitSlideshowBtn.addEventListener('click', exitSlideshow);
+            slideshowScreen.addEventListener('touchstart', handleSlideshowTouchStart, { passive: true });
+            slideshowScreen.addEventListener('touchmove', handleSlideshowTouchMove, { passive: true });
+            slideshowScreen.addEventListener('touchend', handleSlideshowTouchEnd);
 
             document.addEventListener('keydown', (e) => {
                 if (slideshowScreen.style.display === 'flex') {
