@@ -146,7 +146,13 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const APP_STATE_KEY = 'textSlideshowState';
     const DEFAULT_FONT_FAMILY = '"Noto Serif HK", serif';
+    const MAX_IMAGE_STORAGE_BYTES = 150 * 1024;
+    const DB_NAME = 'text-slideshow-db';
+    const DB_VERSION = 1;
+    const BG_IMAGES_STORE = 'bgImages';
 
+    let db = null;
+    let isIndexedDBSupported = 'indexedDB' in window;
     let pages = [];
     let activePageId = null;
     let nextId = 1;
@@ -155,34 +161,209 @@ document.addEventListener('DOMContentLoaded', () => {
         return Array.from(inputContainer.querySelectorAll('textarea'));
     }
 
+    function normalizePage(page) {
+        return {
+            id: typeof page.id === 'number' ? page.id : nextId++,
+            columns: Number.isInteger(page.columns) && page.columns > 0 ? page.columns : 2,
+            texts: Array.isArray(page.texts) ? page.texts.map(value => String(value)) : ['',''],
+            gridTemplate: typeof page.gridTemplate === 'string' && page.gridTemplate.trim() ? page.gridTemplate : 'repeat(2, 1fr)',
+            bgColor: typeof page.bgColor === 'string' ? page.bgColor : '#111111',
+            textColor: typeof page.textColor === 'string' ? page.textColor : '#ffffff',
+            fontFamily: typeof page.fontFamily === 'string' ? page.fontFamily : DEFAULT_FONT_FAMILY,
+            fontSize: typeof page.fontSize === 'number' ? page.fontSize : 3,
+            bgImageId: typeof page.bgImageId === 'string' ? page.bgImageId : '',
+            bgImage: typeof page.bgImage === 'string' ? page.bgImage : '',
+            bgImageUrl: ''
+        };
+    }
+
+    function getPersistablePages() {
+        return pages.map(page => {
+            const clone = { ...page };
+            delete clone.bgImageUrl;
+            if (clone.bgImageId) {
+                clone.bgImage = '';
+                return clone;
+            }
+            if (typeof clone.bgImage === 'string' && clone.bgImage.length > MAX_IMAGE_STORAGE_BYTES) {
+                clone.bgImage = '';
+            }
+            return clone;
+        });
+    }
+
+    function generateImageId() {
+        return `bg-${crypto.randomUUID?.() ?? Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+    }
+
+    async function openDatabase() {
+        if (!isIndexedDBSupported) {
+            console.warn('IndexedDB is not available in this browser. Falling back to localStorage image persistence.');
+            return null;
+        }
+
+        return new Promise(resolve => {
+            const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+            request.onupgradeneeded = event => {
+                const database = event.target.result;
+                if (!database.objectStoreNames.contains(BG_IMAGES_STORE)) {
+                    database.createObjectStore(BG_IMAGES_STORE);
+                }
+            };
+
+            request.onsuccess = event => resolve(event.target.result);
+            request.onerror = event => {
+                console.warn('IndexedDB open failed:', event.target.error);
+                resolve(null);
+            };
+            request.onblocked = () => {
+                console.warn('IndexedDB open blocked by another tab.');
+            };
+        });
+    }
+
+    function fileToDataURL(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => reject(reader.error);
+            reader.readAsDataURL(file);
+        });
+    }
+
+    async function saveImageBlob(imageId, blob) {
+        if (!db) return false;
+        return new Promise(resolve => {
+            const transaction = db.transaction(BG_IMAGES_STORE, 'readwrite');
+            const store = transaction.objectStore(BG_IMAGES_STORE);
+            const request = store.put(blob, imageId);
+
+            request.onsuccess = () => resolve(true);
+            request.onerror = () => {
+                console.warn('saveImageBlob failed:', request.error);
+                resolve(false);
+            };
+        });
+    }
+
+    async function getImageBlob(imageId) {
+        if (!db || !imageId) return null;
+        return new Promise(resolve => {
+            const transaction = db.transaction(BG_IMAGES_STORE, 'readonly');
+            const request = transaction.objectStore(BG_IMAGES_STORE).get(imageId);
+
+            request.onsuccess = () => resolve(request.result || null);
+            request.onerror = () => {
+                console.warn('getImageBlob failed:', request.error);
+                resolve(null);
+            };
+        });
+    }
+
+    async function deleteImageBlob(imageId) {
+        if (!db || !imageId) return false;
+        return new Promise(resolve => {
+            const transaction = db.transaction(BG_IMAGES_STORE, 'readwrite');
+            const request = transaction.objectStore(BG_IMAGES_STORE).delete(imageId);
+
+            request.onsuccess = () => resolve(true);
+            request.onerror = () => {
+                console.warn('deleteImageBlob failed:', request.error);
+                resolve(false);
+            };
+        });
+    }
+
+    function isObjectUrl(url) {
+        return typeof url === 'string' && url.startsWith('blob:');
+    }
+
+    function revokePageBgImageUrl(page) {
+        if (!page || !page.bgImageUrl) return;
+        if (isObjectUrl(page.bgImageUrl)) {
+            URL.revokeObjectURL(page.bgImageUrl);
+        }
+        page.bgImageUrl = '';
+    }
+
+    function getImageIdsInUse() {
+        return pages.reduce((set, page) => {
+            if (page.bgImageId) set.add(page.bgImageId);
+            return set;
+        }, new Set());
+    }
+
+    async function cleanupImageIdIfUnused(imageId) {
+        if (!imageId) return;
+        const inUse = getImageIdsInUse();
+        if (!inUse.has(imageId)) {
+            await deleteImageBlob(imageId);
+        }
+    }
+
+    async function hydratePageBgImage(page) {
+        if (!page) return;
+        if (page.bgImageUrl) return;
+        if (page.bgImageId && db) {
+            const blob = await getImageBlob(page.bgImageId);
+            if (blob) {
+                page.bgImageUrl = URL.createObjectURL(blob);
+                page.bgImage = '';
+                return;
+            }
+        }
+        if (page.bgImage) {
+            page.bgImageUrl = page.bgImage;
+            return;
+        }
+        page.bgImageUrl = '';
+    }
+
+    async function ensureAllPageImages() {
+        await Promise.all(pages.map(hydratePageBgImage));
+    }
+
     // --- State Management ---
     function saveState() {
         const state = {
-            pages,
+            pages: getPersistablePages(),
             activePageId,
             nextId
         };
-        localStorage.setItem(APP_STATE_KEY, JSON.stringify(state));
+
+        try {
+            localStorage.setItem(APP_STATE_KEY, JSON.stringify(state));
+        } catch (error) {
+            console.warn('Could not save slideshow state to localStorage.', error);
+        }
     }
 
     function loadState() {
         const savedState = localStorage.getItem(APP_STATE_KEY);
         if (savedState) {
-            const state = JSON.parse(savedState);
-            pages = state.pages;
-            activePageId = state.activePageId;
-            nextId = state.nextId;
-            pages.forEach(p => {
-                if (!p.bgColor) p.bgColor = '#111111';
-                if (!p.textColor) p.textColor = '#ffffff';
-                if (!p.fontFamily) p.fontFamily = DEFAULT_FONT_FAMILY;
-                if (!p.fontSize) p.fontSize = 3;
-                if (typeof p.bgImage === 'undefined' || p.bgImage === null) p.bgImage = '';
-            });
+            try {
+                const state = JSON.parse(savedState);
+                if (!state || !Array.isArray(state.pages)) {
+                    throw new Error('Saved state is invalid.');
+                }
+
+                pages = state.pages.map(normalizePage);
+                activePageId = pages.some(p => p.id === state.activePageId) ? state.activePageId : pages[0]?.id || null;
+                nextId = typeof state.nextId === 'number' && state.nextId > 0
+                    ? state.nextId
+                    : Math.max(0, ...pages.map(p => p.id)) + 1;
+            } catch (error) {
+                console.warn('Failed to load saved state:', error);
+                localStorage.removeItem(APP_STATE_KEY);
+                pages = [];
+                activePageId = null;
+                nextId = 1;
+                addPage(false);
+            }
         } else {
             addPage(false);
         }
-        renderApp();
     }
 
     function getActivePage() {
@@ -208,7 +389,9 @@ document.addEventListener('DOMContentLoaded', () => {
             textColor: '#ffffff',
             fontFamily: DEFAULT_FONT_FAMILY,
             fontSize: 3,
-            bgImage: ''
+            bgImageId: '',
+            bgImage: '',
+            bgImageUrl: ''
         };
         pages.push(newPage);
         selectPage(newPage.id, shouldSave);
@@ -222,16 +405,20 @@ document.addEventListener('DOMContentLoaded', () => {
         if (shouldSave) saveState();
     }
 
-    function deletePage(pageId) {
+    async function deletePage(pageId) {
         if (pages.length <= 1) {
             alert("You must have at least one page.");
             return;
         }
+        const deletedPage = pages.find(p => p.id === pageId);
         const deletedPageIndex = pages.findIndex(p => p.id === pageId);
         pages = pages.filter(p => p.id !== pageId);
         if (activePageId === pageId) {
             const newActivePage = pages[Math.max(0, deletedPageIndex - 1)];
             selectPage(newActivePage.id, false);
+        }
+        if (deletedPage?.bgImageId) {
+            await cleanupImageIdIfUnused(deletedPage.bgImageId);
         }
         saveState();
         renderApp();
@@ -275,31 +462,60 @@ document.addEventListener('DOMContentLoaded', () => {
         const activePage = getActivePage();
         if (!activePage) return;
         bgImagePicker.value = '';
-        bgImagePickerLabel.textContent = activePage.bgImage ? '已選擇' : '選擇';
-        clearBgImageBtn.disabled = !activePage.bgImage;
-        bgImagePreview.style.backgroundImage = activePage.bgImage ? `url('${activePage.bgImage}')` : 'none';
-        bgImagePreview.classList.toggle('has-image', Boolean(activePage.bgImage));
+        const hasImage = Boolean(activePage.bgImageId || activePage.bgImageUrl || activePage.bgImage);
+        bgImagePickerLabel.textContent = hasImage ? '已選擇' : '選擇';
+        clearBgImageBtn.disabled = !hasImage;
+        const imageUrl = activePage.bgImageUrl || activePage.bgImage || '';
+        bgImagePreview.style.backgroundImage = imageUrl ? `url('${imageUrl}')` : 'none';
+        bgImagePreview.classList.toggle('has-image', Boolean(imageUrl));
     }
 
-    function handleBgImageUpload(event) {
+    async function handleBgImageUpload(event) {
         const file = event.target.files && event.target.files[0];
         if (!file) return;
 
-        const reader = new FileReader();
-        reader.onload = () => {
-            const activePage = getActivePage();
-            if (!activePage) return;
-            activePage.bgImage = reader.result;
-            saveState();
-            updateBackgroundImageControls();
-        };
-        reader.readAsDataURL(file);
-    }
-
-    function clearBgImage() {
         const activePage = getActivePage();
         if (!activePage) return;
+        saveCurrentPageText();
+
+        const previousBgImageId = activePage.bgImageId;
+        revokePageBgImageUrl(activePage);
+
+        activePage.bgImageId = '';
         activePage.bgImage = '';
+        activePage.bgImageUrl = URL.createObjectURL(file);
+
+        if (db) {
+            const imageId = generateImageId();
+            const success = await saveImageBlob(imageId, file);
+            if (success) {
+                activePage.bgImageId = imageId;
+                activePage.bgImage = '';
+                await cleanupImageIdIfUnused(previousBgImageId);
+            } else {
+                activePage.bgImage = await fileToDataURL(file);
+                alert('圖片已加載，但無法儲存到 IndexedDB，刷新後不保留。');
+            }
+        } else {
+            activePage.bgImage = await fileToDataURL(file);
+            if (file.size > MAX_IMAGE_STORAGE_BYTES) {
+                alert('圖片過大，將只在目前工作階段顯示，重新整理後不會保留。');
+            }
+        }
+
+        saveState();
+        updateBackgroundImageControls();
+    }
+
+    async function clearBgImage() {
+        const activePage = getActivePage();
+        if (!activePage) return;
+        const previousBgImageId = activePage.bgImageId;
+        revokePageBgImageUrl(activePage);
+        activePage.bgImageId = '';
+        activePage.bgImage = '';
+        activePage.bgImageUrl = '';
+        await cleanupImageIdIfUnused(previousBgImageId);
         saveState();
         updateBackgroundImageControls();
     }
@@ -453,7 +669,8 @@ document.addEventListener('DOMContentLoaded', () => {
         slideshowScreen.style.setProperty('--slideshow-font-family', page.fontFamily || DEFAULT_FONT_FAMILY);
         slideshowScreen.style.setProperty('--slideshow-bg', page.bgColor);
         slideshowScreen.style.setProperty('--slideshow-text-color', page.textColor);
-        slideshowScreen.style.backgroundImage = page.bgImage ? `url('${page.bgImage}')` : 'none';
+        const imageUrl = page.bgImageUrl || page.bgImage || '';
+        slideshowScreen.style.backgroundImage = imageUrl ? `url('${imageUrl}')` : 'none';
         slideshowRenderArea.style.gridTemplateColumns = page.gridTemplate || `repeat(${page.columns}, 1fr)`;
         slideshowRenderArea.innerHTML = '';
         page.texts.forEach(text => {
@@ -546,6 +763,13 @@ document.addEventListener('DOMContentLoaded', () => {
         renderApp(); // Sync editor to the last viewed slide
     }
 
+    async function initApp() {
+        db = await openDatabase();
+        loadState();
+        await ensureAllPageImages();
+        renderApp();
+    }
+
     // --- Init ---
-    loadState(); 
+    initApp();
 });
