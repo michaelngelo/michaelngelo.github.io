@@ -51,21 +51,31 @@
                     <option value='system-ui, sans-serif'>系統預設</option>
                 </select>
             </div>
-            <div class="control-group">
-                <label for="bg-color-picker">背景顏色:</label>
-                <button type="button" class="color-picker-btn" id="bg-color-picker-btn" data-color-input="bg-color-picker" aria-label="選擇背景顏色">
-                    <span class="color-swatch" id="bg-color-swatch"></span>
-                    <span class="color-picker-label">選擇</span>
-                </button>
-                <input type="color" id="bg-color-picker" value="#111111" hidden>
+            <div class="control-group control-group--color-pair">
+                <div class="color-picker-block">
+                    <label for="bg-color-picker">背景顏色:</label>
+                    <button type="button" class="color-picker-btn" id="bg-color-picker-btn" data-color-input="bg-color-picker" aria-label="選擇背景顏色">
+                        <span class="color-swatch" id="bg-color-swatch"></span>
+                        <span class="color-picker-label">選擇</span>
+                    </button>
+                    <input type="color" id="bg-color-picker" value="#111111" hidden>
+                </div>
+                <div class="color-picker-block">
+                    <label for="text-color-picker">文字顏色:</label>
+                    <button type="button" class="color-picker-btn" id="text-color-picker-btn" data-color-input="text-color-picker" aria-label="選擇文字顏色">
+                        <span class="color-swatch" id="text-color-swatch"></span>
+                        <span class="color-picker-label">選擇</span>
+                    </button>
+                    <input type="color" id="text-color-picker" value="#ffffff" hidden>
+                </div>
             </div>
             <div class="control-group">
-                <label for="text-color-picker">文字顏色:</label>
-                <button type="button" class="color-picker-btn" id="text-color-picker-btn" data-color-input="text-color-picker" aria-label="選擇文字顏色">
-                    <span class="color-swatch" id="text-color-swatch"></span>
-                    <span class="color-picker-label">選擇</span>
+                <label for="bg-image-picker">背景圖片:</label>
+                <button type="button" class="color-picker-btn" id="bg-image-picker-btn" aria-label="選擇背景圖片">
+                    <span class="color-picker-label" id="bg-image-picker-label">選擇</span>
                 </button>
-                <input type="color" id="text-color-picker" value="#ffffff" hidden>
+                <button type="button" class="clear-image-btn" id="clear-bg-image-btn" aria-label="清除背景圖片">清除</button>
+                <input type="file" id="bg-image-picker" accept="image/*" hidden>
             </div>
             <div class="control-group">
                 <button id="start-btn">進入幻燈片模式</button>
@@ -100,9 +110,13 @@
             const fontFamilySelect = document.getElementById('font-family-select');
             const bgColorPicker = document.getElementById('bg-color-picker');
             const textColorPicker = document.getElementById('text-color-picker');
+            const bgImagePicker = document.getElementById('bg-image-picker');
+            const bgImagePickerLabel = document.getElementById('bg-image-picker-label');
             const bgColorButton = document.getElementById('bg-color-picker-btn');
-            const textColorButton = document.getElementById('text-color-picker-btn');
+            const bgImageButton = document.getElementById('bg-image-picker-btn');
+            const clearBgImageBtn = document.getElementById('clear-bg-image-btn');
             const bgColorSwatch = document.getElementById('bg-color-swatch');
+            const textColorButton = document.getElementById('text-color-picker-btn');
             const textColorSwatch = document.getElementById('text-color-swatch');
             const prevSlideBtn = document.getElementById('prev-slide-btn');
             const nextSlideBtn = document.getElementById('next-slide-btn');
@@ -138,6 +152,7 @@
                         if (!p.textColor) p.textColor = '#ffffff';
                         if (!p.fontFamily) p.fontFamily = DEFAULT_FONT_FAMILY;
                         if (!p.fontSize) p.fontSize = 3;
+                        if (typeof p.bgImage === 'undefined' || p.bgImage === null) p.bgImage = '';
                     });
                 } else {
                     addPage(false);
@@ -167,7 +182,8 @@
                     bgColor: '#111111',
                     textColor: '#ffffff',
                     fontFamily: DEFAULT_FONT_FAMILY,
-                    fontSize: 3
+                    fontSize: 3,
+                    bgImage: ''
                 };
                 pages.push(newPage);
                 selectPage(newPage.id, shouldSave);
@@ -227,6 +243,38 @@
                 updateEditorFontSize();
                 updateEditorColors();
                 updateEditorFontFamily();
+                updateBackgroundImageControls();
+            }
+
+            function updateBackgroundImageControls() {
+                const activePage = getActivePage();
+                if (!activePage) return;
+                bgImagePicker.value = '';
+                bgImagePickerLabel.textContent = activePage.bgImage ? '已選擇' : '選擇';
+                clearBgImageBtn.disabled = !activePage.bgImage;
+            }
+
+            function handleBgImageUpload(event) {
+                const file = event.target.files && event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const activePage = getActivePage();
+                    if (!activePage) return;
+                    activePage.bgImage = reader.result;
+                    saveState();
+                    updateBackgroundImageControls();
+                };
+                reader.readAsDataURL(file);
+            }
+
+            function clearBgImage() {
+                const activePage = getActivePage();
+                if (!activePage) return;
+                activePage.bgImage = '';
+                saveState();
+                updateBackgroundImageControls();
             }
 
             function renderTabs() {
@@ -280,9 +328,12 @@
             }
 
             bgColorButton.addEventListener('click', () => bgColorPicker.click());
+            bgImageButton.addEventListener('click', () => bgImagePicker.click());
+            clearBgImageBtn.addEventListener('click', clearBgImage);
             textColorButton.addEventListener('click', () => textColorPicker.click());
             bgColorPicker.addEventListener('input', handleColorChange);
             textColorPicker.addEventListener('input', handleColorChange);
+            bgImagePicker.addEventListener('change', handleBgImageUpload);
             fontFamilySelect.addEventListener('change', () => {
                 const activePage = getActivePage();
                 if (!activePage) return;
@@ -375,6 +426,7 @@
                 slideshowScreen.style.setProperty('--slideshow-font-family', page.fontFamily || DEFAULT_FONT_FAMILY);
                 slideshowScreen.style.setProperty('--slideshow-bg', page.bgColor);
                 slideshowScreen.style.setProperty('--slideshow-text-color', page.textColor);
+                slideshowScreen.style.backgroundImage = page.bgImage ? `url('${page.bgImage}')` : 'none';
                 slideshowRenderArea.style.gridTemplateColumns = page.gridTemplate || `repeat(${page.columns}, 1fr)`;
                 slideshowRenderArea.innerHTML = '';
                 page.texts.forEach(text => {

@@ -109,6 +109,18 @@ header h1 {
     white-space: nowrap;
 }
 
+.control-group--color-pair {
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.color-picker-block {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
 .control-group--range {
     min-width: 300px;
 }
@@ -168,20 +180,32 @@ textarea:focus-visible {
     outline-offset: 2px;
 }
 
-.color-picker-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    min-width: 132px;
-    background: rgba(255, 255, 255, 0.96);
-    color: var(--text-color);
-    border: 1px solid var(--border-color);
-    font-weight: 600;
-    box-shadow: none;
-}
-
-.color-picker-btn:hover {
-    background: rgba(245, 247, 255, 0.96);
+.color-picker-btn,
+    .clear-image-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 132px;
+        background: rgba(255, 255, 255, 0.96);
+        color: var(--text-color);
+        border: 1px solid var(--border-color);
+        font-weight: 600;
+        box-shadow: none;
+    }
+    
+    .color-picker-btn:hover,
+    .clear-image-btn:hover {
+        background: rgba(245, 247, 255, 0.96);
+    }
+    
+    .clear-image-btn {
+        padding: 10px 12px;
+        border-radius: 999px;
+    }
+    
+    .clear-image-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
 }
 
 .color-swatch {
@@ -384,8 +408,11 @@ textarea:focus {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: var(--slideshow-bg, #111);
+    background-color: var(--slideshow-bg, #111);
     color: var(--slideshow-text-color, #fff);
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center;
     z-index: 9999;
     padding-block: 40px;
     box-sizing: border-box;
