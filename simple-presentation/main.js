@@ -139,6 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const bgColorSwatch = document.getElementById('bg-color-swatch');
     const textColorButton = document.getElementById('text-color-picker-btn');
     const textColorSwatch = document.getElementById('text-color-swatch');
+    const slideTextBgToggleBtn = document.getElementById('slide-text-bg-toggle-btn');
     const prevSlideBtn = document.getElementById('prev-slide-btn');
     const nextSlideBtn = document.getElementById('next-slide-btn');
     const exitSlideshowBtn = document.getElementById('exit-slideshow-btn');
@@ -170,10 +171,11 @@ document.addEventListener('DOMContentLoaded', () => {
             bgColor: typeof page.bgColor === 'string' ? page.bgColor : '#111111',
             textColor: typeof page.textColor === 'string' ? page.textColor : '#ffffff',
             fontFamily: typeof page.fontFamily === 'string' ? page.fontFamily : DEFAULT_FONT_FAMILY,
-            fontSize: typeof page.fontSize === 'number' ? page.fontSize : 3,
+            fontSize: typeof page.fontSize === 'number' ? page.fontSize : 4,
             bgImageId: typeof page.bgImageId === 'string' ? page.bgImageId : '',
             bgImage: typeof page.bgImage === 'string' ? page.bgImage : '',
-            bgImageUrl: ''
+            bgImageUrl: '',
+            showSlideTextBg: typeof page.showSlideTextBg === 'boolean' ? page.showSlideTextBg : false
         };
     }
 
@@ -388,10 +390,11 @@ document.addEventListener('DOMContentLoaded', () => {
             bgColor: '#111111',
             textColor: '#ffffff',
             fontFamily: DEFAULT_FONT_FAMILY,
-            fontSize: 3,
+            fontSize: 4,
             bgImageId: '',
             bgImage: '',
-            bgImageUrl: ''
+            bgImageUrl: '',
+            showSlideTextBg: false
         };
         pages.push(newPage);
         selectPage(newPage.id, shouldSave);
@@ -433,11 +436,12 @@ document.addEventListener('DOMContentLoaded', () => {
         columnSelect.value = activePage.columns;
         updateColorPickerButtons();
         fontFamilySelect.value = activePage.fontFamily || DEFAULT_FONT_FAMILY;
-        fontSizeSlider.value = activePage.fontSize || 3;
-        fontSizeValue.textContent = `${(activePage.fontSize || 3).toFixed(1)} rem`;
+        fontSizeSlider.value = activePage.fontSize || 4;
+        fontSizeValue.textContent = `${(activePage.fontSize || 4).toFixed(1)} vw`;
         inputContainer.style.gridTemplateColumns = activePage.gridTemplate || `repeat(${activePage.columns}, minmax(0, 1fr))`;
         inputContainer.style.setProperty('--editor-columns', activePage.columns);
         inputContainer.innerHTML = '';
+        updateSlideTextBgToggle(activePage.showSlideTextBg);
         for (let i = 0; i < activePage.columns; i++) {
             const textValue = activePage.texts[i] || '';
             const inputBox = document.createElement('div');
@@ -577,6 +581,13 @@ document.addEventListener('DOMContentLoaded', () => {
     bgColorPicker.addEventListener('input', handleColorChange);
     textColorPicker.addEventListener('input', handleColorChange);
     bgImagePicker.addEventListener('change', handleBgImageUpload);
+    slideTextBgToggleBtn.addEventListener('click', () => {
+        const activePage = getActivePage();
+        if (!activePage) return;
+        activePage.showSlideTextBg = !activePage.showSlideTextBg;
+        updateSlideTextBgToggle(activePage.showSlideTextBg);
+        saveState();
+    });
     fontFamilySelect.addEventListener('change', () => {
         const activePage = getActivePage();
         if (!activePage) return;
@@ -644,11 +655,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateEditorFontSize() {
         const activePage = getActivePage();
         if (!activePage) return;
-        const newSize = activePage.fontSize || 3;
+        const newSize = activePage.fontSize || 4;
         fontSizeSlider.value = newSize;
-        fontSizeValue.textContent = `${newSize.toFixed(1)} rem`;
+        fontSizeValue.textContent = `${newSize.toFixed(1)} vw`;
         getEditorTextAreas().forEach(textarea => {
-            textarea.style.fontSize = `${newSize}rem`;
+            textarea.style.fontSize = `${newSize}vw`;
         });
     }
 
@@ -660,12 +671,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function updateSlideTextBgToggle(isEnabled) {
+        if (!slideTextBgToggleBtn) return;
+        slideTextBgToggleBtn.classList.toggle('active', Boolean(isEnabled));
+        slideTextBgToggleBtn.textContent = isEnabled ? '啟用' : '關閉';
+        slideTextBgToggleBtn.setAttribute('aria-pressed', isEnabled ? 'true' : 'false');
+    }
+
     function renderSlideshowPage(page) {
         const pageIndex = pages.findIndex(p => p.id === page.id);
         slidePageIndicator.textContent = `第 ${pageIndex + 1} / ${pages.length} 頁`;
 
-        const fontSize = page.fontSize || 3;
-        slideshowScreen.style.setProperty('--slideshow-font-size', `${fontSize}rem`);
+        const fontSize = page.fontSize || 4;
+        slideshowScreen.style.setProperty('--slideshow-font-size', `${fontSize}vw`);
         slideshowScreen.style.setProperty('--slideshow-font-family', page.fontFamily || DEFAULT_FONT_FAMILY);
         slideshowScreen.style.setProperty('--slideshow-bg', page.bgColor);
         slideshowScreen.style.setProperty('--slideshow-text-color', page.textColor);
@@ -677,7 +695,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const columnWrapper = document.createElement('div');
             columnWrapper.className = 'slide-column';
             const textElement = document.createElement('div');
-            textElement.className = 'slide-text';
+            textElement.className = `slide-text${page.showSlideTextBg ? ' slide-text--with-bg' : ''}`;
             textElement.textContent = text;
             columnWrapper.appendChild(textElement);
             slideshowRenderArea.appendChild(columnWrapper);

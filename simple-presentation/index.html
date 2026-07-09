@@ -6,7 +6,7 @@
     <title>文字幻燈片展示器</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+HK:wght@400;500;700&family=Chiron+Sung+HK:wght@400;500;700&family=Source+Han+Sans+TC:wght@400;500;700&family=ZCOOL+Xiaowei&family=Ma+Shan+Zheng&family=Klee+One:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&family=LXGW+WenKai+TC:wght@400;700&family=Liu+Jian+Mao+Cao&family=Long+Cang&family=M+PLUS+Rounded+1c:wght@400;500;700&family=Ma+Shan+Zheng&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@400;500;700&family=Yusei+Magic&family=ZCOOL+KuaiLe&family=ZCOOL+QingKe+HuangYou&family=ZCOOL+Xiaowei&family=Zhi+Mang+Xing&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <script src="main.js" defer></script>
 </head>
@@ -31,24 +31,39 @@
             </div>
             <div class="control-group control-group--range">
                 <label for="font-size-slider">字體大小:</label>
-                <input type="range" id="font-size-slider" min="1" max="10" step="0.1" value="3">
-                <span id="font-size-value">3.0 rem</span>
+                <!-- Updated min, max, step, and value for vw -->
+                <input type="range" id="font-size-slider" min="1" max="20" step="0.5" value="4">
+                <span id="font-size-value">4.0 vw</span>
             </div>
             <div class="control-group">
                 <label for="font-family-select">字體樣式:</label>
                 <select id="font-family-select">
-                    <option value='&quot;Noto Serif HK&quot;, serif' selected>Noto Serif Hong Kong（線上字型）</option>
-                    <option value='&quot;ZCOOL Xiaowei&quot;, serif'>ZCOOL Xiaowei（線上字型）</option>
-                    <option value='&quot;Chiron Sung HK&quot;, serif'>Chiron Sung HK（線上字型）</option>
-                    <option value='&quot;LXGW WenKai TC&quot;, sans-serif'>LXGW WenKai TC（線上字型）</option>
-                    <option value='&quot;Klee One&quot;, sans-serif'>Klee One（線上字型）</option>
-                    <option value='&quot;Ma Shan Zheng&quot;, cursive'>Ma Shan Zheng（線上字型）</option>
-                    <option value='&quot;Noto Sans TC&quot;, sans-serif'>Noto Sans TC（線上字型）</option>
-                    <option value='&quot;Source Han Sans TC&quot;, sans-serif'>Source Han Sans TC（線上字型）</option>
-                    <option value='&quot;PingFang TC&quot;, sans-serif'>PingFang TC</option>
-                    <option value='Microsoft JhengHei, &quot;PingFang TC&quot;, sans-serif'>微軟正黑體</option>
-                    <option value='&quot;MingLiU&quot;, serif'>細明體</option>
-                    <option value='system-ui, sans-serif'>系統預設</option>
+                    <optgroup label="線上字型 - 襯線/黑體 (Standard)">
+                        <option value='&quot;Noto Serif TC&quot;, serif' selected>思源宋體 (Noto Serif TC)</option>
+                        <option value='&quot;Noto Sans TC&quot;, sans-serif'>思源黑體 (Noto Sans TC)</option>
+                        <option value='&quot;M PLUS Rounded 1c&quot;, sans-serif'>圓體 (M PLUS Rounded 1c)</option>
+                    </optgroup>
+                    <optgroup label="線上字型 - 楷體/手寫 (Handwriting)">
+                        <option value='&quot;LXGW WenKai TC&quot;, cursive'>霞鶩文楷 (LXGW WenKai TC)</option>
+                        <option value='&quot;Klee One&quot;, cursive'>日系硬筆楷書 (Klee One)</option>
+                        <option value='&quot;Yusei Magic&quot;, sans-serif'>游星魔法手寫 (Yusei Magic)</option>
+                    </optgroup>
+                    <optgroup label="線上字型 - 毛筆/行草 (Brush/Cursive)">
+                        <option value='&quot;ZCOOL Xiaowei&quot;, serif'>站酷小薇 (ZCOOL Xiaowei)</option>
+                        <option value='&quot;Ma Shan Zheng&quot;, cursive'>馬善政毛筆楷體 (Ma Shan Zheng)</option>
+                        <option value='&quot;Zhi Mang Xing&quot;, cursive'>志莽毛筆行書 (Zhi Mang Xing)</option>
+                        <option value='&quot;Long Cang&quot;, cursive'>龍藏體 (Long Cang)</option>
+                        <option value='&quot;Liu Jian Mao Cao&quot;, cursive'>柳建毛草 (Liu Jian Mao Cao)</option>
+                    </optgroup>
+                    <optgroup label="線上字型 - 藝術/趣味 (Display)">
+                        <option value='&quot;ZCOOL KuaiLe&quot;, display'>站酷快樂體 (ZCOOL KuaiLe)</option>
+                        <option value='&quot;ZCOOL QingKe HuangYou&quot;, display'>站酷慶科黃油體 (ZCOOL QingKe HuangYou)</option>
+                    </optgroup>
+                    <optgroup label="系統字型 (System Fonts)">
+                        <option value='system-ui, -apple-system, BlinkMacSystemFont, &quot;PingFang TC&quot;, &quot;Microsoft JhengHei&quot;, sans-serif'>系統預設黑體 (System Default)</option>
+                        <option value='&quot;BiauKai&quot;, &quot;DFKai-SB&quot;, serif'>標楷體 (BiauKai)</option>
+                        <option value='&quot;MingLiU&quot;, &quot;PMingLiU&quot;, serif'>細明體 (MingLiU)</option>
+                    </optgroup>
                 </select>
             </div>
             <div class="control-group control-group--color-pair">
@@ -77,6 +92,10 @@
                 <button type="button" class="clear-image-btn" id="clear-bg-image-btn" aria-label="清除背景圖片">清除</button>
                 <div class="bg-image-preview" id="bg-image-preview" aria-hidden="true"></div>
                 <input type="file" id="bg-image-picker" accept="image/*" hidden>
+            </div>
+            <div class="control-group">
+                <label>文字背景:</label>
+                <button type="button" class="toggle-btn" id="slide-text-bg-toggle-btn" aria-pressed="false">關閉</button>
             </div>
             <div class="control-group">
                 <button id="start-btn">進入幻燈片模式</button>
