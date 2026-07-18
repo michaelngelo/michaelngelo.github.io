@@ -1,0 +1,16 @@
+{
+  "short_name": "VerseFlow",
+  "name": "VerseFlow - Lyric Presenter",
+  "description": "A lightning-fast, offline-ready lyric and text presenter for live stage events.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#121212",
+  "theme_color": "#5b7cff",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%235b7cff'/><text y='65' x='15' fill='white' font-size='60' font-family='sans-serif'>VF</text></svg>",
+      "type": "image/svg+xml",
+      "sizes": "512x512"
+    }
+  ]
+}
