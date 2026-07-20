@@ -1,8 +1,8 @@
 class TabManager extends HTMLElement {
-  constructor() {
-    super();
-    this.attachShadow({ mode: 'open' });
-    this.shadowRoot.innerHTML = `
+    constructor() {
+        super();
+        this.attachShadow({ mode: 'open' });
+        this.shadowRoot.innerHTML = `
       <style>
         :host {
           display: block;
@@ -25,8 +25,8 @@ class TabManager extends HTMLElement {
         .tab {
           flex: 0 0 auto;
           min-width: 0;
-          padding: 12px 14px;
-          cursor: pointer;
+          padding: 10px 12px;
+          cursor: grab;
           border-radius: 12px;
           background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(248,250,252,0.95));
           border: 1px solid rgba(15, 23, 42, 0.08);
@@ -34,10 +34,13 @@ class TabManager extends HTMLElement {
           align-items: center;
           justify-content: space-between;
           gap: 8px;
-          white-space: nowrap;
           color: #334155;
           font-weight: 600;
-          transition: all 0.2s ease;
+          transition: background 0.2s ease, box-shadow 0.2s ease;
+          user-select: none;
+        }
+        .tab:active {
+          cursor: grabbing;
         }
         .tab.active {
           background: linear-gradient(135deg, #5b7cff, #4a65d8);
@@ -45,12 +48,35 @@ class TabManager extends HTMLElement {
           border-color: transparent;
           box-shadow: 0 8px 18px rgba(91, 124, 255, 0.24);
         }
+        .tab.dragging {
+          opacity: 0.5;
+          transform: scale(0.98);
+        }
+        .tab-label {
+          flex: 1;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          outline: none;
+          padding: 2px 4px;
+          border-radius: 4px;
+          cursor: text;
+          min-width: 40px;
+        }
+        .tab-label:focus {
+          background: rgba(0, 0, 0, 0.05);
+          color: #000;
+        }
+        .tab.active .tab-label:focus {
+          background: rgba(255, 255, 255, 0.2);
+          color: #fff;
+        }
         .delete-page-btn {
           border: none;
           background: none;
           cursor: pointer;
           font-size: 16px;
-          padding: 0;
+          padding: 0 4px;
           line-height: 1;
           color: inherit;
           opacity: 0.6;
@@ -58,6 +84,10 @@ class TabManager extends HTMLElement {
         }
         .delete-page-btn:hover {
           opacity: 1;
+          color: #ef4444;
+        }
+        .tab.active .delete-page-btn:hover {
+          color: #ffb3b3;
         }
         .add-page-btn {
           flex: 0 0 auto;
@@ -71,26 +101,15 @@ class TabManager extends HTMLElement {
           cursor: pointer;
           box-shadow: 0 8px 18px rgba(91, 124, 255, 0.22);
         }
-        
-        /* Mobile Switch to Top Horizontal Bar Row Layout */
         @media (max-width: 900px) {
           .tabs-container {
             flex-direction: row;
-            align-items: center;
             overflow-x: auto;
-            overflow-y: hidden;
-            flex-wrap: nowrap;
-            scrollbar-width: thin;
             border-radius: 999px;
             padding: 8px;
           }
-          .tab {
+          .tab, .add-page-btn {
             border-radius: 999px;
-            padding: 8px 14px;
-          }
-          .add-page-btn {
-            border-radius: 999px;
-            padding: 8px 14px;
           }
         }
       </style>
@@ -99,48 +118,120 @@ class TabManager extends HTMLElement {
       </div>
     `;
 
-    this.tabsContainer = this.shadowRoot.getElementById('tabs-container');
-    this.addPageBtn = this.shadowRoot.getElementById('add-page-btn');
+        this.tabsContainer = this.shadowRoot.getElementById('tabs-container');
+        this.addPageBtn = this.shadowRoot.getElementById('add-page-btn');
 
-    this.addPageBtn.addEventListener('click', () => {
-      this.dispatchEvent(new CustomEvent('page-added'));
-    });
-  }
+        this.addPageBtn.addEventListener('click', () => {
+            this.dispatchEvent(new CustomEvent('page-added'));
+        });
 
-  renderTabs(pages, activePageId) {
-    while (this.tabsContainer.firstChild && this.tabsContainer.firstChild !== this.addPageBtn) {
-        this.tabsContainer.removeChild(this.tabsContainer.firstChild);
+        // Handle Drop Zone Logic
+        this.tabsContainer.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            const draggingTab = this.tabsContainer.querySelector('.dragging');
+            if (!draggingTab) return;
+
+            const siblings = [...this.tabsContainer.querySelectorAll('.tab:not(.dragging)')];
+            const nextSibling = siblings.find(sibling => {
+                const box = sibling.getBoundingClientRect();
+                // Check if vertical or horizontal layout
+                const isHorizontal = window.innerWidth <= 900;
+                if (isHorizontal) {
+                    return e.clientX <= box.left + box.width / 2;
+                } else {
+                    return e.clientY <= box.top + box.height / 2;
+                }
+            });
+
+            if (nextSibling) {
+                this.tabsContainer.insertBefore(draggingTab, nextSibling);
+            } else {
+                this.tabsContainer.insertBefore(draggingTab, this.addPageBtn);
+            }
+        });
+
+        this.tabsContainer.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const tabs = [...this.tabsContainer.querySelectorAll('.tab')];
+            const newOrder = tabs.map(tab => parseInt(tab.dataset.pageId));
+            this.dispatchEvent(new CustomEvent('page-reordered', { detail: { newOrder } }));
+        });
     }
 
-    pages.forEach(page => {
-        const tab = document.createElement('div');
-        tab.className = 'tab';
-        
-        const labelSpan = document.createElement('span');
-        labelSpan.textContent = `Page ${page.id}`;
-        tab.appendChild(labelSpan);
-        
-        tab.dataset.pageId = page.id;
-        if (page.id === activePageId) {
-            tab.classList.add('active');
+    renderTabs(pages, activePageId) {
+        while (this.tabsContainer.firstChild && this.tabsContainer.firstChild !== this.addPageBtn) {
+            this.tabsContainer.removeChild(this.tabsContainer.firstChild);
         }
 
-        const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'delete-page-btn';
-        deleteBtn.textContent = '×';
-        deleteBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.dispatchEvent(new CustomEvent('page-deleted', { detail: { pageId: page.id } }));
-        });
+        pages.forEach(page => {
+            const tab = document.createElement('div');
+            tab.className = 'tab';
+            tab.dataset.pageId = page.id;
+            tab.draggable = true;
 
-        tab.appendChild(deleteBtn);
-        tab.addEventListener('click', () => {
-            this.dispatchEvent(new CustomEvent('page-selected', { detail: { pageId: page.id } }));
-        });
+            if (page.id === activePageId) {
+                tab.classList.add('active');
+            }
 
-        this.tabsContainer.insertBefore(tab, this.addPageBtn);
-    });
-  }
+            // Editable Label
+            const labelSpan = document.createElement('span');
+            labelSpan.className = 'tab-label';
+            labelSpan.textContent = page.name || `Page ${page.id}`;
+            labelSpan.contentEditable = "true";
+            labelSpan.spellcheck = false;
+
+            // Prevent dragging when clicking into text
+            labelSpan.addEventListener('mousedown', (e) => e.stopPropagation());
+
+            // Save name on blur or enter
+            const saveName = () => {
+                const newName = labelSpan.textContent.trim() || `Page ${page.id}`;
+                labelSpan.textContent = newName; // Reset if empty
+                this.dispatchEvent(new CustomEvent('page-renamed', {
+                    detail: { pageId: page.id, newName }
+                }));
+            };
+
+            labelSpan.addEventListener('blur', saveName);
+            labelSpan.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    labelSpan.blur();
+                }
+            });
+
+            // Drag events
+            tab.addEventListener('dragstart', (e) => {
+                tab.classList.add('dragging');
+                // Required for Firefox
+                e.dataTransfer.setData('text/plain', page.id);
+                e.dataTransfer.effectAllowed = 'move';
+            });
+
+            tab.addEventListener('dragend', () => {
+                tab.classList.remove('dragging');
+            });
+
+            // Delete button
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-page-btn';
+            deleteBtn.textContent = '×';
+            deleteBtn.title = '刪除頁面';
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.dispatchEvent(new CustomEvent('page-deleted', { detail: { pageId: page.id } }));
+            });
+
+            tab.appendChild(labelSpan);
+            tab.appendChild(deleteBtn);
+
+            tab.addEventListener('click', () => {
+                this.dispatchEvent(new CustomEvent('page-selected', { detail: { pageId: page.id } }));
+            });
+
+            this.tabsContainer.insertBefore(tab, this.addPageBtn);
+        });
+    }
 }
 
 customElements.define('tab-manager', TabManager);
@@ -195,6 +286,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function normalizePage(page) {
         return {
             id: typeof page.id === 'number' ? page.id : nextId++,
+            name: typeof page.name === 'string' ? page.name : `Page ${page.id || nextId}`,
             columns: Number.isInteger(page.columns) && page.columns > 0 ? page.columns : 1,
             texts: Array.isArray(page.texts) ? page.texts.map(value => String(value)) : [''],
             gridTemplate: typeof page.gridTemplate === 'string' && page.gridTemplate.trim() ? page.gridTemplate : '1fr',
@@ -230,27 +322,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function openDatabase() {
         if (!isIndexedDBSupported) {
-            console.warn('IndexedDB is not available in this browser. Falling back to localStorage image persistence.');
+            console.warn('IndexedDB is not available in this browser.');
             return null;
         }
 
         return new Promise(resolve => {
             const request = indexedDB.open(DB_NAME, DB_VERSION);
-
             request.onupgradeneeded = event => {
                 const database = event.target.result;
                 if (!database.objectStoreNames.contains(BG_IMAGES_STORE)) {
                     database.createObjectStore(BG_IMAGES_STORE);
                 }
             };
-
             request.onsuccess = event => resolve(event.target.result);
             request.onerror = event => {
                 console.warn('IndexedDB open failed:', event.target.error);
                 resolve(null);
-            };
-            request.onblocked = () => {
-                console.warn('IndexedDB open blocked by another tab.');
             };
         });
     }
@@ -270,12 +357,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const transaction = db.transaction(BG_IMAGES_STORE, 'readwrite');
             const store = transaction.objectStore(BG_IMAGES_STORE);
             const request = store.put(blob, imageId);
-
             request.onsuccess = () => resolve(true);
-            request.onerror = () => {
-                console.warn('saveImageBlob failed:', request.error);
-                resolve(false);
-            };
+            request.onerror = () => resolve(false);
         });
     }
 
@@ -284,12 +367,8 @@ document.addEventListener('DOMContentLoaded', () => {
         return new Promise(resolve => {
             const transaction = db.transaction(BG_IMAGES_STORE, 'readonly');
             const request = transaction.objectStore(BG_IMAGES_STORE).get(imageId);
-
             request.onsuccess = () => resolve(request.result || null);
-            request.onerror = () => {
-                console.warn('getImageBlob failed:', request.error);
-                resolve(null);
-            };
+            request.onerror = () => resolve(null);
         });
     }
 
@@ -298,12 +377,8 @@ document.addEventListener('DOMContentLoaded', () => {
         return new Promise(resolve => {
             const transaction = db.transaction(BG_IMAGES_STORE, 'readwrite');
             const request = transaction.objectStore(BG_IMAGES_STORE).delete(imageId);
-
             request.onsuccess = () => resolve(true);
-            request.onerror = () => {
-                console.warn('deleteImageBlob failed:', request.error);
-                resolve(false);
-            };
+            request.onerror = () => resolve(false);
         });
     }
 
@@ -363,11 +438,10 @@ document.addEventListener('DOMContentLoaded', () => {
             activePageId,
             nextId
         };
-
         try {
             localStorage.setItem(APP_STATE_KEY, JSON.stringify(state));
         } catch (error) {
-            console.warn('Could not save slideshow state to localStorage.', error);
+            console.warn('Could not save state to localStorage.', error);
         }
     }
 
@@ -376,10 +450,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (savedState) {
             try {
                 const state = JSON.parse(savedState);
-                if (!state || !Array.isArray(state.pages)) {
-                    throw new Error('Saved state is invalid.');
-                }
-
+                if (!state || !Array.isArray(state.pages)) throw new Error('Saved state is invalid.');
                 pages = state.pages.map(normalizePage);
                 activePageId = pages.some(p => p.id === state.activePageId) ? state.activePageId : pages[0]?.id || null;
                 nextId = typeof state.nextId === 'number' && state.nextId > 0
@@ -411,8 +482,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function addPage(shouldSave = true) {
         saveCurrentPageText();
+        const newId = nextId++;
         const newPage = {
-            id: nextId++,
+            id: newId,
+            name: `Page ${newId}`,
             columns: 1,
             texts: ['這是第 1 欄的展示文字。'],
             gridTemplate: '1fr',
@@ -439,7 +512,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function deletePage(pageId) {
         if (pages.length <= 1) {
-            alert("You must have at least one page.");
+            alert("至少需要保留一個頁面！ (You must have at least one page.)");
             return;
         }
         const deletedPage = pages.find(p => p.id === pageId);
@@ -471,6 +544,7 @@ document.addEventListener('DOMContentLoaded', () => {
         inputContainer.style.setProperty('--editor-columns', activePage.columns);
         inputContainer.innerHTML = '';
         updateSlideTextBgToggle(activePage.showSlideTextBg);
+
         for (let i = 0; i < activePage.columns; i++) {
             const textValue = activePage.texts[i] || '';
             const inputBox = document.createElement('div');
@@ -562,17 +636,32 @@ document.addEventListener('DOMContentLoaded', () => {
         renderEditor();
     }
 
-    // --- Event Listeners ---
-    tabManager.addEventListener('page-added', () => addPage());
-    tabManager.addEventListener('page-selected', e => selectPage(e.detail.pageId));
+    // --- Web Component Tab Manager Event Listeners ---
+    tabManager.addEventListener('page-added', () => addPage(true));
+    tabManager.addEventListener('page-selected', e => selectPage(e.detail.pageId, true));
     tabManager.addEventListener('page-deleted', e => deletePage(e.detail.pageId));
 
+    tabManager.addEventListener('page-renamed', (e) => {
+        const page = pages.find(p => p.id === e.detail.pageId);
+        if (page) {
+            page.name = e.detail.newName;
+            saveState();
+        }
+    });
+
+    tabManager.addEventListener('page-reordered', (e) => {
+        const newOrder = e.detail.newOrder;
+        pages = newOrder.map(id => pages.find(p => p.id === id)).filter(Boolean);
+        saveState();
+        renderTabs();
+    });
+
+    // --- Global Controls Event Listeners ---
     toggleControlsBtn.addEventListener('click', () => {
         const isCollapsed = controlsSection.classList.toggle('collapsed');
-        
         toggleControlsBtn.setAttribute('aria-expanded', !isCollapsed);
-        toggleControlsBtn.innerHTML = isCollapsed 
-            ? '展開設定 <span class="toggle-icon">◀</span>' 
+        toggleControlsBtn.innerHTML = isCollapsed
+            ? '展開設定 <span class="toggle-icon">◀</span>'
             : '收起設定 <span class="toggle-icon">▶</span>';
     });
 
@@ -580,14 +669,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (confirm('確定要清空所有頁面嗎？這將會刪除所有內容且無法復原。')) {
             for (const page of pages) {
                 revokePageBgImageUrl(page);
-                if (page.bgImageId) {
-                    await deleteImageBlob(page.bgImageId);
-                }
+                if (page.bgImageId) await deleteImageBlob(page.bgImageId);
             }
             pages = [];
             activePageId = null;
             nextId = 1;
-            addPage(true); 
+            addPage(true);
         }
     });
 
@@ -605,7 +692,7 @@ document.addEventListener('DOMContentLoaded', () => {
             activePage.texts.pop();
         }
         renderEditor();
-        saveState(); 
+        saveState();
     });
 
     function updateColorPickerButtons() {
@@ -634,6 +721,7 @@ document.addEventListener('DOMContentLoaded', () => {
     bgColorPicker.addEventListener('input', handleColorChange);
     textColorPicker.addEventListener('input', handleColorChange);
     bgImagePicker.addEventListener('change', handleBgImageUpload);
+
     slideTextBgToggleBtn.addEventListener('click', () => {
         const activePage = getActivePage();
         if (!activePage) return;
@@ -641,6 +729,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateSlideTextBgToggle(activePage.showSlideTextBg);
         saveState();
     });
+
     fontFamilySelect.addEventListener('change', () => {
         const activePage = getActivePage();
         if (!activePage) return;
@@ -648,6 +737,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateEditorFontFamily();
         saveState();
     });
+
     fontSizeSlider.addEventListener('input', () => {
         const activePage = getActivePage();
         if (!activePage) return;
@@ -655,6 +745,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateEditorFontSize();
         saveState();
     });
+
     inputContainer.addEventListener('input', () => { saveCurrentPageText(); saveState(); });
 
     // --- Resizing Logic ---
@@ -687,7 +778,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const activePage = getActivePage();
         if (activePage) {
             activePage.gridTemplate = inputContainer.style.gridTemplateColumns;
-            saveState(); 
+            saveState();
         }
         document.body.classList.remove('resizing');
         if (activeHandle) activeHandle.classList.remove('active');
@@ -760,7 +851,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let nextIndex = (direction === 'next') ? currentIndex + 1 : currentIndex - 1;
         if (nextIndex >= pages.length) nextIndex = 0;
         if (nextIndex < 0) nextIndex = pages.length - 1;
-        
+
         activePageId = pages[nextIndex].id;
         renderSlideshowPage(getActivePage());
         saveState();
