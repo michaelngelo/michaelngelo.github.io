@@ -550,7 +550,7 @@ document.addEventListener('DOMContentLoaded', () => {
         toggleControlsBtn.setAttribute('aria-expanded', !isCollapsed);
         toggleControlsBtn.innerHTML = isCollapsed 
             ? '<span class="toggle-icon">▶</span> 展開設定' 
-            : '<span class="toggle-icon">▼</span> 收起設定';
+            : '<span class="toggle-icon">◀</span> 收起設定';
     });
 
     clearAllPagesBtn.addEventListener('click', async () => {
