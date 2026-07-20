@@ -6,43 +6,38 @@ class TabManager extends HTMLElement {
       <style>
         :host {
           display: block;
+          max-height: 100%;
         }
         .tabs-container {
           display: flex;
-          align-items: center;
+          flex-direction: column;
+          align-items: stretch;
           gap: 8px;
-          padding: 8px;
+          padding: 12px;
           background: rgba(255, 255, 255, 0.84);
           border: 1px solid rgba(15, 23, 42, 0.08);
-          border-radius: 999px;
-          margin-bottom: 16px;
-          overflow-x: auto;
-          overflow-y: hidden;
-          flex-wrap: nowrap;
-          scrollbar-width: thin;
+          border-radius: 16px;
+          max-height: 100%;
+          overflow-y: auto;
+          overflow-x: hidden;
           box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
-        }
-        .tabs-container::-webkit-scrollbar {
-          height: 8px;
-        }
-        .tabs-container::-webkit-scrollbar-thumb {
-          background: rgba(91, 124, 255, 0.24);
-          border-radius: 999px;
         }
         .tab {
           flex: 0 0 auto;
           min-width: 0;
-          padding: 8px 14px;
+          padding: 12px 14px;
           cursor: pointer;
-          border-radius: 999px;
+          border-radius: 12px;
           background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(248,250,252,0.95));
           border: 1px solid rgba(15, 23, 42, 0.08);
           display: flex;
           align-items: center;
+          justify-content: space-between;
           gap: 8px;
           white-space: nowrap;
           color: #334155;
           font-weight: 600;
+          transition: all 0.2s ease;
         }
         .tab.active {
           background: linear-gradient(135deg, #5b7cff, #4a65d8);
@@ -58,16 +53,45 @@ class TabManager extends HTMLElement {
           padding: 0;
           line-height: 1;
           color: inherit;
+          opacity: 0.6;
+          transition: opacity 0.2s ease;
+        }
+        .delete-page-btn:hover {
+          opacity: 1;
         }
         .add-page-btn {
           flex: 0 0 auto;
-          padding: 8px 12px;
+          padding: 12px;
           font-size: 16px;
           font-weight: bold;
-          border-radius: 999px;
+          border: none;
+          border-radius: 12px;
           background: linear-gradient(135deg, #5b7cff, #4a65d8);
           color: white;
+          cursor: pointer;
           box-shadow: 0 8px 18px rgba(91, 124, 255, 0.22);
+        }
+        
+        /* Mobile Switch to Top Horizontal Bar Row Layout */
+        @media (max-width: 900px) {
+          .tabs-container {
+            flex-direction: row;
+            align-items: center;
+            overflow-x: auto;
+            overflow-y: hidden;
+            flex-wrap: nowrap;
+            scrollbar-width: thin;
+            border-radius: 999px;
+            padding: 8px;
+          }
+          .tab {
+            border-radius: 999px;
+            padding: 8px 14px;
+          }
+          .add-page-btn {
+            border-radius: 999px;
+            padding: 8px 14px;
+          }
         }
       </style>
       <div class="tabs-container" id="tabs-container">
@@ -84,7 +108,6 @@ class TabManager extends HTMLElement {
   }
 
   renderTabs(pages, activePageId) {
-    // Clear existing tabs except for the add button
     while (this.tabsContainer.firstChild && this.tabsContainer.firstChild !== this.addPageBtn) {
         this.tabsContainer.removeChild(this.tabsContainer.firstChild);
     }
@@ -92,7 +115,11 @@ class TabManager extends HTMLElement {
     pages.forEach(page => {
         const tab = document.createElement('div');
         tab.className = 'tab';
-        tab.textContent = `Page ${page.id}`;
+        
+        const labelSpan = document.createElement('span');
+        labelSpan.textContent = `Page ${page.id}`;
+        tab.appendChild(labelSpan);
+        
         tab.dataset.pageId = page.id;
         if (page.id === activePageId) {
             tab.classList.add('active');
@@ -168,10 +195,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function normalizePage(page) {
         return {
             id: typeof page.id === 'number' ? page.id : nextId++,
-            // Change the default fallback from 2 to 1
             columns: Number.isInteger(page.columns) && page.columns > 0 ? page.columns : 1,
-            texts: Array.isArray(page.texts) ? page.texts.map(value => String(value)) : [''], // Update to single empty string or default text
-            // Change the default fallback from 'repeat(2, 1fr)' to '1fr'
+            texts: Array.isArray(page.texts) ? page.texts.map(value => String(value)) : [''],
             gridTemplate: typeof page.gridTemplate === 'string' && page.gridTemplate.trim() ? page.gridTemplate : '1fr',
             bgColor: typeof page.bgColor === 'string' ? page.bgColor : '#111111',
             textColor: typeof page.textColor === 'string' ? page.textColor : '#ffffff',
@@ -382,7 +407,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!activePage) return;
         const textareas = getEditorTextAreas();
         activePage.texts = textareas.map(t => t.value);
-        // saveState() is called by the parent function
     }
 
     function addPage(shouldSave = true) {
@@ -546,31 +570,23 @@ document.addEventListener('DOMContentLoaded', () => {
     toggleControlsBtn.addEventListener('click', () => {
         const isCollapsed = controlsSection.classList.toggle('collapsed');
         
-        // Update button text, icon, and accessibility attribute based on state
         toggleControlsBtn.setAttribute('aria-expanded', !isCollapsed);
         toggleControlsBtn.innerHTML = isCollapsed 
-            ? '<span class="toggle-icon">▶</span> 展開設定' 
-            : '<span class="toggle-icon">◀</span> 收起設定';
+            ? '展開設定 <span class="toggle-icon">◀</span>' 
+            : '收起設定 <span class="toggle-icon">▶</span>';
     });
 
     clearAllPagesBtn.addEventListener('click', async () => {
-        // Show a confirmation dialog to prevent accidental clicks
         if (confirm('確定要清空所有頁面嗎？這將會刪除所有內容且無法復原。')) {
-            
-            // Clean up memory object URLs and IndexedDB images to prevent bloat
             for (const page of pages) {
                 revokePageBgImageUrl(page);
                 if (page.bgImageId) {
                     await deleteImageBlob(page.bgImageId);
                 }
             }
-
-            // Reset the application state
             pages = [];
             activePageId = null;
             nextId = 1;
-            
-            // Generate a fresh, default page and save the state
             addPage(true); 
         }
     });
@@ -742,8 +758,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function changeSlide(direction) {
         const currentIndex = pages.findIndex(p => p.id === activePageId);
         let nextIndex = (direction === 'next') ? currentIndex + 1 : currentIndex - 1;
-        if (nextIndex >= pages.length) nextIndex = 0; // Loop to start
-        if (nextIndex < 0) nextIndex = pages.length - 1; // Loop to end
+        if (nextIndex >= pages.length) nextIndex = 0;
+        if (nextIndex < 0) nextIndex = pages.length - 1;
         
         activePageId = pages[nextIndex].id;
         renderSlideshowPage(getActivePage());
@@ -815,7 +831,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function exitSlideshow() {
         slideshowScreen.style.display = 'none';
         document.exitFullscreen?.();
-        renderApp(); // Sync editor to the last viewed slide
+        renderApp();
     }
 
     async function initApp() {
@@ -825,6 +841,5 @@ document.addEventListener('DOMContentLoaded', () => {
         renderApp();
     }
 
-    // --- Init ---
     initApp();
 });
