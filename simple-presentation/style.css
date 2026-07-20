@@ -60,7 +60,7 @@ body.resizing {
 
 /* 應用程式容器 */
 .container {
-    max-width: 1400px;
+    max-width: 1540px;
     margin-inline: auto;
     flex: 1 1 auto;
     min-width: 0;
@@ -75,7 +75,7 @@ body.resizing {
     border: 1px solid rgba(255, 255, 255, 0.72);
 }
 
-/* 頂部 Header 與 全域按鈕 */
+/* 頂部 Header */
 .app-header {
     display: flex;
     justify-content: space-between;
@@ -125,28 +125,38 @@ body.resizing {
     box-shadow: 0 14px 30px rgba(91, 124, 255, 0.32);
 }
 
+/* Restructured Destructive Action Styling */
+.utility-zone {
+    margin-top: auto;
+    padding-top: 24px;
+    border-top: 1px dashed var(--border-color);
+    display: flex;
+    flex-direction: column;
+}
+
 .clear-all-btn {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
     background: transparent;
-    color: #ef4444;
-    border: 1px solid rgba(239, 68, 68, 0.3);
-    padding: 10px 20px;
-    font-size: 0.95rem;
-    border-radius: 999px;
+    color: #94a3b8;
+    border: none;
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
-    box-shadow: none;
-    font-weight: 600;
+    font-weight: 500;
+    text-decoration: underline;
 }
 
 .clear-all-btn:hover {
-    background: rgba(239, 68, 68, 0.08);
-    border-color: rgba(239, 68, 68, 0.6);
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.05);
 }
 
-/* 主編輯版面結構 */
+/* 主編輯版面結構 (3 Column Configuration) */
 .editor-layout {
     display: flex;
     gap: 24px;
@@ -155,7 +165,14 @@ body.resizing {
     min-height: 0;
 }
 
-/* Sidebar 設定區域 */
+/* Left Sidebar - Navigation */
+.sidebar-nav {
+    flex: 0 0 160px;
+    width: 160px;
+    min-width: 0;
+}
+
+/* Right Sidebar - Controls */
 .sidebar-controls {
     flex: 0 0 320px;
     width: 320px;
@@ -169,11 +186,10 @@ body.resizing {
     max-height: 100%;
     display: flex;
     flex-direction: column;
-    /* Updated transition targets horizontal collapse */
     transition: width 0.4s ease, opacity 0.3s ease, padding 0.4s ease, margin 0.4s ease, border-width 0.4s ease;
 }
 
-/* Javascript Collapse State */
+/* Right-side Collapse Animation Structure */
 .sidebar-controls.collapsed {
     flex: 0 0 0px;
     width: 0;
@@ -205,8 +221,8 @@ body.resizing {
     background: transparent;
     color: var(--muted-color);
     border: 1px solid var(--border-color);
-    padding: 6px 14px;
-    font-size: 0.85rem;
+    padding: 10px 20px;
+    font-size: 0.95rem;
     border-radius: 999px;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -217,13 +233,10 @@ body.resizing {
 .toggle-controls-btn:hover {
     background: rgba(15, 23, 42, 0.05);
     color: var(--text-color);
-    transform: none;
-    box-shadow: none;
 }
 
 .toggle-icon {
     font-size: 0.75rem;
-    transition: transform 0.3s ease;
 }
 
 /* 分組設定樣式 */
@@ -397,17 +410,13 @@ textarea:focus-visible {
     display: inline-block;
 }
 
-/* 工作區 (Tabs 與編輯器) */
+/* 工作區 (Center Main Workspace Column) */
 .workspace {
     flex: 1;
     display: flex;
     flex-direction: column;
     min-width: 0;
     min-height: 0;
-}
-
-#tab-manager {
-    flex: 0 0 auto; 
 }
 
 /* 欄位輸入區域 */
@@ -503,10 +512,15 @@ textarea:focus {
         flex-direction: column;
     }
 
+    .sidebar-nav {
+        width: 100%;
+        flex: auto;
+        margin-bottom: 12px;
+    }
+
     .sidebar-controls {
         width: 100%;
         flex: auto;
-        /* Toggle vertical collapsing on mobile for better UX */
         transition: max-height 0.4s ease, opacity 0.3s ease, padding 0.4s ease;
         max-height: 1500px;
     }
@@ -575,8 +589,7 @@ textarea:focus {
     }
 }
 
-
-/* 幻燈片全螢幕模式 (保持不變) */
+/* 幻燈片全螢幕模式 */
 .slideshow-overlay {
     display: none;
     position: fixed;
@@ -701,7 +714,6 @@ textarea:focus {
     border-radius: 0;
     transition: all 0.3s ease;
     backdrop-filter: none;
-    ;
 }
 
 .slide-nav-btn:hover {

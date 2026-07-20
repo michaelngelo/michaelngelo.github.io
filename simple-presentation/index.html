@@ -18,7 +18,7 @@
 
     <div class="container" id="main-ui">
 
-        <!-- Header with Global Actions -->
+        <!-- Header with Nondestructive Actions -->
         <header class="app-header">
             <div class="branding">
                 <h1>文字幻燈片展示器</h1>
@@ -26,10 +26,7 @@
             </div>
             <div class="global-actions">
                 <button id="toggle-controls-btn" class="toggle-controls-btn" aria-expanded="true">
-                    <span class="toggle-icon">◀</span> 收起設定
-                </button>
-                <button id="clear-all-pages-btn" class="clear-all-btn">
-                    🗑️ 清空所有頁面
+                    收起設定 <span class="toggle-icon">▶</span>
                 </button>
                 <button id="start-btn" class="primary-cta">
                     ▶ 進入幻燈片模式
@@ -37,11 +34,28 @@
             </div>
         </header>
 
-        <!-- Main Workspace Layout -->
+        <!-- Main Workspace Layout: Restructured to 3-Columns -->
         <div class="editor-layout">
 
-            <!-- SIDEBAR: Settings and Controls -->
-            <!-- Note: The class 'controls' is kept so main.js can target it for collapse behavior -->
+            <!-- LEFT SIDEBAR: Slide Navigation Panel -->
+            <aside class="sidebar-nav">
+                <tab-manager id="tab-manager"></tab-manager>
+
+                <div class="utility-zone">
+                    <button id="clear-all-pages-btn" class="clear-all-btn">
+                        🗑️ 清空所有頁面
+                    </button>
+                </div>
+            </aside>
+
+            <!-- CENTER COLUMN: Main Workspace Inputs -->
+            <main class="workspace">
+                <div id="input-container" class="input-grid">
+                    <!-- JS will generate content -->
+                </div>
+            </main>
+
+            <!-- RIGHT SIDEBAR: Settings and Controls -->
             <aside class="sidebar-controls controls" id="controls-section">
                 <div class="controls-header">
                     <h3>設定區</h3>
@@ -148,19 +162,10 @@
                 </div>
             </aside>
 
-            <!-- MAIN WORKSPACE: Tabs and Inputs -->
-            <main class="workspace">
-                <tab-manager id="tab-manager"></tab-manager>
-
-                <div id="input-container" class="input-grid">
-                    <!-- JS will generate content -->
-                </div>
-            </main>
-
         </div>
     </div>
 
-    <!-- Slideshow Overlay (unchanged) -->
+    <!-- Slideshow Overlay -->
     <div id="slideshow-screen" class="slideshow-overlay" style="display: none;">
         <button class="slide-nav-btn" id="prev-slide-btn">&lt;</button>
         <div id="slideshow-render-area" class="slideshow-content"></div>
