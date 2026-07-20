@@ -144,7 +144,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const nextSlideBtn = document.getElementById('next-slide-btn');
     const exitSlideshowBtn = document.getElementById('exit-slideshow-btn');
     const slidePageIndicator = document.getElementById('slide-page-indicator');
-    
+    const toggleControlsBtn = document.getElementById('toggle-controls-btn');
+    const controlsSection = document.querySelector('.controls');
+    const clearAllPagesBtn = document.getElementById('clear-all-pages-btn');
+
     const APP_STATE_KEY = 'textSlideshowState';
     const DEFAULT_FONT_FAMILY = '"Noto Serif HK", serif';
     const MAX_IMAGE_STORAGE_BYTES = 150 * 1024;
@@ -165,9 +168,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function normalizePage(page) {
         return {
             id: typeof page.id === 'number' ? page.id : nextId++,
-            columns: Number.isInteger(page.columns) && page.columns > 0 ? page.columns : 2,
-            texts: Array.isArray(page.texts) ? page.texts.map(value => String(value)) : ['',''],
-            gridTemplate: typeof page.gridTemplate === 'string' && page.gridTemplate.trim() ? page.gridTemplate : 'repeat(2, 1fr)',
+            // Change the default fallback from 2 to 1
+            columns: Number.isInteger(page.columns) && page.columns > 0 ? page.columns : 1,
+            texts: Array.isArray(page.texts) ? page.texts.map(value => String(value)) : [''], // Update to single empty string or default text
+            // Change the default fallback from 'repeat(2, 1fr)' to '1fr'
+            gridTemplate: typeof page.gridTemplate === 'string' && page.gridTemplate.trim() ? page.gridTemplate : '1fr',
             bgColor: typeof page.bgColor === 'string' ? page.bgColor : '#111111',
             textColor: typeof page.textColor === 'string' ? page.textColor : '#ffffff',
             fontFamily: typeof page.fontFamily === 'string' ? page.fontFamily : DEFAULT_FONT_FAMILY,
@@ -384,9 +389,9 @@ document.addEventListener('DOMContentLoaded', () => {
         saveCurrentPageText();
         const newPage = {
             id: nextId++,
-            columns: 2,
-            texts: ['這是第 1 欄的展示文字。', '這是第 2 欄的展示文字。'],
-            gridTemplate: 'repeat(2, 1fr)',
+            columns: 1,
+            texts: ['這是第 1 欄的展示文字。'],
+            gridTemplate: '1fr',
             bgColor: '#111111',
             textColor: '#ffffff',
             fontFamily: DEFAULT_FONT_FAMILY,
@@ -537,6 +542,38 @@ document.addEventListener('DOMContentLoaded', () => {
     tabManager.addEventListener('page-added', () => addPage());
     tabManager.addEventListener('page-selected', e => selectPage(e.detail.pageId));
     tabManager.addEventListener('page-deleted', e => deletePage(e.detail.pageId));
+
+    toggleControlsBtn.addEventListener('click', () => {
+        const isCollapsed = controlsSection.classList.toggle('collapsed');
+        
+        // Update button text, icon, and accessibility attribute based on state
+        toggleControlsBtn.setAttribute('aria-expanded', !isCollapsed);
+        toggleControlsBtn.innerHTML = isCollapsed 
+            ? '<span class="toggle-icon">▶</span> 展開設定' 
+            : '<span class="toggle-icon">▼</span> 收起設定';
+    });
+
+    clearAllPagesBtn.addEventListener('click', async () => {
+        // Show a confirmation dialog to prevent accidental clicks
+        if (confirm('確定要清空所有頁面嗎？這將會刪除所有內容且無法復原。')) {
+            
+            // Clean up memory object URLs and IndexedDB images to prevent bloat
+            for (const page of pages) {
+                revokePageBgImageUrl(page);
+                if (page.bgImageId) {
+                    await deleteImageBlob(page.bgImageId);
+                }
+            }
+
+            // Reset the application state
+            pages = [];
+            activePageId = null;
+            nextId = 1;
+            
+            // Generate a fresh, default page and save the state
+            addPage(true); 
+        }
+    });
 
     columnSelect.addEventListener('change', () => {
         const activePage = getActivePage();

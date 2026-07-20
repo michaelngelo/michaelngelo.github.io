@@ -20,7 +20,17 @@
 
         <tab-manager id="tab-manager"></tab-manager>
 
-        <div class="controls">
+        <div class="controls-header">
+            <button id="clear-all-pages-btn" class="clear-all-btn">
+                🗑️ 清空所有頁面
+            </button>
+            <button id="toggle-controls-btn" class="toggle-controls-btn" aria-expanded="true">
+                <span class="toggle-icon">▼</span> 收起設定
+            </button>
+        </div>
+
+
+        <div class="controls" id="controls-section">
             <div class="control-group">
                 <label for="column-select">欄位數量:</label>
                 <select id="column-select">
