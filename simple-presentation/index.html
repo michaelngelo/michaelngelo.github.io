@@ -1,124 +1,166 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>文字幻燈片展示器</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&family=LXGW+WenKai+TC:wght@400;700&family=Liu+Jian+Mao+Cao&family=Long+Cang&family=M+PLUS+Rounded+1c:wght@400;500;700&family=Ma+Shan+Zheng&family=Noto+Sans+HK:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+HK:wght@400;500;700&family=Noto+Serif+TC:wght@400;500;700&family=Yusei+Magic&family=ZCOOL+KuaiLe&family=ZCOOL+QingKe+HuangYou&family=ZCOOL+Xiaowei&family=Zhi+Mang+Xing&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&family=LXGW+WenKai+TC:wght@400;700&family=Liu+Jian+Mao+Cao&family=Long+Cang&family=M+PLUS+Rounded+1c:wght@400;500;700&family=Ma+Shan+Zheng&family=Noto+Sans+HK:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+HK:wght@400;500;700&family=Noto+Serif+TC:wght@400;500;700&family=Yusei+Magic&family=ZCOOL+KuaiLe&family=ZCOOL+QingKe+HuangYou&family=ZCOOL+Xiaowei&family=Zhi+Mang+Xing&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <script src="main.js" defer></script>
 </head>
+
 <body>
 
     <div class="container" id="main-ui">
-        <header>
-            <h1>文字幻燈片展示器</h1>
-            <p class="header-subtitle">整理靈感，快速切換成沉浸式展示</p>
+
+        <!-- Header with Global Actions -->
+        <header class="app-header">
+            <div class="branding">
+                <h1>文字幻燈片展示器</h1>
+                <p class="header-subtitle">整理靈感，快速切換成沉浸式展示</p>
+            </div>
+            <div class="global-actions">
+                <button id="toggle-controls-btn" class="toggle-controls-btn" aria-expanded="true">
+                    <span class="toggle-icon">◀</span> 收起設定
+                </button>
+                <button id="clear-all-pages-btn" class="clear-all-btn">
+                    🗑️ 清空所有頁面
+                </button>
+                <button id="start-btn" class="primary-cta">
+                    ▶ 進入幻燈片模式
+                </button>
+            </div>
         </header>
 
-        <tab-manager id="tab-manager"></tab-manager>
+        <!-- Main Workspace Layout -->
+        <div class="editor-layout">
 
-        <div class="controls-header">
-            <button id="clear-all-pages-btn" class="clear-all-btn">
-                🗑️ 清空所有頁面
-            </button>
-            <button id="toggle-controls-btn" class="toggle-controls-btn" aria-expanded="true">
-                <span class="toggle-icon">▼</span> 收起設定
-            </button>
-        </div>
-
-
-        <div class="controls" id="controls-section">
-            <div class="control-group">
-                <label for="column-select">欄位數量:</label>
-                <select id="column-select">
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                </select>
-            </div>
-            <div class="control-group control-group--range">
-                <label for="font-size-slider">字體大小:</label>
-                <!-- Updated min, max, step, and value for vw -->
-                <input type="range" id="font-size-slider" min="1" max="20" step="0.5" value="4">
-                <span id="font-size-value">4.0 vw</span>
-            </div>
-            <div class="control-group">
-                <label for="font-family-select">字體樣式:</label>
-                <select id="font-family-select">
-                    <optgroup label="線上字型 - 襯線/黑體 (Standard)">
-                        <option value='&quot;Noto Serif HK&quot;, serif' selected>思源宋體 HK (Noto Serif HK)</option>
-                        <option value='&quot;Noto Sans HK&quot;, sans-serif'>思源黑體 HK (Noto Sans HK)</option>
-                        <option value='&quot;Noto Serif TC&quot;, serif'>思源宋體 TC (Noto Serif TC)</option>
-                        <option value='&quot;Noto Sans TC&quot;, sans-serif'>思源黑體 TC (Noto Sans TC)</option>
-                        <option value='&quot;M PLUS Rounded 1c&quot;, sans-serif'>圓體 (M PLUS Rounded 1c)</option>
-                    </optgroup>
-                    <optgroup label="線上字型 - 楷體/手寫 (Handwriting)">
-                        <option value='&quot;LXGW WenKai TC&quot;, cursive'>霞鶩文楷 (LXGW WenKai TC)</option>
-                        <option value='&quot;Klee One&quot;, cursive'>日系硬筆楷書 (Klee One)</option>
-                        <option value='&quot;Yusei Magic&quot;, sans-serif'>游星魔法手寫 (Yusei Magic)</option>
-                    </optgroup>
-                    <optgroup label="線上字型 - 毛筆/行草 (Brush/Cursive)">
-                        <option value='&quot;ZCOOL Xiaowei&quot;, serif'>站酷小薇 (ZCOOL Xiaowei)</option>
-                        <option value='&quot;Ma Shan Zheng&quot;, cursive'>馬善政毛筆楷體 (Ma Shan Zheng)</option>
-                        <option value='&quot;Zhi Mang Xing&quot;, cursive'>志莽毛筆行書 (Zhi Mang Xing)</option>
-                        <option value='&quot;Long Cang&quot;, cursive'>龍藏體 (Long Cang)</option>
-                        <option value='&quot;Liu Jian Mao Cao&quot;, cursive'>柳建毛草 (Liu Jian Mao Cao)</option>
-                    </optgroup>
-                    <optgroup label="線上字型 - 藝術/趣味 (Display)">
-                        <option value='&quot;ZCOOL KuaiLe&quot;, display'>站酷快樂體 (ZCOOL KuaiLe)</option>
-                        <option value='&quot;ZCOOL QingKe HuangYou&quot;, display'>站酷慶科黃油體 (ZCOOL QingKe HuangYou)</option>
-                    </optgroup>
-                    <optgroup label="系統字型 (System Fonts)">
-                        <option value='system-ui, -apple-system, BlinkMacSystemFont, &quot;PingFang TC&quot;, &quot;Microsoft JhengHei&quot;, sans-serif'>系統預設黑體 (System Default)</option>
-                        <option value='&quot;BiauKai&quot;, &quot;DFKai-SB&quot;, serif'>標楷體 (BiauKai)</option>
-                        <option value='&quot;MingLiU&quot;, &quot;PMingLiU&quot;, serif'>細明體 (MingLiU)</option>
-                    </optgroup>
-                </select>
-            </div>
-            <div class="control-group control-group--color-pair">
-                <div class="color-picker-block">
-                    <label for="bg-color-picker">背景顏色:</label>
-                    <button type="button" class="color-picker-btn" id="bg-color-picker-btn" data-color-input="bg-color-picker" aria-label="選擇背景顏色">
-                        <span class="color-swatch" id="bg-color-swatch"></span>
-                        <span class="color-picker-label">選擇</span>
-                    </button>
-                    <input type="color" id="bg-color-picker" value="#111111" hidden>
+            <!-- SIDEBAR: Settings and Controls -->
+            <!-- Note: The class 'controls' is kept so main.js can target it for collapse behavior -->
+            <aside class="sidebar-controls controls" id="controls-section">
+                <div class="controls-header">
+                    <h3>設定區</h3>
                 </div>
-                <div class="color-picker-block">
-                    <label for="text-color-picker">文字顏色:</label>
-                    <button type="button" class="color-picker-btn" id="text-color-picker-btn" data-color-input="text-color-picker" aria-label="選擇文字顏色">
-                        <span class="color-swatch" id="text-color-swatch"></span>
-                        <span class="color-picker-label">選擇</span>
-                    </button>
-                    <input type="color" id="text-color-picker" value="#ffffff" hidden>
-                </div>
-            </div>
-            <div class="control-group">
-                <label for="bg-image-picker">背景圖片:</label>
-                <button type="button" class="color-picker-btn" id="bg-image-picker-btn" aria-label="選擇背景圖片">
-                    <span class="color-picker-label" id="bg-image-picker-label">選擇</span>
-                </button>
-                <button type="button" class="clear-image-btn" id="clear-bg-image-btn" aria-label="清除背景圖片">清除</button>
-                <div class="bg-image-preview" id="bg-image-preview" aria-hidden="true"></div>
-                <input type="file" id="bg-image-picker" accept="image/*" hidden>
-            </div>
-            <div class="control-group">
-                <label>文字背景:</label>
-                <button type="button" class="toggle-btn" id="slide-text-bg-toggle-btn" aria-pressed="false">關閉</button>
-            </div>
-            <div class="control-group">
-                <button id="start-btn">進入幻燈片模式</button>
-            </div>
-        </div>
 
-        <div id="input-container" class="input-grid">
-            <!-- JS will generate content -->
+                <div class="settings-group">
+                    <h4>版面與文字</h4>
+                    <div class="control-group">
+                        <label for="column-select">欄位數量:</label>
+                        <select id="column-select">
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="font-family-select">字體樣式:</label>
+                        <select id="font-family-select">
+                            <optgroup label="線上字型 - 襯線/黑體 (Standard)">
+                                <option value='&quot;Noto Serif HK&quot;, serif' selected>思源宋體 HK (Noto Serif HK)
+                                </option>
+                                <option value='&quot;Noto Sans HK&quot;, sans-serif'>思源黑體 HK (Noto Sans HK)</option>
+                                <option value='&quot;Noto Serif TC&quot;, serif'>思源宋體 TC (Noto Serif TC)</option>
+                                <option value='&quot;Noto Sans TC&quot;, sans-serif'>思源黑體 TC (Noto Sans TC)</option>
+                                <option value='&quot;M PLUS Rounded 1c&quot;, sans-serif'>圓體 (M PLUS Rounded 1c)
+                                </option>
+                            </optgroup>
+                            <optgroup label="線上字型 - 楷體/手寫 (Handwriting)">
+                                <option value='&quot;LXGW WenKai TC&quot;, cursive'>霞鶩文楷 (LXGW WenKai TC)</option>
+                                <option value='&quot;Klee One&quot;, cursive'>日系硬筆楷書 (Klee One)</option>
+                                <option value='&quot;Yusei Magic&quot;, sans-serif'>游星魔法手寫 (Yusei Magic)</option>
+                            </optgroup>
+                            <optgroup label="線上字型 - 毛筆/行草 (Brush/Cursive)">
+                                <option value='&quot;ZCOOL Xiaowei&quot;, serif'>站酷小薇 (ZCOOL Xiaowei)</option>
+                                <option value='&quot;Ma Shan Zheng&quot;, cursive'>馬善政毛筆楷體 (Ma Shan Zheng)</option>
+                                <option value='&quot;Zhi Mang Xing&quot;, cursive'>志莽毛筆行書 (Zhi Mang Xing)</option>
+                                <option value='&quot;Long Cang&quot;, cursive'>龍藏體 (Long Cang)</option>
+                                <option value='&quot;Liu Jian Mao Cao&quot;, cursive'>柳建毛草 (Liu Jian Mao Cao)</option>
+                            </optgroup>
+                            <optgroup label="線上字型 - 藝術/趣味 (Display)">
+                                <option value='&quot;ZCOOL KuaiLe&quot;, display'>站酷快樂體 (ZCOOL KuaiLe)</option>
+                                <option value='&quot;ZCOOL QingKe HuangYou&quot;, display'>站酷慶科黃油體 (ZCOOL QingKe
+                                    HuangYou)</option>
+                            </optgroup>
+                            <optgroup label="系統字型 (System Fonts)">
+                                <option
+                                    value='system-ui, -apple-system, BlinkMacSystemFont, &quot;PingFang TC&quot;, &quot;Microsoft JhengHei&quot;, sans-serif'>
+                                    系統預設黑體 (System Default)</option>
+                                <option value='&quot;BiauKai&quot;, &quot;DFKai-SB&quot;, serif'>標楷體 (BiauKai)</option>
+                                <option value='&quot;MingLiU&quot;, &quot;PMingLiU&quot;, serif'>細明體 (MingLiU)</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    <div class="control-group control-group--range">
+                        <label for="font-size-slider">字體大小:</label>
+                        <div class="range-wrapper">
+                            <input type="range" id="font-size-slider" min="1" max="20" step="0.5" value="4">
+                            <span id="font-size-value">4.0 vw</span>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="divider">
+
+                <div class="settings-group">
+                    <h4>背景與顏色</h4>
+                    <div class="control-group control-group--color-pair">
+                        <div class="color-picker-block">
+                            <label for="bg-color-picker">背景顏色:</label>
+                            <button type="button" class="color-picker-btn" id="bg-color-picker-btn"
+                                data-color-input="bg-color-picker" aria-label="選擇背景顏色">
+                                <span class="color-swatch" id="bg-color-swatch"></span>
+                                <span class="color-picker-label">選擇</span>
+                            </button>
+                            <input type="color" id="bg-color-picker" value="#111111" hidden>
+                        </div>
+                        <div class="color-picker-block">
+                            <label for="text-color-picker">文字顏色:</label>
+                            <button type="button" class="color-picker-btn" id="text-color-picker-btn"
+                                data-color-input="text-color-picker" aria-label="選擇文字顏色">
+                                <span class="color-swatch" id="text-color-swatch"></span>
+                                <span class="color-picker-label">選擇</span>
+                            </button>
+                            <input type="color" id="text-color-picker" value="#ffffff" hidden>
+                        </div>
+                    </div>
+                    <div class="control-group control-group--bg-image">
+                        <label for="bg-image-picker">背景圖片:</label>
+                        <div class="bg-image-actions">
+                            <button type="button" class="color-picker-btn" id="bg-image-picker-btn" aria-label="選擇背景圖片">
+                                <span class="color-picker-label" id="bg-image-picker-label">選擇</span>
+                            </button>
+                            <button type="button" class="clear-image-btn" id="clear-bg-image-btn"
+                                aria-label="清除背景圖片">清除</button>
+                        </div>
+                        <div class="bg-image-preview" id="bg-image-preview" aria-hidden="true"></div>
+                        <input type="file" id="bg-image-picker" accept="image/*" hidden>
+                    </div>
+                    <div class="control-group">
+                        <label>文字背景:</label>
+                        <button type="button" class="toggle-btn" id="slide-text-bg-toggle-btn"
+                            aria-pressed="false">關閉</button>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- MAIN WORKSPACE: Tabs and Inputs -->
+            <main class="workspace">
+                <tab-manager id="tab-manager"></tab-manager>
+
+                <div id="input-container" class="input-grid">
+                    <!-- JS will generate content -->
+                </div>
+            </main>
+
         </div>
     </div>
 
+    <!-- Slideshow Overlay (unchanged) -->
     <div id="slideshow-screen" class="slideshow-overlay" style="display: none;">
         <button class="slide-nav-btn" id="prev-slide-btn">&lt;</button>
         <div id="slideshow-render-area" class="slideshow-content"></div>
@@ -130,4 +172,5 @@
     </div>
 
 </body>
+
 </html>
