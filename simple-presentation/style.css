@@ -103,6 +103,75 @@ header h1 {
     background: rgba(255, 255, 255, 0.88);
     border: 1px solid var(--border-color);
     box-shadow: 0 10px 35px rgba(15, 23, 42, 0.06);
+    /* Add these lines for the animation */
+    max-height: 1000px;
+    overflow: hidden;
+    transition: max-height 0.4s ease, opacity 0.3s ease, padding 0.4s ease, margin 0.4s ease, border-width 0.4s ease;
+}
+
+.controls.collapsed {
+    max-height: 0;
+    opacity: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-bottom: 0;
+    border-width: 0;
+}
+
+.controls-header {
+    display: flex;
+    justify-content: space-between; /* This pushes the buttons to opposite ends */
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.toggle-controls-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    color: var(--muted-color);
+    border: 1px solid var(--border-color);
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: none;
+    font-weight: 600;
+}
+
+.toggle-controls-btn:hover {
+    background: rgba(15, 23, 42, 0.05);
+    color: var(--text-color);
+    transform: none;
+    box-shadow: none;
+}
+
+.toggle-icon {
+    font-size: 0.75rem;
+    transition: transform 0.3s ease;
+}
+
+.clear-all-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    color: #ef4444; /* Danger red */
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: none;
+    font-weight: 600;
+}
+
+.clear-all-btn:hover {
+    background: rgba(239, 68, 68, 0.08);
+    border-color: rgba(239, 68, 68, 0.6);
 }
 
 .control-group {
@@ -383,7 +452,7 @@ input[type="range"] {
     max-width: 100%;
     overflow-x: hidden;
     padding-top: 6px;
-    grid-template-columns: repeat(var(--editor-columns, 2), minmax(0, 1fr));
+    grid-template-columns: repeat(var(--editor-columns, 1), minmax(0, 1fr));
 }
 
 .input-box {
@@ -485,9 +554,9 @@ textarea:focus {
     gap: 40px;
     width: 100%;
     height: 100%;
-    max-width: 1400px;
+    max-width: 1600px;
     margin-inline: auto;
-    padding-inline: clamp(24px, 5vw, 56px);
+    padding-inline: clamp(16px, 3vw, 32px);
 }
 
 .slide-column {
@@ -571,24 +640,29 @@ textarea:focus {
 }
 
 .slide-nav-btn {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
+    /* Make background completely transparent by default */
+    background: transparent; 
+    /* Slightly dim the arrow icon by default so it's not glaring */
+    color: rgba(255, 255, 255, 0.4);
     border: none;
     font-size: 3rem;
     cursor: pointer;
-    padding: 20px;
+    padding: 0 20px;
     z-index: 10000;
     height: 100%;
     display: flex;
     align-items: center;
     border-radius: 0;
-    transition: background 0.2s ease, transform 0.2s ease;
-    backdrop-filter: blur(8px);
+    transition: all 0.3s ease;
+    backdrop-filter: none;;
 }
 
 .slide-nav-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: translateY(-1px);
+    /* Show the background and blur only on hover */
+    background: rgba(255, 255, 255, 0.1);
+    color: white; /* Brighten the arrow on hover */
+    backdrop-filter: blur(8px);
+    transform: none;
 }
 
 #prev-slide-btn {
