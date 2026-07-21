@@ -525,7 +525,7 @@ textarea:focus {
 
     .sidebar-nav {
         width: 100%;
-        flex: auto;
+        flex: 0 0 auto;
         margin-bottom: 0;
         flex-direction: row;
         align-items: center;
