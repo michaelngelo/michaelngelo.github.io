@@ -132,7 +132,6 @@ class TabManager extends HTMLElement {
             this.dispatchEvent(new CustomEvent('page-added'));
         });
 
-        // Handle Drop Zone Logic
         this.tabsContainer.addEventListener('dragover', (e) => {
             e.preventDefault();
             const draggingTab = this.tabsContainer.querySelector('.dragging');
@@ -885,7 +884,7 @@ document.addEventListener('DOMContentLoaded', () => {
     exitSlideshowBtn.addEventListener('click', exitSlideshow);
     slideshowScreen.addEventListener('touchstart', handleSlideshowTouchStart, { passive: true });
     slideshowScreen.addEventListener('touchmove', handleSlideshowTouchMove, { passive: true });
-    slideshowScreen.addEventListener('touched', handleSlideshowTouchEnd);
+    slideshowScreen.addEventListener('touchend', handleSlideshowTouchEnd);
 
     document.addEventListener('keydown', (e) => {
         if (slideshowScreen.style.display === 'flex') {
