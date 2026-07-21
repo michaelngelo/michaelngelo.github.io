@@ -73,6 +73,25 @@
         .delete-btn { color: #ff4b4b; background: none; border: none; font-weight: bold; cursor: pointer; padding: 0 4px; font-size: 1.1rem; }
         .delete-btn:hover { text-shadow: 0 0 5px red; }
 
+        /* Drag & Drop Styling */
+        .drag-handle {
+            cursor: grab;
+            color: #666;
+            font-size: 1.1rem;
+            padding-right: 8px;
+            user-select: none;
+        }
+        .drag-handle:active { cursor: grabbing; }
+
+        .song-item.dragging {
+            opacity: 0.4;
+            border: 2px dashed var(--accent);
+        }
+
+        .song-item.drag-over {
+            border-top: 2px solid var(--accent);
+        }
+
         .editor-pane { flex: 1; display: flex; flex-direction: column; border-right: 1px solid #333; background: var(--bg-dark); }
         .editor-header { padding: 10px 16px; background: #1a1a1a; font-size: 0.85rem; color: var(--text-muted); border-bottom: 1px solid #333; }
         textarea {
@@ -212,15 +231,27 @@
                 localStorage.setItem('verseflow_setlist', JSON.stringify(setlist));
             }
 
+            let draggedIndex = null;
+
             function renderSetlist() {
                 setlistContainer.innerHTML = '';
-                setlist.forEach(song => {
+                setlist.forEach((song, index) => {
                     const el = document.createElement('div');
                     el.className = `song-item ${song.id === activeSongId ? 'active' : ''}`;
-                    
+                    el.draggable = true; // Enable native HTML5 dragging
+                    el.dataset.index = index;
+
+                    // Grip Handle
+                    const handle = document.createElement('span');
+                    handle.className = 'drag-handle';
+                    handle.innerHTML = '⋮⋮';
+
+                    // Title
                     const titleSpan = document.createElement('span');
                     titleSpan.textContent = song.title || "Untitled";
-                    
+                    titleSpan.style.flex = '1';
+
+                    // Delete Button
                     const delBtn = document.createElement('button');
                     delBtn.className = 'delete-btn';
                     delBtn.innerHTML = '×';
@@ -235,9 +266,47 @@
                         }
                     };
 
+                    // --- DRAG AND DROP EVENTS ---
+                    el.addEventListener('dragstart', (e) => {
+                        draggedIndex = index;
+                        el.classList.add('dragging');
+                        e.dataTransfer.effectAllowed = 'move';
+                    });
+
+                    el.addEventListener('dragend', () => {
+                        el.classList.remove('dragging');
+                        document.querySelectorAll('.song-item').forEach(i => i.classList.remove('drag-over'));
+                    });
+
+                    el.addEventListener('dragover', (e) => {
+                        e.preventDefault(); // Necessary to allow drop
+                        el.classList.add('drag-over');
+                    });
+
+                    el.addEventListener('dragleave', () => {
+                        el.classList.remove('drag-over');
+                    });
+
+                    el.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        el.classList.remove('drag-over');
+                        
+                        const targetIndex = index;
+                        if (draggedIndex === null || draggedIndex === targetIndex) return;
+
+                        // Reorder the array in memory
+                        const draggedSong = setlist.splice(draggedIndex, 1)[0];
+                        setlist.splice(targetIndex, 0, draggedSong);
+
+                        saveSetlist();
+                        renderSetlist();
+                    });
+
+                    el.appendChild(handle);
                     el.appendChild(titleSpan);
                     el.appendChild(delBtn);
                     el.onclick = () => loadSong(song.id);
+                    
                     setlistContainer.appendChild(el);
                 });
             }
