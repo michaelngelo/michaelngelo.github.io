@@ -105,11 +105,18 @@ class TabManager extends HTMLElement {
           .tabs-container {
             flex-direction: row;
             overflow-x: auto;
-            border-radius: 999px;
+            border-radius: 12px;
             padding: 8px;
+            gap: 6px;
           }
-          .tab, .add-page-btn {
-            border-radius: 999px;
+          .tab {
+            padding: 8px 12px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+          }
+          .add-page-btn {
+            border-radius: 10px;
+            padding: 8px 14px;
           }
         }
       </style>
@@ -134,7 +141,6 @@ class TabManager extends HTMLElement {
             const siblings = [...this.tabsContainer.querySelectorAll('.tab:not(.dragging)')];
             const nextSibling = siblings.find(sibling => {
                 const box = sibling.getBoundingClientRect();
-                // Check if vertical or horizontal layout
                 const isHorizontal = window.innerWidth <= 900;
                 if (isHorizontal) {
                     return e.clientX <= box.left + box.width / 2;
@@ -173,20 +179,17 @@ class TabManager extends HTMLElement {
                 tab.classList.add('active');
             }
 
-            // Editable Label
             const labelSpan = document.createElement('span');
             labelSpan.className = 'tab-label';
             labelSpan.textContent = page.name || `Page ${page.id}`;
             labelSpan.contentEditable = "true";
             labelSpan.spellcheck = false;
 
-            // Prevent dragging when clicking into text
             labelSpan.addEventListener('mousedown', (e) => e.stopPropagation());
 
-            // Save name on blur or enter
             const saveName = () => {
                 const newName = labelSpan.textContent.trim() || `Page ${page.id}`;
-                labelSpan.textContent = newName; // Reset if empty
+                labelSpan.textContent = newName;
                 this.dispatchEvent(new CustomEvent('page-renamed', {
                     detail: { pageId: page.id, newName }
                 }));
@@ -200,10 +203,8 @@ class TabManager extends HTMLElement {
                 }
             });
 
-            // Drag events
             tab.addEventListener('dragstart', (e) => {
                 tab.classList.add('dragging');
-                // Required for Firefox
                 e.dataTransfer.setData('text/plain', page.id);
                 e.dataTransfer.effectAllowed = 'move';
             });
@@ -212,7 +213,6 @@ class TabManager extends HTMLElement {
                 tab.classList.remove('dragging');
             });
 
-            // Delete button
             const deleteBtn = document.createElement('button');
             deleteBtn.className = 'delete-page-btn';
             deleteBtn.textContent = '×';
@@ -321,11 +321,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function openDatabase() {
-        if (!isIndexedDBSupported) {
-            console.warn('IndexedDB is not available in this browser.');
-            return null;
-        }
-
+        if (!isIndexedDBSupported) return null;
         return new Promise(resolve => {
             const request = indexedDB.open(DB_NAME, DB_VERSION);
             request.onupgradeneeded = event => {
@@ -335,10 +331,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             };
             request.onsuccess = event => resolve(event.target.result);
-            request.onerror = event => {
-                console.warn('IndexedDB open failed:', event.target.error);
-                resolve(null);
-            };
+            request.onerror = () => resolve(null);
         });
     }
 
@@ -431,7 +424,6 @@ document.addEventListener('DOMContentLoaded', () => {
         await Promise.all(pages.map(hydratePageBgImage));
     }
 
-    // --- State Management ---
     function saveState() {
         const state = {
             pages: getPersistablePages(),
@@ -457,7 +449,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     ? state.nextId
                     : Math.max(0, ...pages.map(p => p.id)) + 1;
             } catch (error) {
-                console.warn('Failed to load saved state:', error);
                 localStorage.removeItem(APP_STATE_KEY);
                 pages = [];
                 activePageId = null;
@@ -512,7 +503,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function deletePage(pageId) {
         if (pages.length <= 1) {
-            alert("至少需要保留一個頁面！ (You must have at least one page.)");
+            alert("至少需要保留一個頁面！");
             return;
         }
         const deletedPage = pages.find(p => p.id === pageId);
@@ -601,13 +592,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 await cleanupImageIdIfUnused(previousBgImageId);
             } else {
                 activePage.bgImage = await fileToDataURL(file);
-                alert('圖片已加載，但無法儲存到 IndexedDB，刷新後不保留。');
             }
         } else {
             activePage.bgImage = await fileToDataURL(file);
-            if (file.size > MAX_IMAGE_STORAGE_BYTES) {
-                alert('圖片過大，將只在目前工作階段顯示，重新整理後不會保留。');
-            }
         }
 
         saveState();
@@ -636,7 +623,6 @@ document.addEventListener('DOMContentLoaded', () => {
         renderEditor();
     }
 
-    // --- Web Component Tab Manager Event Listeners ---
     tabManager.addEventListener('page-added', () => addPage(true));
     tabManager.addEventListener('page-selected', e => selectPage(e.detail.pageId, true));
     tabManager.addEventListener('page-deleted', e => deletePage(e.detail.pageId));
@@ -656,13 +642,11 @@ document.addEventListener('DOMContentLoaded', () => {
         renderTabs();
     });
 
-    // --- Global Controls Event Listeners ---
     toggleControlsBtn.addEventListener('click', () => {
         const isCollapsed = controlsSection.classList.toggle('collapsed');
         toggleControlsBtn.setAttribute('aria-expanded', !isCollapsed);
-        toggleControlsBtn.innerHTML = isCollapsed
-            ? '展開設定 <span class="toggle-icon">◀</span>'
-            : '收起設定 <span class="toggle-icon">▶</span>';
+        const icon = toggleControlsBtn.querySelector('.toggle-icon');
+        if (icon) icon.textContent = isCollapsed ? '▲' : '▼';
     });
 
     clearAllPagesBtn.addEventListener('click', async () => {
@@ -748,7 +732,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     inputContainer.addEventListener('input', () => { saveCurrentPageText(); saveState(); });
 
-    // --- Resizing Logic ---
     let activeHandle = null, initialX, initialWidths, handleIndex;
     function initEditorResize(e) {
         e.preventDefault();
@@ -787,7 +770,6 @@ document.addEventListener('DOMContentLoaded', () => {
         window.removeEventListener('mouseup', stopEditorResize);
     }
 
-    // --- Slideshow & Style Logic ---
     function updateEditorColors() {
         const activePage = getActivePage();
         if (!activePage) return;
@@ -857,10 +839,7 @@ document.addEventListener('DOMContentLoaded', () => {
         saveState();
     }
 
-    let touchStartX = 0;
-    let touchStartY = 0;
-    let touchEndX = 0;
-    let touchEndY = 0;
+    let touchStartX = 0, touchStartY = 0, touchEndX = 0, touchEndY = 0;
 
     function handleSlideshowTouchStart(event) {
         if (event.touches.length !== 1) return;
@@ -884,11 +863,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const swipeThreshold = 40;
 
         if (absDeltaX > swipeThreshold && absDeltaX > absDeltaY) {
-            if (deltaX > 0) {
-                changeSlide('prev');
-            } else {
-                changeSlide('next');
-            }
+            if (deltaX > 0) changeSlide('prev');
+            else changeSlide('next');
         }
     }
 
@@ -909,7 +885,7 @@ document.addEventListener('DOMContentLoaded', () => {
     exitSlideshowBtn.addEventListener('click', exitSlideshow);
     slideshowScreen.addEventListener('touchstart', handleSlideshowTouchStart, { passive: true });
     slideshowScreen.addEventListener('touchmove', handleSlideshowTouchMove, { passive: true });
-    slideshowScreen.addEventListener('touchend', handleSlideshowTouchEnd);
+    slideshowScreen.addEventListener('touched', handleSlideshowTouchEnd);
 
     document.addEventListener('keydown', (e) => {
         if (slideshowScreen.style.display === 'flex') {

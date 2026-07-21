@@ -75,54 +75,48 @@ body.resizing {
     border: 1px solid rgba(255, 255, 255, 0.72);
 }
 
-/* 頂部 Header */
+/* 頂部 Header - Compact Version */
 .app-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
-    gap: 20px;
-    margin-bottom: 24px;
-    padding: 8px 8px 16px;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding: 4px 4px 12px;
     border-bottom: 1px solid var(--border-color);
 }
 
 .branding h1 {
-    margin: 0 0 8px;
-    font-size: clamp(1.8rem, 3vw, 2.5rem);
+    margin: 0;
+    font-size: clamp(1.2rem, 2.2vw, 1.8rem);
     font-weight: 800;
     letter-spacing: 0.02em;
     color: #0f172a;
 }
 
-.header-subtitle {
-    margin: 0;
-    color: var(--muted-color);
-    font-size: 0.98rem;
-}
-
 .global-actions {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
 }
 
 .primary-cta {
     background: linear-gradient(135deg, var(--primary-color), var(--primary-dark-color));
     color: white;
     border: none;
-    padding: 12px 24px;
-    font-size: 1rem;
+    padding: 8px 16px;
+    font-size: 0.9rem;
     font-weight: 700;
     border-radius: 999px;
     cursor: pointer;
-    box-shadow: 0 10px 25px rgba(91, 124, 255, 0.24);
+    box-shadow: 0 6px 18px rgba(91, 124, 255, 0.22);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .primary-cta:hover {
     transform: translateY(-2px);
-    box-shadow: 0 14px 30px rgba(91, 124, 255, 0.32);
+    box-shadow: 0 10px 24px rgba(91, 124, 255, 0.32);
 }
 
 .clear-all-btn {
@@ -133,8 +127,8 @@ body.resizing {
     background: transparent;
     color: #94a3b8;
     border: none;
-    padding: 8px 12px;
-    font-size: 0.85rem;
+    padding: 6px 10px;
+    font-size: 0.8rem;
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -147,10 +141,10 @@ body.resizing {
     background: rgba(239, 68, 68, 0.05);
 }
 
-/* 主編輯版面結構 (3 Column Configuration) */
+/* 主編輯版面結構 */
 .editor-layout {
     display: flex;
-    gap: 24px;
+    gap: 20px;
     align-items: stretch;
     flex: 1;
     min-height: 0;
@@ -163,12 +157,12 @@ body.resizing {
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
 }
 
 .sidebar-nav .utility-zone {
     margin-top: 0;
-    padding-top: 16px;
+    padding-top: 12px;
     border-top: 1px dashed var(--border-color);
     display: flex;
     justify-content: center;
@@ -182,7 +176,7 @@ body.resizing {
     background: rgba(255, 255, 255, 0.88);
     border: 1px solid var(--border-color);
     border-radius: 20px;
-    padding: 24px;
+    padding: 20px;
     box-shadow: 0 10px 35px rgba(15, 23, 42, 0.06);
     overflow-y: auto;
     overflow-x: hidden;
@@ -192,7 +186,6 @@ body.resizing {
     transition: width 0.4s ease, opacity 0.3s ease, padding 0.4s ease, margin 0.4s ease, border-width 0.4s ease;
 }
 
-/* Right-side Collapse Animation Structure */
 .sidebar-controls.collapsed {
     flex: 0 0 0px;
     width: 0;
@@ -208,12 +201,12 @@ body.resizing {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
 }
 
 .controls-header h3 {
     margin: 0;
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     color: #0f172a;
 }
 
@@ -224,8 +217,8 @@ body.resizing {
     background: transparent;
     color: var(--muted-color);
     border: 1px solid var(--border-color);
-    padding: 10px 20px;
-    font-size: 0.95rem;
+    padding: 8px 14px;
+    font-size: 0.9rem;
     border-radius: 999px;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -239,19 +232,18 @@ body.resizing {
 }
 
 .toggle-icon {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
 }
 
-/* 分組設定樣式 */
 .settings-group {
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: 14px;
 }
 
 .settings-group h4 {
     margin: 0;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: var(--primary-dark-color);
     text-transform: uppercase;
     letter-spacing: 0.08em;
@@ -260,7 +252,7 @@ body.resizing {
 .divider {
     border: none;
     border-top: 1px solid var(--border-color);
-    margin: 24px 0;
+    margin: 20px 0;
     width: 100%;
 }
 
@@ -268,11 +260,11 @@ body.resizing {
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: 8px;
+    gap: 6px;
 }
 
 .control-group label {
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     color: var(--muted-color);
     font-weight: 600;
 }
@@ -286,13 +278,13 @@ body.resizing {
 .control-group--color-pair {
     display: flex;
     flex-direction: row;
-    gap: 12px;
+    gap: 10px;
 }
 
 .color-picker-block {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
     flex: 1;
 }
 
@@ -303,8 +295,8 @@ body.resizing {
 
 .bg-image-preview {
     width: 100%;
-    height: 80px;
-    border-radius: 16px;
+    height: 70px;
+    border-radius: 12px;
     background-color: rgba(148, 163, 184, 0.12);
     background-position: center;
     background-size: contain;
@@ -320,13 +312,12 @@ body.resizing {
     border-color: rgba(148, 163, 184, 0.9);
 }
 
-/* 共用表單元件樣式 */
 select,
 button,
 input[type="color"],
 input[type="range"] {
-    padding: 10px 12px;
-    font-size: 15px;
+    padding: 8px 12px;
+    font-size: 14px;
     border-radius: 999px;
     border: 1px solid var(--border-color);
     cursor: pointer;
@@ -346,13 +337,6 @@ input[type="range"]:hover {
 input[type="range"] {
     flex-grow: 1;
     accent-color: var(--primary-color);
-}
-
-button:focus-visible,
-select:focus-visible,
-textarea:focus-visible {
-    outline: 2px solid rgba(91, 124, 255, 0.35);
-    outline-offset: 2px;
 }
 
 .color-picker-btn,
@@ -384,7 +368,7 @@ textarea:focus-visible {
     align-items: center;
     justify-content: center;
     width: 100%;
-    padding: 10px 12px;
+    padding: 8px 12px;
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.96);
     color: var(--text-color);
@@ -406,14 +390,13 @@ textarea:focus-visible {
 }
 
 .color-swatch {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
     border: 1px solid rgba(0, 0, 0, 0.1);
     display: inline-block;
 }
 
-/* 工作區 (Center Main Workspace Column) */
 .workspace {
     flex: 1;
     display: flex;
@@ -422,10 +405,9 @@ textarea:focus-visible {
     min-height: 0;
 }
 
-/* 欄位輸入區域 */
 .input-grid {
     display: grid;
-    gap: 20px;
+    gap: 16px;
     margin-bottom: 0;
     flex: 1;
     min-height: 0;
@@ -441,21 +423,21 @@ textarea:focus-visible {
     max-width: 100%;
     min-width: 0;
     background: linear-gradient(145deg, var(--card-bg), var(--surface-soft));
-    padding: 20px;
-    border-radius: 18px;
+    padding: 16px;
+    border-radius: 16px;
     box-shadow: 0 16px 35px rgba(15, 23, 42, 0.08);
     border: 1px solid rgba(15, 23, 42, 0.06);
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
     position: relative;
 }
 
 .editor-resize-handle {
     position: absolute;
     top: 0;
-    right: -18px;
-    width: 18px;
+    right: -16px;
+    width: 16px;
     height: 100%;
     cursor: col-resize;
     z-index: 10;
@@ -467,7 +449,7 @@ textarea:focus-visible {
 .editor-resize-handle::before {
     content: "";
     width: 4px;
-    height: 44px;
+    height: 40px;
     background: linear-gradient(180deg, rgba(15, 23, 42, 0.18), rgba(15, 23, 42, 0.08));
     border-radius: 999px;
     transition: background-color 0.2s ease, transform 0.2s ease;
@@ -475,31 +457,26 @@ textarea:focus-visible {
 
 .editor-resize-handle:hover::before {
     background: linear-gradient(180deg, rgba(91, 124, 255, 0.82), rgba(91, 124, 255, 0.42));
-    transform: scaleY(1.05);
-}
-
-.editor-resize-handle.active::before {
-    background: linear-gradient(180deg, var(--primary-dark-color), var(--primary-color));
 }
 
 .input-box label {
     font-weight: 700;
     color: var(--muted-color);
-    letter-spacing: 0.01em;
+    font-size: 0.9rem;
 }
 
 textarea {
     width: 100%;
     flex-grow: 1;
-    padding: 14px 16px;
+    padding: 12px 14px;
     box-sizing: border-box;
     border: 1px solid rgba(15, 23, 42, 0.12);
-    border-radius: 14px;
+    border-radius: 12px;
     background: rgba(248, 250, 252, 0.96);
     color: var(--text-color);
-    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
     resize: none;
-    min-height: 220px;
+    min-height: 200px;
     box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.05);
 }
 
@@ -509,55 +486,89 @@ textarea:focus {
     background-color: white;
 }
 
-/* RWD - 行動裝置配置 */
+/* Enhanced Mobile Ergonomics & Layout Optimization */
 @media (max-width: 900px) {
+    body {
+        padding: 8px;
+    }
+
+    .container {
+        padding: 12px;
+        border-radius: 16px;
+    }
+
+    .app-header {
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+    }
+
+    .branding h1 {
+        font-size: 1.1rem;
+    }
+
+    .global-actions {
+        gap: 6px;
+    }
+
+    .primary-cta, .toggle-controls-btn {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+    }
+
     .editor-layout {
         flex-direction: column;
+        gap: 12px;
     }
 
     .sidebar-nav {
         width: 100%;
         flex: auto;
-        margin-bottom: 12px;
-        flex-direction: column; /* Keep stacked on mobile */
+        margin-bottom: 0;
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
     }
-    
+
+    .sidebar-nav tab-manager {
+        flex: 1;
+        min-width: 0;
+        overflow-x: auto;
+    }
+
     .sidebar-nav .utility-zone {
-        padding-top: 8px;
+        padding-top: 0;
         border-top: none;
-        align-items: flex-end;
+        margin-top: 0;
+    }
+
+    .clear-all-btn {
+        padding: 6px 8px;
+        font-size: 0.75rem;
+        white-space: nowrap;
     }
 
     .sidebar-controls {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
         width: 100%;
-        flex: auto;
-        transition: max-height 0.4s ease, opacity 0.3s ease, padding 0.4s ease;
-        max-height: 1500px;
+        max-height: 75vh;
+        border-radius: 24px 24px 0 0;
+        z-index: 1000;
+        box-shadow: 0 -10px 30px rgba(15, 23, 42, 0.2);
+        transform: translateY(0);
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
     }
 
     .sidebar-controls.collapsed {
+        transform: translateY(100%);
         width: 100%;
         max-height: 0;
-        padding-top: 0;
-        padding-bottom: 0;
+        opacity: 0;
+        padding: 0;
+        border-width: 0;
         margin: 0;
-    }
-}
-
-@media (max-width: 768px) {
-    body {
-        padding: 12px;
-    }
-
-    .app-header {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .global-actions {
-        width: 100%;
-        flex-direction: column;
-        align-items: stretch;
     }
 
     .input-grid {
@@ -569,37 +580,23 @@ textarea:focus {
         display: none;
     }
 
-    .container {
-        padding: 16px;
-        border-radius: 20px;
-    }
-
     .input-box {
-        padding: 14px;
+        padding: 12px;
+        min-height: auto;
     }
 
     textarea {
-        min-height: 320px;
+        min-height: 180px;
     }
 
     .slide-nav-btn {
-        width: 52px;
+        width: 48px;
+        font-size: 1.8rem;
         padding: 0;
-        font-size: 2rem;
-        height: auto;
-        align-self: stretch;
-    }
-
-    #prev-slide-btn {
-        margin-left: 0;
-    }
-
-    #next-slide-btn {
-        margin-right: 0;
     }
 }
 
-/* 幻燈片全螢幕模式 */
+/* Slideshow Overlay */
 .slideshow-overlay {
     display: none;
     position: fixed;
