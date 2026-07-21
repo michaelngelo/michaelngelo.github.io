@@ -4,7 +4,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>文字幻燈片展示器</title>
+    
+    <!-- Primary Meta Tags & SEO -->
+    <title>文字幻燈片展示器 | Text Slideshow Presenter</title>
+    <meta name="description" content="簡潔強大的線上文字幻燈片展示工具。支援雙語介面、多欄版面、多款字型、自訂顏色與背景圖片。 Free online text slideshow presenter with multi-column layout, customizable fonts, colors, and background images.">
+    <meta name="keywords" content="文字幻燈片, 展示器, 線上簡報, Text Slideshow, Slide Presenter, Presentation Tool, Dual Language">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://example.com/">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://example.com/">
+    <meta property="og:title" content="文字幻燈片展示器 | Text Slideshow Presenter">
+    <meta property="og:description" content="簡潔強大的線上文字幻燈片展示工具。支援多欄版面、豐富字型、自訂顏色與背景圖片。 Free online text slideshow presenter with dynamic multi-column layouts.">
+    <meta property="og:locale" content="zh_TW">
+    <meta property="og:locale:alternate" content="en_US">
+
+    <!-- Twitter Cards -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="文字幻燈片展示器 | Text Slideshow Presenter">
+    <meta name="twitter:description" content="簡潔強大的線上文字幻燈片展示工具。Free online text slideshow presenter.">
+
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "文字幻燈片展示器 | Text Slideshow Presenter",
+      "applicationCategory": "UtilitiesApplication",
+      "operatingSystem": "All",
+      "inLanguage": ["zh-Hant", "en"],
+      "description": "Interactive web tool for creating custom text slideshows with multi-column layouts, web fonts, and dynamic backgrounds."
+    }
+    </script>
+
+    <!-- Typography & CSS -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -21,13 +55,16 @@
         <!-- Compact Header with Global Actions -->
         <header class="app-header">
             <div class="branding">
-                <h1>文字幻燈片展示器</h1>
+                <h1 data-i18n="appTitle">文字幻燈片展示器</h1>
             </div>
             <div class="global-actions">
-                <button id="toggle-controls-btn" class="toggle-controls-btn" aria-expanded="true">
-                    設定 <span class="toggle-icon">▼</span>
+                <button id="lang-toggle-btn" class="toggle-controls-btn lang-btn" aria-label="Switch Language / 切換語言">
+                    🌐 <span id="lang-text">English</span>
                 </button>
-                <button id="start-btn" class="primary-cta">
+                <button id="toggle-controls-btn" class="toggle-controls-btn" aria-expanded="true">
+                    <span data-i18n="settingsBtn">設定</span> <span class="toggle-icon">▼</span>
+                </button>
+                <button id="start-btn" class="primary-cta" data-i18n="enterSlideshow">
                     ▶ 進入幻燈片
                 </button>
             </div>
@@ -41,7 +78,7 @@
                 <tab-manager id="tab-manager"></tab-manager>
 
                 <div class="utility-zone">
-                    <button id="clear-all-pages-btn" class="clear-all-btn">
+                    <button id="clear-all-pages-btn" class="clear-all-btn" data-i18n="clearAllPages">
                         🗑️ 清空所有頁面
                     </button>
                 </div>
@@ -57,13 +94,13 @@
             <!-- RIGHT SIDEBAR: Settings and Controls -->
             <aside class="sidebar-controls controls" id="controls-section">
                 <div class="controls-header">
-                    <h3>設定區</h3>
+                    <h3 data-i18n="settingsTitle">設定區</h3>
                 </div>
 
                 <div class="settings-group">
-                    <h4>版面與文字</h4>
+                    <h4 data-i18n="layoutAndText">版面與文字</h4>
                     <div class="control-group">
-                        <label for="column-select">欄位數量:</label>
+                        <label for="column-select" data-i18n="columnsLabel">欄位數量:</label>
                         <select id="column-select">
                             <option value="1">1</option>
                             <option value="2">2</option>
@@ -71,32 +108,32 @@
                         </select>
                     </div>
                     <div class="control-group">
-                        <label for="font-family-select">字體樣式:</label>
+                        <label for="font-family-select" data-i18n="fontFamilyLabel">字體樣式:</label>
                         <select id="font-family-select">
-                            <optgroup label="線上字型 - 襯線/黑體 (Standard)">
+                            <optgroup id="optgroup-standard" label="線上字型 - 襯線/黑體 (Standard)">
                                 <option value='&quot;Noto Serif HK&quot;, serif' selected>思源宋體 HK (Noto Serif HK)</option>
                                 <option value='&quot;Noto Sans HK&quot;, sans-serif'>思源黑體 HK (Noto Sans HK)</option>
                                 <option value='&quot;Noto Serif TC&quot;, serif'>思源宋體 TC (Noto Serif TC)</option>
                                 <option value='&quot;Noto Sans TC&quot;, sans-serif'>思源黑體 TC (Noto Sans TC)</option>
                                 <option value='&quot;M PLUS Rounded 1c&quot;, sans-serif'>圓體 (M PLUS Rounded 1c)</option>
                             </optgroup>
-                            <optgroup label="線上字型 - 楷體/手寫 (Handwriting)">
+                            <optgroup id="optgroup-handwriting" label="線上字型 - 楷體/手寫 (Handwriting)">
                                 <option value='&quot;LXGW WenKai TC&quot;, cursive'>霞鶩文楷 (LXGW WenKai TC)</option>
                                 <option value='&quot;Klee One&quot;, cursive'>日系硬筆楷書 (Klee One)</option>
                                 <option value='&quot;Yusei Magic&quot;, sans-serif'>游星魔法手寫 (Yusei Magic)</option>
                             </optgroup>
-                            <optgroup label="線上字型 - 毛筆/行草 (Brush/Cursive)">
+                            <optgroup id="optgroup-brush" label="線上字型 - 毛筆/行草 (Brush/Cursive)">
                                 <option value='&quot;ZCOOL Xiaowei&quot;, serif'>站酷小薇 (ZCOOL Xiaowei)</option>
                                 <option value='&quot;Ma Shan Zheng&quot;, cursive'>馬善政毛筆楷體 (Ma Shan Zheng)</option>
                                 <option value='&quot;Zhi Mang Xing&quot;, cursive'>志莽毛筆行書 (Zhi Mang Xing)</option>
                                 <option value='&quot;Long Cang&quot;, cursive'>龍藏體 (Long Cang)</option>
                                 <option value='&quot;Liu Jian Mao Cao&quot;, cursive'>柳建毛草 (Liu Jian Mao Cao)</option>
                             </optgroup>
-                            <optgroup label="線上字型 - 藝術/趣味 (Display)">
+                            <optgroup id="optgroup-display" label="線上字型 - 藝術/趣味 (Display)">
                                 <option value='&quot;ZCOOL KuaiLe&quot;, display'>站酷快樂體 (ZCOOL KuaiLe)</option>
                                 <option value='&quot;ZCOOL QingKe HuangYou&quot;, display'>站酷慶科黃油體 (ZCOOL QingKe HuangYou)</option>
                             </optgroup>
-                            <optgroup label="系統字型 (System Fonts)">
+                            <optgroup id="optgroup-system" label="系統字型 (System Fonts)">
                                 <option value='system-ui, -apple-system, BlinkMacSystemFont, &quot;PingFang TC&quot;, &quot;Microsoft JhengHei&quot;, sans-serif'>系統預設黑體 (System Default)</option>
                                 <option value='&quot;BiauKai&quot;, &quot;DFKai-SB&quot;, serif'>標楷體 (BiauKai)</option>
                                 <option value='&quot;MingLiU&quot;, &quot;PMingLiU&quot;, serif'>細明體 (MingLiU)</option>
@@ -104,7 +141,7 @@
                         </select>
                     </div>
                     <div class="control-group control-group--range">
-                        <label for="font-size-slider">字體大小:</label>
+                        <label for="font-size-slider" data-i18n="fontSizeLabel">字體大小:</label>
                         <div class="range-wrapper">
                             <input type="range" id="font-size-slider" min="1" max="20" step="0.5" value="4">
                             <span id="font-size-value">4.0 vw</span>
@@ -115,41 +152,41 @@
                 <hr class="divider">
 
                 <div class="settings-group">
-                    <h4>背景與顏色</h4>
+                    <h4 data-i18n="bgAndColor">背景與顏色</h4>
                     <div class="control-group control-group--color-pair">
                         <div class="color-picker-block">
-                            <label for="bg-color-picker">背景顏色:</label>
+                            <label for="bg-color-picker" data-i18n="bgColorLabel">背景顏色:</label>
                             <button type="button" class="color-picker-btn" id="bg-color-picker-btn"
                                 data-color-input="bg-color-picker" aria-label="選擇背景顏色">
                                 <span class="color-swatch" id="bg-color-swatch"></span>
-                                <span class="color-picker-label">選擇</span>
+                                <span class="color-picker-label" id="bg-color-picker-label" data-i18n="selectBtn">選擇</span>
                             </button>
                             <input type="color" id="bg-color-picker" value="#111111" hidden>
                         </div>
                         <div class="color-picker-block">
-                            <label for="text-color-picker">文字顏色:</label>
+                            <label for="text-color-picker" data-i18n="textColorLabel">文字顏色:</label>
                             <button type="button" class="color-picker-btn" id="text-color-picker-btn"
                                 data-color-input="text-color-picker" aria-label="選擇文字顏色">
                                 <span class="color-swatch" id="text-color-swatch"></span>
-                                <span class="color-picker-label">選擇</span>
+                                <span class="color-picker-label" id="text-color-picker-label" data-i18n="selectBtn">選擇</span>
                             </button>
                             <input type="color" id="text-color-picker" value="#ffffff" hidden>
                         </div>
                     </div>
                     <div class="control-group control-group--bg-image">
-                        <label for="bg-image-picker">背景圖片:</label>
+                        <label for="bg-image-picker" data-i18n="bgImageLabel">背景圖片:</label>
                         <div class="bg-image-actions">
                             <button type="button" class="color-picker-btn" id="bg-image-picker-btn" aria-label="選擇背景圖片">
-                                <span class="color-picker-label" id="bg-image-picker-label">選擇</span>
+                                <span class="color-picker-label" id="bg-image-picker-label" data-i18n="selectBtn">選擇</span>
                             </button>
-                            <button type="button" class="clear-image-btn" id="clear-bg-image-btn" aria-label="清除背景圖片">清除</button>
+                            <button type="button" class="clear-image-btn" id="clear-bg-image-btn" aria-label="清除背景圖片" data-i18n="clearBtn">清除</button>
                         </div>
                         <div class="bg-image-preview" id="bg-image-preview" aria-hidden="true"></div>
                         <input type="file" id="bg-image-picker" accept="image/*" hidden>
                     </div>
                     <div class="control-group">
-                        <label>文字背景:</label>
-                        <button type="button" class="toggle-btn" id="slide-text-bg-toggle-btn" aria-pressed="false">關閉</button>
+                        <label data-i18n="slideTextBgLabel">文字背景:</label>
+                        <button type="button" class="toggle-btn" id="slide-text-bg-toggle-btn" aria-pressed="false" data-i18n="toggleOff">關閉</button>
                     </div>
                 </div>
             </aside>
