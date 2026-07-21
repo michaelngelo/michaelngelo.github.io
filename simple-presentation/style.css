@@ -58,7 +58,7 @@ body.resizing {
     user-select: none;
 }
 
-/* 應用程式容器 */
+/* Application Container */
 .container {
     max-width: 1540px;
     margin-inline: auto;
@@ -75,7 +75,7 @@ body.resizing {
     border: 1px solid rgba(255, 255, 255, 0.72);
 }
 
-/* 頂部 Header - Compact Version */
+/* Compact Header */
 .app-header {
     display: flex;
     justify-content: space-between;
@@ -141,7 +141,7 @@ body.resizing {
     background: rgba(239, 68, 68, 0.05);
 }
 
-/* 主編輯版面結構 */
+/* Main Layout Structure */
 .editor-layout {
     display: flex;
     gap: 20px;
@@ -486,7 +486,7 @@ textarea:focus {
     background-color: white;
 }
 
-/* Enhanced Mobile Ergonomics & Layout Optimization */
+/* Mobile Ergonomics Optimization */
 @media (max-width: 900px) {
     body {
         padding: 8px;
@@ -547,6 +547,7 @@ textarea:focus {
         white-space: nowrap;
     }
 
+    /* Mobile Sheet for Settings */
     .sidebar-controls {
         position: fixed;
         bottom: 0;
