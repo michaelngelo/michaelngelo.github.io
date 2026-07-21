@@ -30,7 +30,8 @@ body {
     margin: 0;
     padding: 20px;
     transition: all 0.3s ease;
-    min-height: 100%;
+    height: 100dvh;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
 }
@@ -63,6 +64,7 @@ body.resizing {
     max-width: 1540px;
     margin-inline: auto;
     flex: 1 1 auto;
+    min-height: 0;
     min-width: 0;
     display: flex;
     flex-direction: column;
@@ -195,6 +197,7 @@ body.resizing {
     margin-left: 0;
     margin-right: 0;
     border-width: 0;
+    visibility: hidden;
 }
 
 .controls-header {
