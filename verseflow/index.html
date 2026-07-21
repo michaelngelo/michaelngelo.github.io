@@ -204,6 +204,27 @@
                     projContent.innerHTML = '';
                 }
             };
+
+            // NEW: Double-click projector screen to toggle native fullscreen
+            projUI.addEventListener('dblclick', () => {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(err => console.log(err));
+                } else {
+                    document.exitFullscreen().catch(err => console.log(err));
+                }
+            });
+
+            // NEW: Intercept projector window keypresses and relay back to the Dashboard
+            document.addEventListener('keydown', (e) => {
+                const key = e.key.toLowerCase();
+                const navKeys = ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'enter', ' ', 'c', 'v', 'b'];
+                
+                if (navKeys.includes(key) || (key >= '1' && key <= '9')) {
+                    channel.postMessage({ type: 'PROJECTOR_KEYPRESS', key: key });
+                    e.preventDefault();
+                }
+            });
+
         } else {
             // --- DASHBOARD LOGIC ---
             const editor = document.getElementById('lyric-editor');
@@ -430,27 +451,46 @@
             themeSelect.addEventListener('change', () => { if(liveIndex !== -1) goLive(liveIndex); });
             chordsToggle.addEventListener('change', () => { renderSlideList(); if(liveIndex !== -1) goLive(liveIndex); });
             
-            // BUG FIX: Bulletproof URL construction to fix the broken Launch button
+            // Bulletproof URL construction to fix the broken Launch button
             document.getElementById('cast-btn').addEventListener('click', () => {
                 const baseUrl = window.location.href.split('?')[0].split('#')[0];
                 const projectorUrl = baseUrl + '?mode=projector';
                 window.open(projectorUrl, 'projectorWindow', 'width=1280,height=720');
             });
 
-            document.addEventListener('keydown', (e) => {
-                if (document.activeElement === editor) return; 
-
-                const key = e.key.toLowerCase();
-                if (key === 'arrowup') { previewIndex = Math.max(0, previewIndex - 1); updateSelection(); e.preventDefault(); }
-                if (key === 'arrowdown') { previewIndex = Math.min(slides.length - 1, previewIndex + 1); updateSelection(); e.preventDefault(); }
-                if (key === 'enter') { goLive(previewIndex); e.preventDefault(); }
-                if (key === ' ' || key === 'arrowright') { goLive(Math.min(slides.length - 1, liveIndex + 1)); e.preventDefault(); }
-                if (key === 'arrowleft') { goLive(Math.max(0, liveIndex - 1)); e.preventDefault(); }
+            // NEW: Centralized keyboard handler that can be called locally or remotely
+            function handleNavigationKey(key) {
+                if (key === 'arrowup') { previewIndex = Math.max(0, previewIndex - 1); updateSelection(); }
+                if (key === 'arrowdown') { previewIndex = Math.min(slides.length - 1, previewIndex + 1); updateSelection(); }
+                if (key === 'enter') { goLive(previewIndex); }
+                if (key === ' ' || key === 'arrowright') { goLive(Math.min(slides.length - 1, liveIndex + 1)); }
+                if (key === 'arrowleft') { goLive(Math.max(0, liveIndex - 1)); }
 
                 if (key === 'c') jumpToSection('chorus');
                 if (key === 'v') jumpToSection('verse');
                 if (key >= '1' && key <= '9') jumpToSection(`verse ${key}`);
                 if (key === 'b') jumpToSection('bridge');
+            }
+
+            // NEW: Listen for keys pressed remotely on the Projector window
+            channel.onmessage = (e) => {
+                if (e.data.type === 'PROJECTOR_KEYPRESS') {
+                    handleNavigationKey(e.data.key);
+                }
+            };
+
+            // MODIFIED: Local Dashboard keyboard listener
+            document.addEventListener('keydown', (e) => {
+                // Don't trigger if typing in editor or using the font slider
+                if (document.activeElement === editor || document.activeElement === fontSizeSlider) return; 
+
+                const key = e.key.toLowerCase();
+                const navKeys = ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'enter', ' ', 'c', 'v', 'b'];
+                
+                if (navKeys.includes(key) || (key >= '1' && key <= '9')) {
+                    e.preventDefault();
+                    handleNavigationKey(key);
+                }
             });
 
             loadSong(activeSongId);
