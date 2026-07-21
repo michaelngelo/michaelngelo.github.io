@@ -1,3 +1,85 @@
+// Translation Dictionary
+const i18n = {
+    'zh-Hant': {
+        appTitle: '文字幻燈片展示器',
+        settingsBtn: '設定',
+        enterSlideshow: '▶ 進入幻燈片',
+        clearAllPages: '🗑️ 清空所有頁面',
+        settingsTitle: '設定區',
+        layoutAndText: '版面與文字',
+        columnsLabel: '欄位數量:',
+        fontFamilyLabel: '字體樣式:',
+        fontSizeLabel: '字體大小:',
+        bgAndColor: '背景與顏色',
+        bgColorLabel: '背景顏色:',
+        textColorLabel: '文字顏色:',
+        bgImageLabel: '背景圖片:',
+        slideTextBgLabel: '文字背景:',
+        selectBtn: '選擇',
+        selectedBtn: '已選擇',
+        clearBtn: '清除',
+        toggleOn: '啟用',
+        toggleOff: '關閉',
+        columnLabel: '第 {num} 欄內容',
+        defaultText: '這是第 {num} 欄的展示文字。',
+        pageIndicator: '第 {current} / {total} 頁',
+        deletePageTooltip: '刪除頁面',
+        exitSlideshowTooltip: '關閉幻燈片',
+        confirmClearAll: '確定要清空所有頁面嗎？這將會刪除所有內容且無法復原。',
+        alertAtLeastOnePage: '至少需要保留一個頁面！',
+        optgroupStandard: '線上字型 - 襯線/黑體 (Standard)',
+        optgroupHandwriting: '線上字型 - 楷體/手寫 (Handwriting)',
+        optgroupBrush: '線上字型 - 毛筆/行草 (Brush/Cursive)',
+        optgroupDisplay: '線上字型 - 藝術/趣味 (Display)',
+        optgroupSystem: '系統字型 (System Fonts)',
+        pageDefaultName: '頁面'
+    },
+    'en': {
+        appTitle: 'Text Slideshow Presenter',
+        settingsBtn: 'Settings',
+        enterSlideshow: '▶ Enter Slideshow',
+        clearAllPages: '🗑️ Clear All Pages',
+        settingsTitle: 'Settings',
+        layoutAndText: 'Layout & Typography',
+        columnsLabel: 'Columns:',
+        fontFamilyLabel: 'Font Family:',
+        fontSizeLabel: 'Font Size:',
+        bgAndColor: 'Background & Color',
+        bgColorLabel: 'Background Color:',
+        textColorLabel: 'Text Color:',
+        bgImageLabel: 'Background Image:',
+        slideTextBgLabel: 'Text Background:',
+        selectBtn: 'Select',
+        selectedBtn: 'Selected',
+        clearBtn: 'Clear',
+        toggleOn: 'On',
+        toggleOff: 'Off',
+        columnLabel: 'Column {num} Content',
+        defaultText: 'This is presentation text for column {num}.',
+        pageIndicator: 'Page {current} of {total}',
+        deletePageTooltip: 'Delete Page',
+        exitSlideshowTooltip: 'Exit Slideshow',
+        confirmClearAll: 'Are you sure you want to clear all pages? This will delete all content and cannot be undone.',
+        alertAtLeastOnePage: 'At least one page must be kept!',
+        optgroupStandard: 'Online Fonts - Serif / Sans (Standard)',
+        optgroupHandwriting: 'Online Fonts - Handwriting',
+        optgroupBrush: 'Online Fonts - Brush / Cursive',
+        optgroupDisplay: 'Online Fonts - Display',
+        optgroupSystem: 'System Fonts',
+        pageDefaultName: 'Page'
+    }
+};
+
+let currentLang = localStorage.getItem('appLanguage') || 'zh-Hant';
+
+function t(key, params = {}) {
+    let text = i18n[currentLang]?.[key] || i18n['zh-Hant'][key] || key;
+    Object.keys(params).forEach(p => {
+        text = text.replace(`{${p}}`, params[p]);
+    });
+    return text;
+}
+
 class TabManager extends HTMLElement {
     constructor() {
         super();
@@ -180,14 +262,14 @@ class TabManager extends HTMLElement {
 
             const labelSpan = document.createElement('span');
             labelSpan.className = 'tab-label';
-            labelSpan.textContent = page.name || `Page ${page.id}`;
+            labelSpan.textContent = page.name || `${t('pageDefaultName')} ${page.id}`;
             labelSpan.contentEditable = "true";
             labelSpan.spellcheck = false;
 
             labelSpan.addEventListener('mousedown', (e) => e.stopPropagation());
 
             const saveName = () => {
-                const newName = labelSpan.textContent.trim() || `Page ${page.id}`;
+                const newName = labelSpan.textContent.trim() || `${t('pageDefaultName')} ${page.id}`;
                 labelSpan.textContent = newName;
                 this.dispatchEvent(new CustomEvent('page-renamed', {
                     detail: { pageId: page.id, newName }
@@ -215,7 +297,7 @@ class TabManager extends HTMLElement {
             const deleteBtn = document.createElement('button');
             deleteBtn.className = 'delete-page-btn';
             deleteBtn.textContent = '×';
-            deleteBtn.title = '刪除頁面';
+            deleteBtn.title = t('deletePageTooltip');
             deleteBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 this.dispatchEvent(new CustomEvent('page-deleted', { detail: { pageId: page.id } }));
@@ -264,6 +346,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const toggleControlsBtn = document.getElementById('toggle-controls-btn');
     const controlsSection = document.querySelector('.controls');
     const clearAllPagesBtn = document.getElementById('clear-all-pages-btn');
+    const langToggleBtn = document.getElementById('lang-toggle-btn');
+    const langText = document.getElementById('lang-text');
 
     const APP_STATE_KEY = 'textSlideshowState';
     const DEFAULT_FONT_FAMILY = '"Noto Serif HK", serif';
@@ -278,6 +362,41 @@ document.addEventListener('DOMContentLoaded', () => {
     let activePageId = null;
     let nextId = 1;
 
+    function updateLanguageUI() {
+        document.documentElement.lang = currentLang;
+        langText.textContent = currentLang === 'zh-Hant' ? 'English' : '繁體中文';
+
+        // Translate elements with data-i18n
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            if (key) el.textContent = t(key);
+        });
+
+        // Translate optgroups
+        const optgroupMap = {
+            'optgroup-standard': 'optgroupStandard',
+            'optgroup-handwriting': 'optgroupHandwriting',
+            'optgroup-brush': 'optgroupBrush',
+            'optgroup-display': 'optgroupDisplay',
+            'optgroup-system': 'optgroupSystem'
+        };
+        Object.entries(optgroupMap).forEach(([id, key]) => {
+            const group = document.getElementById(id);
+            if (group) group.label = t(key);
+        });
+
+        exitSlideshowBtn.title = t('exitSlideshowTooltip');
+        exitSlideshowBtn.setAttribute('aria-label', t('exitSlideshowTooltip'));
+
+        renderApp();
+    }
+
+    langToggleBtn.addEventListener('click', () => {
+        currentLang = currentLang === 'zh-Hant' ? 'en' : 'zh-Hant';
+        localStorage.setItem('appLanguage', currentLang);
+        updateLanguageUI();
+    });
+
     function getEditorTextAreas() {
         return Array.from(inputContainer.querySelectorAll('textarea'));
     }
@@ -285,7 +404,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function normalizePage(page) {
         return {
             id: typeof page.id === 'number' ? page.id : nextId++,
-            name: typeof page.name === 'string' ? page.name : `Page ${page.id || nextId}`,
+            name: typeof page.name === 'string' ? page.name : `${t('pageDefaultName')} ${page.id || nextId}`,
             columns: Number.isInteger(page.columns) && page.columns > 0 ? page.columns : 1,
             texts: Array.isArray(page.texts) ? page.texts.map(value => String(value)) : [''],
             gridTemplate: typeof page.gridTemplate === 'string' && page.gridTemplate.trim() ? page.gridTemplate : '1fr',
@@ -475,9 +594,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const newId = nextId++;
         const newPage = {
             id: newId,
-            name: `Page ${newId}`,
+            name: `${t('pageDefaultName')} ${newId}`,
             columns: 1,
-            texts: ['這是第 1 欄的展示文字。'],
+            texts: [t('defaultText', { num: 1 })],
             gridTemplate: '1fr',
             bgColor: '#111111',
             textColor: '#ffffff',
@@ -502,7 +621,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function deletePage(pageId) {
         if (pages.length <= 1) {
-            alert("至少需要保留一個頁面！");
+            alert(t('alertAtLeastOnePage'));
             return;
         }
         const deletedPage = pages.find(p => p.id === pageId);
@@ -539,7 +658,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const textValue = activePage.texts[i] || '';
             const inputBox = document.createElement('div');
             inputBox.className = 'input-box';
-            inputBox.innerHTML = `<label>第 ${i + 1} 欄內容</label><textarea id="text-input-${i}">${textValue}</textarea>`;
+            inputBox.innerHTML = `<label>${t('columnLabel', { num: i + 1 })}</label><textarea id="text-input-${i}">${textValue}</textarea>`;
             if (i < activePage.columns - 1) {
                 const handle = document.createElement('div');
                 handle.className = 'editor-resize-handle';
@@ -560,7 +679,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!activePage) return;
         bgImagePicker.value = '';
         const hasImage = Boolean(activePage.bgImageId || activePage.bgImageUrl || activePage.bgImage);
-        bgImagePickerLabel.textContent = hasImage ? '已選擇' : '選擇';
+        bgImagePickerLabel.textContent = hasImage ? t('selectedBtn') : t('selectBtn');
         clearBgImageBtn.disabled = !hasImage;
         const imageUrl = activePage.bgImageUrl || activePage.bgImage || '';
         bgImagePreview.style.backgroundImage = imageUrl ? `url('${imageUrl}')` : 'none';
@@ -649,7 +768,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     clearAllPagesBtn.addEventListener('click', async () => {
-        if (confirm('確定要清空所有頁面嗎？這將會刪除所有內容且無法復原。')) {
+        if (confirm(t('confirmClearAll'))) {
             for (const page of pages) {
                 revokePageBgImageUrl(page);
                 if (page.bgImageId) await deleteImageBlob(page.bgImageId);
@@ -669,7 +788,7 @@ document.addEventListener('DOMContentLoaded', () => {
         activePage.columns = newColCount;
         activePage.gridTemplate = `repeat(${newColCount}, minmax(0, 1fr))`;
         while (activePage.texts.length < newColCount) {
-            activePage.texts.push(`這是第 ${activePage.texts.length + 1} 欄的展示文字。`);
+            activePage.texts.push(t('defaultText', { num: activePage.texts.length + 1 }));
         }
         while (activePage.texts.length > newColCount) {
             activePage.texts.pop();
@@ -799,13 +918,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateSlideTextBgToggle(isEnabled) {
         if (!slideTextBgToggleBtn) return;
         slideTextBgToggleBtn.classList.toggle('active', Boolean(isEnabled));
-        slideTextBgToggleBtn.textContent = isEnabled ? '啟用' : '關閉';
+        slideTextBgToggleBtn.textContent = isEnabled ? t('toggleOn') : t('toggleOff');
         slideTextBgToggleBtn.setAttribute('aria-pressed', isEnabled ? 'true' : 'false');
     }
 
     function renderSlideshowPage(page) {
         const pageIndex = pages.findIndex(p => p.id === page.id);
-        slidePageIndicator.textContent = `第 ${pageIndex + 1} / ${pages.length} 頁`;
+        slidePageIndicator.textContent = t('pageIndicator', { current: pageIndex + 1, total: pages.length });
 
         const fontSize = page.fontSize || 4;
         slideshowScreen.style.setProperty('--slideshow-font-size', `${fontSize}vw`);
@@ -904,7 +1023,7 @@ document.addEventListener('DOMContentLoaded', () => {
         db = await openDatabase();
         loadState();
         await ensureAllPageImages();
-        renderApp();
+        updateLanguageUI();
     }
 
     initApp();
