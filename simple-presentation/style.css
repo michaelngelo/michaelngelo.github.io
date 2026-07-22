@@ -262,6 +262,8 @@ body.resizing {
 .settings-group h4 {
     margin: 0;
     font-size: 0.8rem;
+    font-family: "Montserrat", "Noto Sans TC", sans-serif;
+    font-weight: 700;
     color: var(--primary-dark-color);
     text-transform: uppercase;
     letter-spacing: 0.08em;
@@ -283,6 +285,7 @@ body.resizing {
 
 .control-group label {
     font-size: 0.9rem;
+    font-family: "Inter", "Noto Sans TC", sans-serif;
     color: var(--muted-color);
     font-weight: 600;
 }
@@ -334,6 +337,7 @@ select,
 button,
 input[type="color"],
 input[type="range"] {
+    font-family: "Inter", "Noto Sans TC", sans-serif;
     padding: 8px 12px;
     font-size: 14px;
     border-radius: 999px;
