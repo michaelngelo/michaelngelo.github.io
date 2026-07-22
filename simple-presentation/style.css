@@ -3,16 +3,16 @@ html {
 }
 
 :root {
-    --bg-color: #0f172a;
-    --bg-accent: #111827;
+    --bg-color: #020617;       /* Midnight Slate */
+    --bg-accent: #0f172a;      /* Dark Slate */
     --text-color: #172033;
-    --muted-color: #64748b;
-    --card-bg: rgba(255, 255, 255, 0.94);
-    --surface-soft: rgba(248, 250, 252, 0.95);
-    --border-color: rgba(15, 23, 42, 0.12);
-    --primary-color: #5b7cff;
-    --primary-dark-color: #4a65d8;
-    --shadow: 0 20px 45px rgba(15, 23, 42, 0.12);
+    --muted-color: #475569;
+    --card-bg: rgba(255, 255, 255, 0.96);
+    --surface-soft: rgba(248, 250, 252, 0.98);
+    --border-color: rgba(2, 6, 23, 0.1);
+    --primary-color: #2563eb;       /* Royal Blue */
+    --primary-dark-color: #1d4ed8;  /* Navy Blue */
+    --shadow: 0 20px 45px rgba(2, 6, 23, 0.12);
 }
 
 * {
@@ -22,7 +22,7 @@ html {
 body {
     font-family: "Inter", "Noto Sans TC", system-ui, -apple-system, sans-serif;
     background:
-        radial-gradient(circle at top left, rgba(91, 124, 255, 0.22), transparent 24%),
+        radial-gradient(circle at top left, rgba(37, 99, 235, 0.22), transparent 24%),
         linear-gradient(135deg, var(--bg-accent) 0%, var(--bg-color) 55%, #1e293b 100%);
     background-attachment: fixed;
     background-size: cover;
