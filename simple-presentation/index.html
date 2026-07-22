@@ -6,31 +6,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <!-- Primary Meta Tags & SEO -->
-    <title>文字幻燈片展示器 | Text Slideshow Presenter</title>
-    <meta name="description" content="簡潔強大的線上文字幻燈片展示工具。支援雙語介面、多欄版面、多款字型、自訂顏色與背景圖片。 Free online text slideshow presenter with multi-column layout, customizable fonts, colors, and background images.">
-    <meta name="keywords" content="文字幻燈片, 展示器, 線上簡報, Text Slideshow, Slide Presenter, Presentation Tool, Dual Language">
+    <title>文字投影 | TextCast</title>
+    <meta name="description" content="簡潔強大的線上文字投影展示工具。支援雙語介面、多欄版面、多款字型、自訂顏色與背景圖片。 Free online text slideshow presenter with multi-column layout, customizable fonts, colors, and background images.">
+    <meta name="keywords" content="文字投影, 展示器, 線上簡報, Text Slideshow, Slide Presenter, Presentation Tool, Dual Language">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://example.com/">
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://example.com/">
-    <meta property="og:title" content="文字幻燈片展示器 | Text Slideshow Presenter">
-    <meta property="og:description" content="簡潔強大的線上文字幻燈片展示工具。支援多欄版面、豐富字型、自訂顏色與背景圖片。 Free online text slideshow presenter with dynamic multi-column layouts.">
+    <meta property="og:title" content="文字投影 | TextCast">
+    <meta property="og:description" content="簡潔強大的線上文字投影展示工具。支援多欄版面、豐富字型、自訂顏色與背景圖片。 Free online text slideshow presenter with dynamic multi-column layouts.">
     <meta property="og:locale" content="zh_TW">
     <meta property="og:locale:alternate" content="en_US">
 
     <!-- Twitter Cards -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="文字幻燈片展示器 | Text Slideshow Presenter">
-    <meta name="twitter:description" content="簡潔強大的線上文字幻燈片展示工具。Free online text slideshow presenter.">
+    <meta name="twitter:title" content="文字投影 | TextCast">
+    <meta name="twitter:description" content="簡潔強大的線上文字投影展示工具。Free online text slideshow presenter.">
 
     <!-- Structured Data (JSON-LD) -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "WebApplication",
-      "name": "文字幻燈片展示器 | Text Slideshow Presenter",
+      "name": "文字投影 | TextCast",
       "applicationCategory": "UtilitiesApplication",
       "operatingSystem": "All",
       "inLanguage": ["zh-Hant", "en"],
@@ -41,9 +41,7 @@
     <!-- Typography & CSS -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&family=LXGW+WenKai+TC:wght@400;700&family=Liu+Jian+Mao+Cao&family=Long+Cang&family=M+PLUS+Rounded+1c:wght@400;500;700&family=Ma+Shan+Zheng&family=Noto+Sans+HK:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+HK:wght@400;500;700&family=Noto+Serif+TC:wght@400;500;700&family=Yusei+Magic&family=ZCOOL+KuaiLe&family=ZCOOL+QingKe+HuangYou&family=ZCOOL+Xiaowei&family=Zhi+Mang+Xing&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Dela+Gothic+One&family=Inter:wght@400;700;900&family=Klee+One:wght@400;600&family=LXGW+WenKai+TC:wght@400;700&family=Montserrat:wght@700;900&family=Noto+Sans+TC:wght@400;700;900&family=Noto+Serif+TC:wght@400;700;900&family=Oswald:wght@500;700&family=Playfair+Display:ital,wght@0,600;0,800;1,600&family=Shippori+Mincho:wght@500;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <script src="main.js" defer></script>
 </head>
@@ -55,7 +53,7 @@
         <!-- Compact Header with Global Actions -->
         <header class="app-header">
             <div class="branding">
-                <h1 data-i18n="appTitle">文字幻燈片展示器</h1>
+                <h1 data-i18n="appTitle">文字投影展示器</h1>
             </div>
             <div class="global-actions">
                 <button id="lang-toggle-btn" class="toggle-controls-btn lang-btn" aria-label="Switch Language / 切換語言">
@@ -65,7 +63,7 @@
                     <span data-i18n="settingsBtn">設定</span> <span class="toggle-icon">▼</span>
                 </button>
                 <button id="start-btn" class="primary-cta" data-i18n="enterSlideshow">
-                    ▶ 進入幻燈片
+                    ▶ 進入投影
                 </button>
             </div>
         </header>
@@ -110,33 +108,28 @@
                     <div class="control-group">
                         <label for="font-family-select" data-i18n="fontFamilyLabel">字體樣式:</label>
                         <select id="font-family-select">
-                            <optgroup id="optgroup-standard" label="線上字型 - 襯線/黑體 (Standard)">
-                                <option value='&quot;Noto Serif HK&quot;, serif' selected>思源宋體 HK (Noto Serif HK)</option>
-                                <option value='&quot;Noto Sans HK&quot;, sans-serif'>思源黑體 HK (Noto Sans HK)</option>
-                                <option value='&quot;Noto Serif TC&quot;, serif'>思源宋體 TC (Noto Serif TC)</option>
-                                <option value='&quot;Noto Sans TC&quot;, sans-serif'>思源黑體 TC (Noto Sans TC)</option>
-                                <option value='&quot;M PLUS Rounded 1c&quot;, sans-serif'>圓體 (M PLUS Rounded 1c)</option>
+                            <optgroup id="optgroup-standard" label="現代黑體 (Modern Sans)">
+                                <option value='&quot;Noto Sans TC&quot;, sans-serif' selected>思源黑體 (Noto Sans TC)</option>
+                                <option value='&quot;Inter&quot;, sans-serif'>Inter (English UI)</option>
+                                <option value='&quot;Montserrat&quot;, sans-serif'>Montserrat (English Bold)</option>
                             </optgroup>
-                            <optgroup id="optgroup-handwriting" label="線上字型 - 楷體/手寫 (Handwriting)">
+                            <optgroup id="optgroup-serif" label="經典宋體 (Elegant Serif)">
+                                <option value='&quot;Noto Serif TC&quot;, serif'>思源宋體 (Noto Serif TC)</option>
+                                <option value='&quot;Shippori Mincho&quot;, serif'>日系明朝體 (Shippori Mincho)</option>
+                                <option value='&quot;Playfair Display&quot;, serif'>Playfair Display (English Serif)</option>
+                            </optgroup>
+                            <optgroup id="optgroup-handwriting" label="溫潤手寫 (Handwriting)">
                                 <option value='&quot;LXGW WenKai TC&quot;, cursive'>霞鶩文楷 (LXGW WenKai TC)</option>
                                 <option value='&quot;Klee One&quot;, cursive'>日系硬筆楷書 (Klee One)</option>
-                                <option value='&quot;Yusei Magic&quot;, sans-serif'>游星魔法手寫 (Yusei Magic)</option>
+                                <option value='&quot;Caveat&quot;, cursive'>Caveat (English Script)</option>
                             </optgroup>
-                            <optgroup id="optgroup-brush" label="線上字型 - 毛筆/行草 (Brush/Cursive)">
-                                <option value='&quot;ZCOOL Xiaowei&quot;, serif'>站酷小薇 (ZCOOL Xiaowei)</option>
-                                <option value='&quot;Ma Shan Zheng&quot;, cursive'>馬善政毛筆楷體 (Ma Shan Zheng)</option>
-                                <option value='&quot;Zhi Mang Xing&quot;, cursive'>志莽毛筆行書 (Zhi Mang Xing)</option>
-                                <option value='&quot;Long Cang&quot;, cursive'>龍藏體 (Long Cang)</option>
-                                <option value='&quot;Liu Jian Mao Cao&quot;, cursive'>柳建毛草 (Liu Jian Mao Cao)</option>
-                            </optgroup>
-                            <optgroup id="optgroup-display" label="線上字型 - 藝術/趣味 (Display)">
-                                <option value='&quot;ZCOOL KuaiLe&quot;, display'>站酷快樂體 (ZCOOL KuaiLe)</option>
-                                <option value='&quot;ZCOOL QingKe HuangYou&quot;, display'>站酷慶科黃油體 (ZCOOL QingKe HuangYou)</option>
+                            <optgroup id="optgroup-display" label="強烈視覺 (High Impact)">
+                                <option value='&quot;Dela Gothic One&quot;, display'>德拉黑體 (Dela Gothic One)</option>
+                                <option value='&quot;Oswald&quot;, sans-serif'>Oswald (English Condensed)</option>
                             </optgroup>
                             <optgroup id="optgroup-system" label="系統字型 (System Fonts)">
                                 <option value='system-ui, -apple-system, BlinkMacSystemFont, &quot;PingFang TC&quot;, &quot;Microsoft JhengHei&quot;, sans-serif'>系統預設黑體 (System Default)</option>
                                 <option value='&quot;BiauKai&quot;, &quot;DFKai-SB&quot;, serif'>標楷體 (BiauKai)</option>
-                                <option value='&quot;MingLiU&quot;, &quot;PMingLiU&quot;, serif'>細明體 (MingLiU)</option>
                             </optgroup>
                         </select>
                     </div>
@@ -200,7 +193,7 @@
         <div id="slideshow-render-area" class="slideshow-content"></div>
         <button class="slide-nav-btn" id="next-slide-btn">&gt;</button>
         <div class="slideshow-footer">
-            <button class="exit-btn" id="exit-slideshow-btn" aria-label="關閉幻燈片" title="關閉幻燈片">×</button>
+            <button class="exit-btn" id="exit-slideshow-btn" aria-label="關閉投影" title="關閉投影">×</button>
             <div class="page-indicator" id="slide-page-indicator"></div>
         </div>
     </div>

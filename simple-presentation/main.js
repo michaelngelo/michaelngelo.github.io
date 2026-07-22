@@ -1,9 +1,9 @@
 // Translation Dictionary
 const i18n = {
     'zh-Hant': {
-        appTitle: '文字幻燈片展示器',
+        appTitle: '文字投影',
         settingsBtn: '設定',
-        enterSlideshow: '▶ 進入幻燈片',
+        enterSlideshow: '▶ 進入投影',
         clearAllPages: '🗑️ 清空所有頁面',
         settingsTitle: '設定區',
         layoutAndText: '版面與文字',
@@ -24,18 +24,18 @@ const i18n = {
         defaultText: '這是第 {num} 欄的展示文字。',
         pageIndicator: '第 {current} / {total} 頁',
         deletePageTooltip: '刪除頁面',
-        exitSlideshowTooltip: '關閉幻燈片',
+        exitSlideshowTooltip: '關閉投影',
         confirmClearAll: '確定要清空所有頁面嗎？這將會刪除所有內容且無法復原。',
         alertAtLeastOnePage: '至少需要保留一個頁面！',
-        optgroupStandard: '線上字型 - 襯線/黑體 (Standard)',
-        optgroupHandwriting: '線上字型 - 楷體/手寫 (Handwriting)',
-        optgroupBrush: '線上字型 - 毛筆/行草 (Brush/Cursive)',
-        optgroupDisplay: '線上字型 - 藝術/趣味 (Display)',
+        optgroupStandard: '現代黑體 (Modern Sans)',
+        optgroupSerif: '經典宋體 (Elegant Serif)',
+        optgroupHandwriting: '溫潤手寫 (Handwriting)',
+        optgroupDisplay: '強烈視覺 (High Impact)',
         optgroupSystem: '系統字型 (System Fonts)',
         pageDefaultName: '頁面'
     },
     'en': {
-        appTitle: 'Text Slideshow Presenter',
+        appTitle: 'TextCast',
         settingsBtn: 'Settings',
         enterSlideshow: '▶ Enter Slideshow',
         clearAllPages: '🗑️ Clear All Pages',
@@ -61,10 +61,10 @@ const i18n = {
         exitSlideshowTooltip: 'Exit Slideshow',
         confirmClearAll: 'Are you sure you want to clear all pages? This will delete all content and cannot be undone.',
         alertAtLeastOnePage: 'At least one page must be kept!',
-        optgroupStandard: 'Online Fonts - Serif / Sans (Standard)',
-        optgroupHandwriting: 'Online Fonts - Handwriting',
-        optgroupBrush: 'Online Fonts - Brush / Cursive',
-        optgroupDisplay: 'Online Fonts - Display',
+        optgroupStandard: 'Modern Sans',
+        optgroupSerif: 'Elegant Serif',
+        optgroupHandwriting: 'Handwriting',
+        optgroupDisplay: 'High Impact',
         optgroupSystem: 'System Fonts',
         pageDefaultName: 'Page'
     }
@@ -376,7 +376,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const optgroupMap = {
             'optgroup-standard': 'optgroupStandard',
             'optgroup-handwriting': 'optgroupHandwriting',
-            'optgroup-brush': 'optgroupBrush',
+            'optgroup-serif': 'optgroupSerif',
             'optgroup-display': 'optgroupDisplay',
             'optgroup-system': 'optgroupSystem'
         };

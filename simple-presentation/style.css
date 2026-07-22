@@ -20,7 +20,7 @@ html {
 }
 
 body {
-    font-family: "Noto Sans TC", system-ui, -apple-system, sans-serif;
+    font-family: "Inter", "Noto Sans TC", system-ui, -apple-system, sans-serif;
     background:
         radial-gradient(circle at top left, rgba(91, 124, 255, 0.22), transparent 24%),
         linear-gradient(135deg, var(--bg-accent) 0%, var(--bg-color) 55%, #1e293b 100%);
@@ -40,7 +40,9 @@ h1,
 h2,
 h3,
 .header-subtitle {
-    font-family: "LXGW WenKai TC", cursive;
+    font-family: "Montserrat", "Noto Sans TC", sans-serif;
+    font-weight: 800;
+    letter-spacing: 0.02em;
 }
 
 body::before {
@@ -121,7 +123,8 @@ body.resizing {
     border: none;
     padding: 8px 16px;
     font-size: 0.9rem;
-    font-weight: 700;
+    font-family: "Inter", "Noto Sans TC", sans-serif;
+    font-weight: 800;
     border-radius: 999px;
     cursor: pointer;
     box-shadow: 0 6px 18px rgba(91, 124, 255, 0.22);
