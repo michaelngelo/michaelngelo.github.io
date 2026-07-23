@@ -217,7 +217,7 @@
             // NEW: Intercept projector window keypresses and relay back to the Dashboard
             document.addEventListener('keydown', (e) => {
                 const key = e.key.toLowerCase();
-                const navKeys = ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'enter', ' ', 'c', 'v', 'b'];
+                const navKeys = ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'enter', ' ', 'c', 'v', 'b', 'p', 'i', 'o', 't'];
                 
                 if (navKeys.includes(key) || (key >= '1' && key <= '9')) {
                     channel.postMessage({ type: 'PROJECTOR_KEYPRESS', key: key });
@@ -470,6 +470,10 @@
                 if (key === 'v') jumpToSection('verse');
                 if (key >= '1' && key <= '9') jumpToSection(`verse ${key}`);
                 if (key === 'b') jumpToSection('bridge');
+                if (key === 'p') jumpToSection('pre-chorus');
+                if (key === 'i') jumpToSection('intro');
+                if (key === 'o') jumpToSection('outro');
+                if (key === 't') jumpToSection('tag');
             }
 
             // NEW: Listen for keys pressed remotely on the Projector window
@@ -485,7 +489,7 @@
                 if (document.activeElement === editor || document.activeElement === fontSizeSlider) return; 
 
                 const key = e.key.toLowerCase();
-                const navKeys = ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'enter', ' ', 'c', 'v', 'b'];
+                const navKeys = ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'enter', ' ', 'c', 'v', 'b', 'p', 'i', 'o', 't'];
                 
                 if (navKeys.includes(key) || (key >= '1' && key <= '9')) {
                     e.preventDefault();
