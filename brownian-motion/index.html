@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>LIL Brownian Motion Simulator</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f8f9fa;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .widget-container {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 20px;
+      width: 100%;
+      max-width: 900px;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #eee;
+    }
+    button {
+      background-color: #0066cc;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background-color: #0052a3;
+    }
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .slider-label {
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .toggle-label {
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    #chart {
+      width: 100%;
+      height: 500px;
+    }
+    .path-brownian { fill: none; stroke: #2c7bb6; stroke-width: 1px; stroke-linejoin: round; }
+    .path-lil { fill: none; stroke: #d7191c; stroke-width: 2px; stroke-dasharray: 6 4; }
+    .path-sqrt { fill: none; stroke: #1a9641; stroke-width: 2px; stroke-dasharray: 2 4; }
+    .axis-label { font-size: 12px; fill: #666; }
+    .legend-text { font-size: 12px; font-family: monospace; }
+  </style>
+</head>
+<body>
+
+<div class="widget-container">
+  <div class="controls">
+    <button id="generate-btn">Generate New Path</button>
+    
+    <div class="control-group">
+      <label class="slider-label" for="steps-slider">Steps (t): <span id="steps-val">5000</span></label>
+      <input type="range" id="steps-slider" min="1000" max="10000" step="500" value="5000">
+    </div>
+
+    <div class="control-group">
+      <label class="toggle-label">
+        <input type="checkbox" id="toggle-lil" checked>
+        Show LIL Envelope (±√(2t log log t))
+      </label>
+    </div>
+
+    <div class="control-group">
+      <label class="toggle-label">
+        <input type="checkbox" id="toggle-sqrt" checked>
+        Show Std Dev Envelope (±√t)
+      </label>
+    </div>
+  </div>
+
+  <div id="chart"></div>
+</div>
+
+<script>
+  // Math Configuration
+  const T_START = 3; // Start at t=3 to avoid log(log(t)) negative infinity/NaN at t <= e
+
+  // D3 Setup
+  const margin = {top: 20, right: 30, bottom: 40, left: 50};
+  const width = 860 - margin.left - margin.right;
+  const height = 500 - margin.top - margin.bottom;
+
+  const svg = d3.select("#chart")
+    .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+    .attr("transform", `translate(${margin.left},${margin.top})`);
+
+  // Scales
+  const xScale = d3.scaleLinear().range([0, width]);
+  const yScale = d3.scaleLinear().range([height, 0]);
+
+  // Axes groups
+  const xAxisGroup = svg.append("g").attr("transform", `translate(0,${height})`);
+  const yAxisGroup = svg.append("g");
+
+  // Path elements
+  const pathSqrtUpper = svg.append("path").attr("class", "path-sqrt");
+  const pathSqrtLower = svg.append("path").attr("class", "path-sqrt");
+  const pathLILUpper = svg.append("path").attr("class", "path-lil");
+  const pathLILLower = svg.append("path").attr("class", "path-lil");
+  const pathBrownian = svg.append("path").attr("class", "path-brownian");
+
+  // Box-Muller transform for standard normal distribution N(0, 1)
+  function randomNormal() {
+    let u = 0, v = 0;
+    while(u === 0) u = Math.random();
+    while(v === 0) v = Math.random();
+    return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+  }
+
+  // Generate Brownian Motion Path
+  function generateData(maxSteps) {
+    const data = [];
+    let currentY = 0;
+    
+    // Simulate from t=0 to properly accumulate variance
+    for (let t = 0; t <= maxSteps; t++) {
+      if (t >= T_START) {
+        data.push({ t: t, y: currentY });
+      }
+      // dt = 1 step
+      currentY += randomNormal();
+    }
+    return data;
+  }
+
+  // Generate mathematical bounds arrays
+  function generateBounds(maxSteps) {
+    const bounds = [];
+    const stepSize = Math.max(1, Math.floor(maxSteps / 200)); // Optimize rendering points
+    
+    for (let t = T_START; t <= maxSteps; t += stepSize) {
+      bounds.push({
+        t: t,
+        sqrt: Math.sqrt(t),
+        lil: Math.sqrt(2 * t * Math.log(Math.log(t)))
+      });
+    }
+    // Ensure final point is included
+    bounds.push({
+      t: maxSteps,
+      sqrt: Math.sqrt(maxSteps),
+      lil: Math.sqrt(2 * maxSteps * Math.log(Math.log(maxSteps)))
+    });
+    return bounds;
+  }
+
+  // Line Generators
+  const lineBrownian = d3.line().x(d => xScale(d.t)).y(d => yScale(d.y));
+  
+  const lineSqrtUpper = d3.line().x(d => xScale(d.t)).y(d => yScale(d.sqrt));
+  const lineSqrtLower = d3.line().x(d => xScale(d.t)).y(d => yScale(-d.sqrt));
+  
+  const lineLILUpper = d3.line().x(d => xScale(d.t)).y(d => yScale(d.lil));
+  const lineLILLower = d3.line().x(d => xScale(d.t)).y(d => yScale(-d.lil));
+
+  function updateChart() {
+    const maxSteps = parseInt(document.getElementById("steps-slider").value);
+    const data = generateData(maxSteps);
+    const bounds = generateBounds(maxSteps);
+
+    // Calculate Y domain based on the maximum LIL value + 10% padding
+    const maxY = Math.sqrt(2 * maxSteps * Math.log(Math.log(maxSteps))) * 1.1;
+
+    // Update Scales
+    xScale.domain([T_START, maxSteps]);
+    yScale.domain([-maxY, maxY]);
+
+    // Update Axes
+    xAxisGroup.transition().duration(200).call(d3.axisBottom(xScale));
+    yAxisGroup.transition().duration(200).call(d3.axisLeft(yScale));
+
+    // Update Paths
+    pathBrownian.datum(data).attr("d", lineBrownian);
+    
+    pathSqrtUpper.datum(bounds).attr("d", lineSqrtUpper);
+    pathSqrtLower.datum(bounds).attr("d", lineSqrtLower);
+    
+    pathLILUpper.datum(bounds).attr("d", lineLILUpper);
+    pathLILLower.datum(bounds).attr("d", lineLILLower);
+
+    // Apply visibility toggles
+    toggleVisibility();
+  }
+
+  function toggleVisibility() {
+    const showLIL = document.getElementById("toggle-lil").checked;
+    const showSqrt = document.getElementById("toggle-sqrt").checked;
+
+    pathLILUpper.style("display", showLIL ? "block" : "none");
+    pathLILLower.style("display", showLIL ? "block" : "none");
+    
+    pathSqrtUpper.style("display", showSqrt ? "block" : "none");
+    pathSqrtLower.style("display", showSqrt ? "block" : "none");
+  }
+
+  // Event Listeners
+  document.getElementById("generate-btn").addEventListener("click", updateChart);
+  
+  document.getElementById("steps-slider").addEventListener("input", function(e) {
+    document.getElementById("steps-val").textContent = e.target.value;
+    updateChart();
+  });
+
+  document.getElementById("toggle-lil").addEventListener("change", toggleVisibility);
+  document.getElementById("toggle-sqrt").addEventListener("change", toggleVisibility);
+
+  // Initialize
+  updateChart();
+
+</script>
+</body>
+</html>
