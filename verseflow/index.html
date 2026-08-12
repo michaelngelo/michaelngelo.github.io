@@ -15,8 +15,15 @@
             --accent: #5b7cff;
             --accent-hover: #4a65d8;
             --live-color: #ff4b4b;
-            --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            --font-lyric: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            /* Added Hong Kong / Traditional Chinese font fallbacks */
+            --font-ui: -apple-system, BlinkMacSystemFont, "PingFang HK", "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+            --font-lyric: "PingFang HK", "Microsoft JhengHei", "Noto Sans TC", "Helvetica Neue", sans-serif;
+        }
+
+        /* Ensure Chinese characters break cleanly on line wraps */
+        .slide-content, .projector-text {
+            word-break: break-word;
+            line-break: strict;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -53,9 +60,27 @@
 
         /* --- SETLIST PANE --- */
         .setlist-pane {
-            width: 220px; display: flex; flex-direction: column;
+            width: 260px; /* Changed from 220px */
+            display: flex; flex-direction: column;
             border-right: 1px solid #333; background: #151515;
         }
+
+        #undo-toast {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: var(--bg-panel);
+            color: var(--text-main);
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            display: none; /* Hidden by default */
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
         .setlist-header {
             padding: 10px 16px; background: #1a1a1a; font-size: 0.85rem; color: var(--text-muted);
             border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center;
@@ -136,7 +161,6 @@
             <div class="controls">
                 <label style="font-size: 0.9rem;"><input type="checkbox" id="chords-toggle"> Show Chords</label>
                 
-                <!-- NEW: Font Size Slider -->
                 <label style="font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
                     Size: <input type="range" id="font-size-slider" min="3" max="12" step="0.5" value="6">
                 </label>
@@ -146,8 +170,18 @@
                     <option value="theme-karaoke">Karaoke Bold</option>
                     <option value="theme-cinematic">Cinematic Serif</option>
                 </select>
+
+                <div style="display: flex; gap: 4px; margin-left: 12px; padding-left: 16px; border-left: 1px solid #444;">
+                    <button id="export-btn" class="btn-small" title="Export Setlist">💾 Export</button>
+                    <button id="import-btn" class="btn-small" title="Import Setlist">📂 Import</button>
+                    <input type="file" id="import-file" accept=".json" style="display: none;">
+                </div>
             </div>
-            <button class="primary" id="cast-btn">Launch Projector</button>
+            
+            <div style="display: flex; gap: 10px;">
+                <button id="clear-screen-btn" style="background: #e65100; border-color: #e65100;">Clear Screen</button>
+                <button class="primary" id="cast-btn">Launch Projector</button>
+            </div>
         </header>
 
         <div class="workspace">
@@ -156,15 +190,23 @@
                     <span>Setlist</span>
                     <button id="add-song-btn" class="btn-small">+ Add</button>
                 </div>
+                
+                <div style="padding: 8px 12px; border-bottom: 1px solid #333;">
+                    <input type="text" id="search-input" placeholder="Search song..." style="width: 100%; padding: 4px 8px; font-size: 0.85rem;">
+                </div>
+
                 <div id="setlist-container" class="setlist-items"></div>
             </div>
-
             <div class="editor-pane">
                 <div class="editor-header">Top line is Song Title. Double enter = New Slide. # = Section. [Chords]</div>
                 <textarea id="lyric-editor"></textarea>
             </div>
-
             <div class="preview-pane" id="slide-list"></div>
+        </div>
+
+        <div id="undo-toast">
+            <span id="undo-text">Song deleted.</span>
+            <button id="undo-btn" class="btn-small" style="background: var(--accent);">Undo</button>
         </div>
 
         <div class="hotkey-hints">
@@ -254,6 +296,9 @@
 
             let draggedIndex = null;
 
+            let deletedSongCache = null;
+            let deletedSongIndex = -1;
+            let undoTimeout = null;
             function renderSetlist() {
                 setlistContainer.innerHTML = '';
                 setlist.forEach((song, index) => {
@@ -279,11 +324,22 @@
                     delBtn.onclick = (e) => {
                         e.stopPropagation();
                         if(confirm(`Delete "${song.title}"?`)) {
+                            // 1. Cache the deleted song and its original position
+                            deletedSongIndex = index;
+                            deletedSongCache = song;
+                            
+                            // 2. Remove it from the list
                             setlist = setlist.filter(s => s.id !== song.id);
                             if(setlist.length === 0) setlist = [{ id: Date.now(), title: "New Song", lyrics: "New Song\n\n# Verse 1\n..." }];
                             if(activeSongId === song.id) loadSong(setlist[0].id);
                             else renderSetlist();
                             saveSetlist();
+                            
+                            // 3. Show the Undo Toast pop-up for 7 seconds
+                            const toast = document.getElementById('undo-toast');
+                            toast.style.display = 'flex';
+                            clearTimeout(undoTimeout);
+                            undoTimeout = setTimeout(() => { toast.style.display = 'none'; }, 7000);
                         }
                     };
 
@@ -349,6 +405,85 @@
                 loadSong(newSong.id);
             });
 
+            document.getElementById('export-btn').addEventListener('click', () => {
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(setlist));
+                const downloadNode = document.createElement('a');
+                downloadNode.setAttribute("href", dataStr);
+                downloadNode.setAttribute("download", `verseflow_setlist_${new Date().toISOString().slice(0,10)}.json`);
+                document.body.appendChild(downloadNode);
+                downloadNode.click();
+                downloadNode.remove();
+            });
+
+            const importBtn = document.getElementById('import-btn');
+            const importFile = document.getElementById('import-file');
+            
+            importBtn.addEventListener('click', () => importFile.click());
+            
+            importFile.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const importedSetlist = JSON.parse(event.target.result);
+                        if (Array.isArray(importedSetlist) && importedSetlist.length > 0) {
+                            if (confirm("Replace current setlist with imported data?")) {
+                                setlist = importedSetlist;
+                                saveSetlist();
+                                loadSong(setlist[0].id);
+                            }
+                        } else {
+                            alert("Invalid setlist file format.");
+                        }
+                    } catch (err) {
+                        alert("Error parsing JSON file. Make sure it is a valid VerseFlow export.");
+                    }
+                };
+                reader.readAsText(file);
+                importFile.value = ''; // Reset the input so the same file can be uploaded again if needed
+            });
+
+            // Search Filter Logic
+            const searchInput = document.getElementById('search-input');
+            
+            searchInput.addEventListener('input', () => {
+                const query = searchInput.value.toLowerCase().trim();
+                const songItems = setlistContainer.querySelectorAll('.song-item');
+                
+                setlist.forEach((song, index) => {
+                    const itemEl = songItems[index];
+                    if (itemEl) {
+                        // Filters by both song title and lyrics content
+                        const matches = song.title.toLowerCase().includes(query) || song.lyrics.toLowerCase().includes(query);
+                        itemEl.style.display = matches ? 'flex' : 'none';
+                    }
+                });
+            });
+
+            // Blackout / Clear Screen Button Listener
+            document.getElementById('clear-screen-btn').addEventListener('click', () => {
+                liveIndex = -1;
+                updateSelection();
+                // Utilizes the existing CLEAR_SLIDE event in your projector logic
+                channel.postMessage({ type: 'CLEAR_SLIDE' }); 
+            });
+
+            // Undo Button Listener
+            document.getElementById('undo-btn').addEventListener('click', () => {
+                if (deletedSongCache) {
+                    // Re-insert the song at its original position
+                    setlist.splice(deletedSongIndex, 0, deletedSongCache);
+                    saveSetlist();
+                    renderSetlist();
+                    
+                    // Hide the toast and clear the cache
+                    document.getElementById('undo-toast').style.display = 'none';
+                    deletedSongCache = null;
+                }
+            });
+
             function parseText() {
                 const text = editor.value;
                 const lines = text.split('\n');
@@ -380,8 +515,21 @@
                 renderSlideList();
             }
 
+            function escapeHTML(str) {
+                return str.replace(/[&<>'"]/g, 
+                    tag => ({
+                        '&': '&amp;',
+                        '<': '&lt;',
+                        '>': '&gt;',
+                        "'": '&#39;',
+                        '"': '&quot;'
+                    }[tag] || tag)
+                );
+            }
+
             function formatContent(text) {
-                let html = text.replace(/\n/g, '<br>');
+                let html = escapeHTML(text);
+                html = html.replace(/\n/g, '<br>');
                 html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
                 if (chordsToggle.checked) html = html.replace(/\[(.*?)\]/g, '<span class="chord">$1</span>');
                 else html = html.replace(/\[(.*?)\]/g, ''); 
@@ -458,7 +606,7 @@
                 window.open(projectorUrl, 'projectorWindow', 'width=1280,height=720');
             });
 
-            // NEW: Centralized keyboard handler that can be called locally or remotely
+            // Centralized keyboard handler that can be called locally or remotely
             function handleNavigationKey(key) {
                 if (key === 'arrowup') { previewIndex = Math.max(0, previewIndex - 1); updateSelection(); }
                 if (key === 'arrowdown') { previewIndex = Math.min(slides.length - 1, previewIndex + 1); updateSelection(); }
@@ -476,14 +624,14 @@
                 if (key === 't') jumpToSection('tag');
             }
 
-            // NEW: Listen for keys pressed remotely on the Projector window
+            // Listen for keys pressed remotely on the Projector window
             channel.onmessage = (e) => {
                 if (e.data.type === 'PROJECTOR_KEYPRESS') {
                     handleNavigationKey(e.data.key);
                 }
             };
 
-            // MODIFIED: Local Dashboard keyboard listener
+            // Local Dashboard keyboard listener
             document.addEventListener('keydown', (e) => {
                 // Don't trigger if typing in editor or using the font slider
                 if (document.activeElement === editor || document.activeElement === fontSizeSlider) return; 
