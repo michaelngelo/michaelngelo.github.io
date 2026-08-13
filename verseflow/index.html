@@ -125,7 +125,49 @@
         }
         textarea:focus { outline: none; }
 
-        .preview-pane { flex: 1; display: flex; flex-direction: column; background: #181818; overflow-y: auto; padding: 20px; gap: 12px; }
+        /* Wrap preview pane to hold the Quick Jump Bar */
+        .preview-container { 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            background: #181818; 
+            overflow: hidden; 
+        }
+        
+        /* Quick Jump Bar Styling */
+        .quick-jump-bar {
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 8px; 
+            padding: 12px 20px;
+            background: #1a1a1a; 
+            border-bottom: 1px solid #333;
+        }
+        .jump-btn {
+            background: #2a2a2a; 
+            color: var(--text-main); 
+            border: 1px solid #444;
+            padding: 6px 12px; 
+            border-radius: 4px; 
+            font-size: 0.8rem; 
+            font-weight: bold;
+            cursor: pointer; 
+            transition: 0.2s;
+        }
+        .jump-btn:hover { 
+            background: var(--accent); 
+            border-color: var(--accent); 
+        }
+
+        .preview-pane { 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            overflow-y: auto; 
+            padding: 20px; 
+            gap: 12px; 
+        }
+        
         .slide-card {
             background: var(--bg-panel); border: 2px solid transparent; border-radius: 8px; padding: 16px; cursor: pointer; position: relative;
         }
@@ -201,7 +243,12 @@
                 <div class="editor-header">Top line is Song Title. Double enter = New Slide. # = Section. [Chords]</div>
                 <textarea id="lyric-editor"></textarea>
             </div>
-            <div class="preview-pane" id="slide-list"></div>
+            <div class="preview-container">
+                <!-- Quick Jump Bar Container -->
+                <div id="quick-jump-bar" class="quick-jump-bar"></div>
+                
+                <div class="preview-pane" id="slide-list"></div>
+            </div>
         </div>
 
         <div id="undo-toast">
@@ -535,6 +582,49 @@
                 return html;
             }
 
+            // Render Quick Jump Bar
+            function renderQuickJumpBar() {
+                const jumpBar = document.getElementById('quick-jump-bar');
+                jumpBar.innerHTML = '';
+                
+                // Filter the slides array to only find slides that have a label (e.g., # Chorus)
+                const sectionSlides = slides.filter(s => s.label);
+                
+                // If the song has no section tags, hide the bar
+                if (sectionSlides.length === 0) {
+                    jumpBar.style.display = 'none';
+                    return;
+                }
+                
+                jumpBar.style.display = 'flex';
+                
+                // Generate a clickable button for each section
+                sectionSlides.forEach(slide => {
+                    const btn = document.createElement('button');
+                    btn.className = 'jump-btn';
+                    btn.textContent = slide.label;
+                    
+                    btn.onclick = () => {
+                        // Find the absolute index of this slide and jump the preview to it
+                        const targetIndex = slides.indexOf(slide);
+                        if (targetIndex !== -1) {
+                            previewIndex = targetIndex;
+                            updateSelection();
+                        }
+                    };
+
+                    // Double-click to instantly go live
+                    btn.ondblclick = () => {
+                        const targetIndex = slides.indexOf(slide);
+                        if (targetIndex !== -1) {
+                            goLive(targetIndex);
+                        }
+                    };
+                    
+                    jumpBar.appendChild(btn);
+                });
+            }
+
             function renderSlideList() {
                 slideList.innerHTML = '';
                 slides.forEach((slide, index) => {
@@ -549,8 +639,13 @@
                     
                     el.innerHTML = innerHTML;
                     el.onclick = () => { previewIndex = index; updateSelection(); };
+                    // Double-click a slide card to instantly go live
+                    el.ondblclick = () => {
+                        goLive(index);
+                    };
                     slideList.appendChild(el);
                 });
+                renderQuickJumpBar();
                 scrollToPreview();
             }
 
