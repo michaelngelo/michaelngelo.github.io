@@ -339,7 +339,7 @@
                 <span><strong style="color: #fff;">Esc:</strong> Clear Screen &nbsp;|&nbsp;</span>
                 <span><strong style="color: #fff;">Space/Arrows:</strong> Change Slide &nbsp;|&nbsp;</span>
                 <span><strong style="color: #fff;">PgUp/PgDn:</strong> Change Song &nbsp;|&nbsp;</span>
-                <span><strong style="color: #fff;">Sections:</strong> <strong>V</strong> (Verse), <strong>C</strong> (Chorus), <strong>B</strong> (Bridge), <strong>1-9</strong>, <strong>P</strong>, <strong>I</strong>, <strong>O</strong>, <strong>T</strong></span>
+                <span><strong style="color: #fff;">Sections:</strong> <strong>V</strong> (Verse), <strong>C</strong> (Chorus), <strong>B</strong> (Bridge), <strong>P</strong> (Pre), <strong>E</strong> (Ending/Coda), <strong>0-99</strong></span>
             </div>
             <a href="#" class="brand" style="flex-shrink: 0;">⚡ VerseFlow</a>
         </div>
@@ -402,8 +402,8 @@
             // Intercept projector window keypresses and relay back to the Dashboard
             document.addEventListener('keydown', (e) => {
                 const key = e.key.toLowerCase();
-                const navKeys = ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'enter', ' ', 'escape', 'backspace', 'pagedown', 'pageup', 'c', 'v', 'b', 'p', 'i', 'o', 't'];
-                
+                const navKeys = ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'enter', ' ', 'escape', 'backspace', 'pagedown', 'pageup', 'v', 'c', 'b', 'p', 'e'];
+
                 if (navKeys.includes(key) || (key >= '0' && key <= '9')) {
                     channel.postMessage({ type: 'PROJECTOR_KEYPRESS', key: key });
                     e.preventDefault();
@@ -776,24 +776,24 @@
                 });
             }
 
-            function jumpToSection(keyword) {
-                // 1. Find all slides where the label STARTS WITH the keyword
+            function jumpToSection(keywords) {
+                // Convert single words into an array so we can search multiple synonyms
+                const searchTerms = Array.isArray(keywords) ? keywords : [keywords];
+                
                 const matches = [];
                 slides.forEach((s, idx) => {
-                    if (s.label.toLowerCase().startsWith(keyword)) {
+                    const labelLower = s.label.toLowerCase();
+                    // Check if the label starts with ANY of our search terms
+                    if (searchTerms.some(term => labelLower.startsWith(term))) {
                         matches.push(idx);
                     }
                 });
 
                 if (matches.length > 0) {
-                    // 2. Find the first match that comes *after* our current preview position
                     let nextIdx = matches.find(idx => idx > previewIndex);
-                    
-                    // 3. If we are already at the last match (or there's only one), wrap around to the first one
                     if (nextIdx === undefined) {
                         nextIdx = matches[0];
                     }
-                    
                     previewIndex = nextIdx;
                     updateSelection();
                 }
@@ -870,13 +870,11 @@
                 }
 
                 // 5. Section Jumping (Letters)
-                if (key === 'c') jumpToSection('chorus');
                 if (key === 'v') jumpToSection('verse');
+                if (key === 'c') jumpToSection('chorus');
                 if (key === 'b') jumpToSection('bridge');
                 if (key === 'p') jumpToSection('pre');
-                if (key === 'i') jumpToSection('intro');
-                if (key === 'o') jumpToSection('outro');
-                if (key === 't') jumpToSection('tag');
+                if (key === 'e') jumpToSection(['coda', 'ending']); // E = Ending/Coda
             }
 
             // Listen for messages from the Projector window
@@ -901,8 +899,8 @@
                 if (document.activeElement === editor || document.activeElement === fontSizeSlider || document.activeElement === searchInput) return; 
 
                 const key = e.key.toLowerCase();
-                const navKeys = ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'enter', ' ', 'escape', 'backspace', 'pagedown', 'pageup', 'c', 'v', 'b', 'p', 'i', 'o', 't'];
-                
+                const navKeys = ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'enter', ' ', 'escape', 'backspace', 'pagedown', 'pageup', 'v', 'c', 'b', 'p', 'e'];
+
                 if (navKeys.includes(key) || (key >= '0' && key <= '9')) {
                     e.preventDefault();
                     handleNavigationKey(key);
