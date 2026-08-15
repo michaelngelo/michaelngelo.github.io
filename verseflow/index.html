@@ -261,34 +261,44 @@
 <body>
 
     <div id="dashboard-ui" class="dashboard">
-        <header>
-            <div class="controls">
-                <label style="font-size: 0.9rem;"><input type="checkbox" id="chords-toggle"> Show Chords</label>
+        <header style="display: flex; justify-content: space-between; align-items: center; padding: 12px 24px; background-color: var(--bg-panel); border-bottom: 1px solid #333;">
+            
+            <!-- LEFT SIDE: File & Formatting -->
+            <div style="display: flex; gap: 24px; align-items: center;">
                 
-                <label style="font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
-                    Size: <input type="range" id="font-size-slider" min="3" max="12" step="0.5" value="6">
-                </label>
-
-                <select id="theme-select">
-                    <option value="theme-dark">Modern Center (Default)</option>
-                    <option value="theme-blue-wash">Deep Blue Wash</option>
-                    <option value="theme-traditional">Traditional Hymnal</option>
-                    <option value="theme-minimalist">Contemporary Minimalist</option>
-                    <option value="theme-lower-third">Lower Third</option>
-                    <option value="theme-paper">Classic Parchment (Light)</option>
-                </select>
-
-                <div style="display: flex; gap: 4px; margin-left: 12px; padding-left: 16px; border-left: 1px solid #444;">
+                <!-- Data Management (File actions on the far left) -->
+                <div style="display: flex; gap: 8px; align-items: center; border-right: 1px solid #444; padding-right: 24px;">
                     <button id="export-btn" class="btn-small" title="Export Setlist">💾 Export</button>
                     <button id="import-btn" class="btn-small" title="Import Setlist">📂 Import</button>
                     <input type="file" id="import-file" accept=".json" style="display: none;">
                 </div>
+
+                <!-- Visual Settings (Formatting) -->
+                <div class="controls" style="display: flex; gap: 16px; align-items: center;">
+                    <!-- Hidden Chords Toggle -->
+                    <label style="font-size: 0.9rem; display: none;"><input type="checkbox" id="chords-toggle"> Show Chords</label>
+                    
+                    <label style="font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
+                        Size: <input type="range" id="font-size-slider" min="3" max="12" step="0.5" value="6">
+                    </label>
+
+                    <select id="theme-select">
+                        <option value="theme-dark">Modern Center (Default)</option>
+                        <option value="theme-blue-wash">Deep Blue Wash</option>
+                        <option value="theme-traditional">Traditional Hymnal</option>
+                        <option value="theme-minimalist">Contemporary Minimalist</option>
+                        <option value="theme-lower-third">Lower Third</option>
+                        <option value="theme-paper">Classic Parchment (Light)</option>
+                    </select>
+                </div>
             </div>
             
-            <div style="display: flex; gap: 10px;">
-                <button id="clear-screen-btn" style="background: #e65100; border-color: #e65100;">Clear Screen</button>
+            <!-- RIGHT SIDE: Stage Actions (Live Controls) -->
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <button id="clear-screen-btn" style="background: #e65100; border-color: #e65100; color: white; padding: 8px 12px; border-radius: 6px; cursor: pointer;">Clear Screen</button>
                 <button class="primary" id="cast-btn">Launch Projector</button>
             </div>
+
         </header>
 
         <div class="workspace">
