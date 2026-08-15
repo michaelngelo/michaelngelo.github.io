@@ -376,10 +376,19 @@
 
                 } else if (e.data.type === 'CLEAR_SLIDE') {
                     projContent.innerHTML = '';
+                    // Ensure the background theme is applied even when text is cleared
+                    if (e.data.theme) {
+                        projUI.className = `projector ${e.data.theme}`;
+                    }
                 }
             };
 
-            // NEW: Double-click projector screen to toggle native fullscreen
+            // Handshake - Tell the dashboard we are ready to receive the current state
+            window.addEventListener('DOMContentLoaded', () => {
+                channel.postMessage({ type: 'PROJECTOR_READY' });
+            });
+
+            // Double-click projector screen to toggle native fullscreen
             projUI.addEventListener('dblclick', () => {
                 if (!document.fullscreenElement) {
                     document.documentElement.requestFullscreen().catch(err => console.log(err));
@@ -804,10 +813,18 @@
                 if (key === 't') jumpToSection('tag');
             }
 
-            // Listen for keys pressed remotely on the Projector window
+            // Listen for messages from the Projector window
             channel.onmessage = (e) => {
                 if (e.data.type === 'PROJECTOR_KEYPRESS') {
                     handleNavigationKey(e.data.key);
+                } else if (e.data.type === 'PROJECTOR_READY') {
+                    // Handshake: Send the current state to the new projector
+                    if (liveIndex !== -1 && activeSongId === liveSongId) {
+                        goLive(liveIndex);
+                    } else {
+                        const currentTheme = document.getElementById('theme-select').value;
+                        channel.postMessage({ type: 'CLEAR_SLIDE', theme: currentTheme });
+                    }
                 }
             };
 
