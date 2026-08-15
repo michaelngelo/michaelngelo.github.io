@@ -404,7 +404,7 @@
                 const key = e.key.toLowerCase();
                 const navKeys = ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'enter', ' ', 'escape', 'backspace', 'pagedown', 'pageup', 'c', 'v', 'b', 'p', 'i', 'o', 't'];
                 
-                if (navKeys.includes(key) || (key >= '1' && key <= '9')) {
+                if (navKeys.includes(key) || (key >= '0' && key <= '9')) {
                     channel.postMessage({ type: 'PROJECTOR_KEYPRESS', key: key });
                     e.preventDefault();
                 }
@@ -777,8 +777,26 @@
             }
 
             function jumpToSection(keyword) {
-                const index = slides.findIndex(s => s.label.toLowerCase().includes(keyword));
-                if (index !== -1) { previewIndex = index; updateSelection(); }
+                // 1. Find all slides where the label STARTS WITH the keyword
+                const matches = [];
+                slides.forEach((s, idx) => {
+                    if (s.label.toLowerCase().startsWith(keyword)) {
+                        matches.push(idx);
+                    }
+                });
+
+                if (matches.length > 0) {
+                    // 2. Find the first match that comes *after* our current preview position
+                    let nextIdx = matches.find(idx => idx > previewIndex);
+                    
+                    // 3. If we are already at the last match (or there's only one), wrap around to the first one
+                    if (nextIdx === undefined) {
+                        nextIdx = matches[0];
+                    }
+                    
+                    previewIndex = nextIdx;
+                    updateSelection();
+                }
             }
 
             // Real-time projector font size updates when slider is moved
@@ -797,21 +815,51 @@
                 window.open(projectorUrl, 'projectorWindow', 'width=1280,height=720');
             });
 
+            // Variables to track multi-digit keyboard inputs
+            let numberBuffer = '';
+            let numberTimeout = null;
+
             // Centralized keyboard handler that can be called locally or remotely
             function handleNavigationKey(key) {
-                // 1. Slide Navigation
+                // 1. Number Buffering for Multi-Digit Sections (e.g., "37")
+                if (key >= '0' && key <= '9') {
+                    numberBuffer += key;
+                    clearTimeout(numberTimeout);
+                    
+                    numberTimeout = setTimeout(() => {
+                        const targetNum = numberBuffer;
+                        numberBuffer = ''; // Reset buffer
+                        
+                        // Priority 1: Strict match for exact numbers (e.g., "# 37" or "# 3")
+                        let idx = slides.findIndex(s => s.label.trim() === targetNum);
+                        
+                        // Priority 2: Safe fallback for standard verse jumping (e.g., "# Verse 3")
+                        if (idx === -1) {
+                            idx = slides.findIndex(s => s.label.toLowerCase() === `verse ${targetNum}`);
+                        }
+                        
+                        if (idx !== -1) { 
+                            previewIndex = idx; 
+                            updateSelection(); 
+                        }
+                    }, 200);
+                    
+                    return; // Stop processing other keys
+                }
+
+                // 2. Slide Navigation
                 if (key === 'arrowup') { previewIndex = Math.max(0, previewIndex - 1); updateSelection(); }
                 if (key === 'arrowdown') { previewIndex = Math.min(slides.length - 1, previewIndex + 1); updateSelection(); }
                 if (key === 'enter') { goLive(previewIndex); }
                 if (key === ' ' || key === 'arrowright') { goLive(Math.min(slides.length - 1, liveIndex + 1)); }
                 if (key === 'arrowleft') { goLive(Math.max(0, liveIndex - 1)); }
 
-                // 2. Blackout / Clear Screen
+                // 3. Blackout / Clear Screen
                 if (key === 'escape' || key === 'backspace') {
                     document.getElementById('clear-screen-btn').click();
                 }
 
-                // 3. Setlist Navigation (PageDown = Next Song, PageUp = Prev Song)
+                // 4. Setlist Navigation (PageDown = Next Song, PageUp = Prev Song)
                 if (key === 'pagedown' || key === 'pageup') {
                     const currentIndex = setlist.findIndex(s => s.id === activeSongId);
                     if (key === 'pagedown' && currentIndex < setlist.length - 1) {
@@ -821,12 +869,11 @@
                     }
                 }
 
-                // 4. Section Jumping
+                // 5. Section Jumping (Letters)
                 if (key === 'c') jumpToSection('chorus');
                 if (key === 'v') jumpToSection('verse');
-                if (key >= '1' && key <= '9') jumpToSection(`verse ${key}`);
                 if (key === 'b') jumpToSection('bridge');
-                if (key === 'p') jumpToSection('pre-chorus');
+                if (key === 'p') jumpToSection('pre');
                 if (key === 'i') jumpToSection('intro');
                 if (key === 'o') jumpToSection('outro');
                 if (key === 't') jumpToSection('tag');
@@ -856,7 +903,7 @@
                 const key = e.key.toLowerCase();
                 const navKeys = ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'enter', ' ', 'escape', 'backspace', 'pagedown', 'pageup', 'c', 'v', 'b', 'p', 'i', 'o', 't'];
                 
-                if (navKeys.includes(key) || (key >= '1' && key <= '9')) {
+                if (navKeys.includes(key) || (key >= '0' && key <= '9')) {
                     e.preventDefault();
                     handleNavigationKey(key);
                 }
