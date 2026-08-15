@@ -339,7 +339,7 @@
                 <span><strong style="color: #fff;">Esc:</strong> Clear Screen &nbsp;|&nbsp;</span>
                 <span><strong style="color: #fff;">Space/Arrows:</strong> Change Slide &nbsp;|&nbsp;</span>
                 <span><strong style="color: #fff;">PgUp/PgDn:</strong> Change Song &nbsp;|&nbsp;</span>
-                <span><strong style="color: #fff;">Sections:</strong> <strong>V</strong> (Verse), <strong>C</strong> (Chorus), <strong>B</strong> (Bridge), <strong>P</strong> (Pre), <strong>E</strong> (Ending/Coda), <strong>0-99</strong></span>
+                <span><strong style="color: #fff;">Sections:</strong> <strong>T</strong> (Title), <strong>V</strong> (Verse), <strong>C</strong> (Chorus), <strong>B</strong> (Bridge), <strong>P</strong> (Pre), <strong>E</strong> (Ending), <strong>0-99</strong></span>
             </div>
             <a href="#" class="brand" style="flex-shrink: 0;">⚡ VerseFlow</a>
         </div>
@@ -402,7 +402,7 @@
             // Intercept projector window keypresses and relay back to the Dashboard
             document.addEventListener('keydown', (e) => {
                 const key = e.key.toLowerCase();
-                const navKeys = ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'enter', ' ', 'escape', 'backspace', 'pagedown', 'pageup', 'v', 'c', 'b', 'p', 'e'];
+                const navKeys = ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'enter', ' ', 'escape', 'backspace', 'pagedown', 'pageup', 'v', 'c', 'b', 'p', 'e', 't'];
 
                 if (navKeys.includes(key) || (key >= '0' && key <= '9')) {
                     channel.postMessage({ type: 'PROJECTOR_KEYPRESS', key: key });
@@ -875,6 +875,12 @@
                 if (key === 'b') jumpToSection('bridge');
                 if (key === 'p') jumpToSection('pre');
                 if (key === 'e') jumpToSection(['coda', 'ending']); // E = Ending/Coda
+
+                // Title / Top Key: Instantly snaps to the very first slide of the song
+                if (key === 't') {
+                    previewIndex = 0;
+                    updateSelection();
+                }
             }
 
             // Listen for messages from the Projector window
@@ -899,7 +905,7 @@
                 if (document.activeElement === editor || document.activeElement === fontSizeSlider || document.activeElement === searchInput) return; 
 
                 const key = e.key.toLowerCase();
-                const navKeys = ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'enter', ' ', 'escape', 'backspace', 'pagedown', 'pageup', 'v', 'c', 'b', 'p', 'e'];
+                const navKeys = ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'enter', ' ', 'escape', 'backspace', 'pagedown', 'pageup', 'v', 'c', 'b', 'p', 'e', 't'];
 
                 if (navKeys.includes(key) || (key >= '0' && key <= '9')) {
                     e.preventDefault();
