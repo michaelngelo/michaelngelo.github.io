@@ -247,6 +247,15 @@
             font-weight: normal; 
         }
 
+        /* Slide Transition Animation */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .fade-animation {
+            animation: fadeIn 0.25s ease-in-out forwards;
+        }
+
     </style>
 </head>
 <body>
@@ -341,9 +350,18 @@
             channel.onmessage = (e) => {
                 if (e.data.type === 'UPDATE_SLIDE') {
                     projUI.className = `projector ${e.data.theme}`;
+                    
+                    // Remove the animation class and trigger a reflow to reset it
+                    projContent.classList.remove('fade-animation');
+                    void projContent.offsetWidth; // This forces the browser to restart the animation
+                    
+                    // Update the lyrics and font size
                     projContent.innerHTML = e.data.html;
-                    // Apply the new font size
                     if (e.data.fontSize) projContent.style.fontSize = e.data.fontSize;
+                    
+                    // Re-apply the animation class to fade the new text in
+                    projContent.classList.add('fade-animation');
+
                 } else if (e.data.type === 'CLEAR_SLIDE') {
                     projContent.innerHTML = '';
                 }
