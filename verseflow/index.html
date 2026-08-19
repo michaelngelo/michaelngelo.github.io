@@ -730,6 +730,13 @@
                                 content: citation + pair
                             });
                         }
+                        const finalVerse = verses[verses.length - 1];
+                        const finalMatch = finalVerse.trim().match(/^(\d+)/);
+                        rollingSlides.push({
+                            label: finalMatch ? finalMatch[1] : '',
+                            content: citation + finalVerse
+                        });
+
                         return rollingSlides;
                     }
                     // ----------------------------------------
