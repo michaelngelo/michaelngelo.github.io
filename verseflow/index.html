@@ -249,6 +249,44 @@
             font-weight: 400; 
         }
 
+        /* 7. Scripture Reading  */
+        .theme-scripture { background-color: #000000; }
+        .theme-scripture .projector-text { 
+            color: #fdf6e3; 
+            font-family: "Merriweather", "Georgia", "Songti TC", "Noto Serif TC", "PMingLiU", "Times New Roman", serif; 
+            font-weight: 400; 
+            text-align: justify;
+            letter-spacing: 0.05em;
+            line-height: 1.35;
+            
+            /* --- Layout Geometry --- */
+            position: absolute;
+            top: 5vh;
+            left: 5vw;
+            width: 60vw;
+            transform: none; 
+            margin: 0;
+        }
+
+        .verse-space { display: none; } /* Hidden in normal song themes */
+        .theme-scripture .verse-space { 
+            display: block; 
+            height: 0.8em; /* Creates a clean gap between verses */
+        }
+
+        /* Citation Formatting (Triggered by the > symbol) */
+        .citation {
+            display: block;
+            text-align: left;
+            font-size: 0.85em;
+            color: #a0a0a0;
+            font-style: normal;
+            font-weight: bold;
+            margin-bottom: 1vh;
+            margin-top: 0;
+            letter-spacing: normal;
+        }
+
         /* Slide Transition Animation */
         @keyframes fadeIn {
             from { opacity: 0; }
@@ -281,7 +319,7 @@
                     <label style="font-size: 0.9rem; display: none;"><input type="checkbox" id="chords-toggle"> Show Chords</label>
                     
                     <label style="font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
-                        Size: <input type="range" id="font-size-slider" min="3" max="12" step="0.5" value="6">
+                        Size: <input type="range" id="font-size-slider" min="2" max="12" step="0.5" value="5">
                     </label>
 
                     <select id="theme-select">
@@ -291,6 +329,7 @@
                         <option value="theme-minimalist">Contemporary Minimalist</option>
                         <option value="theme-lower-third">Lower Third</option>
                         <option value="theme-paper">Classic Parchment (Light)</option>
+                        <option value="theme-scripture">Scripture Reading</option>
                     </select>
                 </div>
             </div>
@@ -425,8 +464,10 @@
             let liveSongId = null;
 
             const defaultSong = { 
-                id: Date.now(), 
-                title: "Amazing Grace", 
+                id: Date.now(),
+                theme: "theme-dark",
+                fontSize: "5",
+                title: "Amazing Grace",
                 lyrics: "Amazing Grace\n\n# Verse 1\nAmazing grace, how sweet the sound\nThat saved a wretch like [C]me\n\n# Chorus\nI once was [G]lost, but now am found\nWas blind, but now I [C]see"
             };
             
@@ -535,6 +576,8 @@
                 activeSongId = id;
                 const song = setlist.find(s => s.id === id);
                 editor.value = song.lyrics;
+                themeSelect.value = song.theme || 'theme-dark';
+                fontSizeSlider.value = song.fontSize || "5";
                 previewIndex = 0;
                 if (activeSongId !== liveSongId) liveIndex = -1;
                 renderSetlist();
@@ -542,7 +585,13 @@
             }
 
             document.getElementById('add-song-btn').addEventListener('click', () => {
-                const newSong = { id: Date.now(), title: "New Song", lyrics: "New Song\n\n# Verse 1\nType lyrics here..." };
+                const newSong = { 
+                    id: Date.now(), 
+                    theme: "theme-dark", 
+                    fontSize: "5",
+                    title: "New Song", 
+                    lyrics: "New Song\n\n# Verse 1\nType lyrics here..." 
+                };
                 setlist.push(newSong);
                 saveSetlist();
                 loadSong(newSong.id);
@@ -644,7 +693,7 @@
                 }
 
                 const blocks = text.split(/\n\s*\n/);
-                slides = blocks.map((block, idx) => {
+                slides = blocks.flatMap((block) => {
                     let label = '';
                     let content = block.trim();
                     if (content.startsWith('#')) {
@@ -652,12 +701,48 @@
                         label = blockLines[0].replace('#', '').trim();
                         content = blockLines.slice(1).join('\n').trim();
                     }
-                    return { id: idx, label, content };
+
+                    // --- OVERLAPPING SCRIPTURE LOGIC ---
+                    if (label.toLowerCase() === 'rolling') {
+                        const contentLines = content.split('\n');
+                        let citation = '';
+                        let verses = [...contentLines];
+
+                        // Look for the citation (>) on the VERY FIRST line, and remove it from the list
+                        if (verses.length > 0 && verses[0].trim().startsWith('>')) {
+                            citation = verses.shift().trim() + '\n';
+                        }
+
+                        // If there are fewer than 2 verses, default to a normal single slide
+                        if (verses.length < 2) {
+                            return [{ label, content }];
+                        }
+
+                        const rollingSlides = [];
+                        // Mathematically create the overlapping pairs (0&1, 1&2, 2&3...)
+                        for (let i = 0; i < verses.length - 1; i++) {
+                            const pair = verses[i] + '\n' + verses[i + 1];
+                            const match = verses[i].trim().match(/^(\d+)/);
+                            const verseLabel = match ? match[1] : (i === 0 ? label : '');
+
+                            rollingSlides.push({
+                                label: verseLabel, 
+                                content: citation + pair
+                            });
+                        }
+                        return rollingSlides;
+                    }
+                    // ----------------------------------------
+
+                    return [{ label, content }];
                 }).filter(s => s.content || s.label);
+                
+                // Re-assign sequential IDs because flatMap changes the array length
+                slides.forEach((s, idx) => s.id = idx);
                 
                 renderSlideList();
             }
-
+            
             function escapeHTML(str) {
                 return str.replace(/[&<>'"]/g, 
                     tag => ({
@@ -672,6 +757,9 @@
 
             function formatContent(text) {
                 let html = escapeHTML(text);
+                html = html.replace(/^&gt;\s*(.*)(\r?\n)?/gm, '<div class="citation">$1</div>');
+                // Looks for a line break (\n) followed by a number (\d+), and injects the gap span
+                html = html.replace(/\n(?=\s*\d+)/g, '<br><span class="verse-space"></span>');
                 html = html.replace(/\n/g, '<br>');
                 html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
                 if (chordsToggle.checked) html = html.replace(/\[(.*?)\]/g, '<span class="chord">$1</span>');
@@ -800,12 +888,28 @@
             }
 
             // Real-time projector font size updates when slider is moved
-            fontSizeSlider.addEventListener('input', () => { 
+            fontSizeSlider.addEventListener('input', () => {
+                const activeSong = setlist.find(s => s.id === activeSongId);
+                if (activeSong) {
+                    activeSong.fontSize = fontSizeSlider.value;
+                    saveSetlist();
+                }
+                if(liveIndex !== -1) goLive(liveIndex);
+            });
+
+            themeSelect.addEventListener('change', () => { 
+                // Save the newly selected theme to the current song's memory
+                const activeSong = setlist.find(s => s.id === activeSongId);
+                if (activeSong) {
+                    activeSong.theme = themeSelect.value;
+                    saveSetlist();
+                }
+                
+                // Update the live projector if this song is currently on screen
                 if(liveIndex !== -1) goLive(liveIndex); 
             });
 
             editor.addEventListener('input', parseText);
-            themeSelect.addEventListener('change', () => { if(liveIndex !== -1) goLive(liveIndex); });
             chordsToggle.addEventListener('change', () => { renderSlideList(); if(liveIndex !== -1) goLive(liveIndex); });
             
             // Bulletproof URL construction to fix the broken Launch button
