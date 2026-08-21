@@ -1526,8 +1526,14 @@
                 if (e.key === 'Enter') validateAndApplyUrl(onlineImgUrl.value.trim());
             });
 
-            editor.addEventListener('input', parseText);
-            
+            let debounceTimer;
+            editor.addEventListener('input', () => {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    parseText();
+                }, 100); 
+            });
+
             document.getElementById('cast-btn').addEventListener('click', () => {
                 const baseUrl = window.location.href.split('?')[0].split('#')[0];
                 const projectorUrl = baseUrl + '?mode=projector';
