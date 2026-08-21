@@ -2,6 +2,8 @@ const CACHE_NAME = 'verseflow-cache-v1';
 const URLS_TO_CACHE = [
     './',
     './index.html',
+    './style.css',
+    './app.js',
     './manifest.json'
 ];
 
@@ -30,7 +32,6 @@ self.addEventListener('activate', (event) => {
 
 // Fetch Event - Serve Offline First
 self.addEventListener('fetch', (event) => {
-    // Exclude projector mode URL parameters from caching strictness
     const requestUrl = new URL(event.request.url);
     if (requestUrl.search.includes('mode=projector')) {
         event.respondWith(fetch(event.request).catch(() => caches.match('./index.html')));
