@@ -12,19 +12,34 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- MOBILE WARNING OVERLAY -->
+    <div id="mobile-warning">
+        <h2 style="margin-bottom: 12px;">🖥️ Desktop Recommended</h2>
+        <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 24px; max-width: 320px; line-height: 1.5;">
+            This presentation tool is designed for dual-screen setups and physical keyboard hotkeys. It is highly recommended to use a laptop or desktop computer.
+        </p>
+        <button id="continue-anyway-btn" class="primary" style="padding: 10px 20px; font-size: 1rem; border-radius: 6px;">
+            Continue Anyway
+        </button>
+    </div>
 
     <div id="dashboard-ui" class="dashboard">
         <header>
             <div style="display: flex; gap: 24px; align-items: center;">
                 <div style="display: flex; gap: 8px; align-items: center; border-right: 1px solid #444; padding-right: 24px;">
-                    <button id="export-btn" class="btn-small" title="Export Setlist">💾 Export</button>
-                    <button id="import-btn" class="btn-small" title="Import Setlist">📂 Import</button>
+                    <div style="display: flex; flex-direction: column; gap: 4px; align-items: center;">
+                        <div style="display: flex; gap: 8px;">
+                            <button id="export-btn" class="btn-small" title="Export Setlist">💾 Export</button>
+                            <button id="import-btn" class="btn-small" title="Import Setlist">📂 Import</button>
+                        </div>
+                        <span style="font-size: 0.65rem; color: #777; letter-spacing: 0.02em;">*Text only (No local media)</span>
+                    </div>
                     <input type="file" id="import-file" accept=".json" style="display: none;">
                 </div>
 
                 <div class="controls">
                     <label style="font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
-                        Size: <input type="range" id="font-size-slider" min="2" max="12" step="0.5" value="5">
+                        Text Size: <input type="range" id="font-size-slider" min="2" max="12" step="0.5" value="5">
                     </label>
 
                     <select id="theme-select">
@@ -41,7 +56,7 @@
             </div>
             
             <div style="display: flex; gap: 10px; align-items: center;">
-                <button id="clear-screen-btn" style="background: #e65100; border-color: #e65100; color: white; padding: 8px 12px; border-radius: 6px; cursor: pointer;">Clear Screen</button>
+                <button id="clear-screen-btn" style="background: #e65100; border-color: #e65100; color: white; padding: 8px 12px; border-radius: 6px; cursor: pointer;">Clear Live Text</button>
                 <button class="primary" id="cast-btn">Launch Projector</button>
             </div>
         </header>
@@ -73,17 +88,17 @@
             <div class="setlist-pane">
                 <div class="setlist-header">
                     <span>Setlist</span>
-                    <button id="add-song-btn" class="btn-small">+ Add</button>
+                    <button id="add-song-btn" class="btn-small">+ New Song</button>
                 </div>
                 
                 <div style="padding: 8px 12px; border-bottom: 1px solid #333;">
-                    <input type="text" id="search-input" placeholder="Search song..." style="width: 100%; padding: 4px 8px; font-size: 0.85rem;">
+                    <input type="text" id="search-input" placeholder="Filter setlist..." style="width: 100%; padding: 4px 8px; font-size: 0.85rem;">
                 </div>
 
                 <div id="setlist-container" class="setlist-items"></div>
             </div>
             <div class="editor-pane">
-                <div class="editor-header">Top line is Song Title. Double enter = New Slide. # = Section. [Chords]</div>
+                <div class="editor-header">Top line is Song Title. Double enter = New Slide. # = Section Label (e.g., # Verse 1).</div>
                 <textarea id="lyric-editor"></textarea>
             </div>
             <div class="preview-container">
