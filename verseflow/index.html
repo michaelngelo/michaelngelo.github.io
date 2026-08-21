@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VerseFlow - Lyric Presenter</title>
     <link rel="manifest" href="./manifest.json">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
     <meta name="theme-color" content="#121212">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Merriweather:wght@400;700&family=Montserrat:wght@400;700&display=swap');
@@ -1173,6 +1175,20 @@
 
             function formatContent(text) {
                 let html = escapeHTML(text);
+                html = html.replace(/\$\$(.*?)\$\$/gs, (match, equation) => {
+                    try {
+                        return katex.renderToString(equation, { displayMode: true, throwOnError: false });
+                    } catch (e) {
+                        return match; // Fallback to raw text if LaTeX syntax fails
+                    }
+                });
+                html = html.replace(/\$(.*?)\$/g, (match, equation) => {
+                    try {
+                        return katex.renderToString(equation, { displayMode: false, throwOnError: false });
+                    } catch (e) {
+                        return match; 
+                    }
+                });
                 html = html.replace(/^&gt;\s*(.*)(\r?\n)?/gm, '<div class="citation">$1</div>');
                 html = html.replace(/\n(?=\s*\d+)/g, '<br><span class="verse-space"></span>');
                 html = html.replace(/\n/g, '<br>');
