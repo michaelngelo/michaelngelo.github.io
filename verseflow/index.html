@@ -375,7 +375,6 @@
             position: relative;
             z-index: 2;
         }
-        .chord { color: #ffeb3b; font-size: 0.5em; vertical-align: super; font-family: monospace; margin-right: 2px; }
 
         /* --- THEMES --- */
         .theme-dark { background-color: #000000; }
@@ -496,8 +495,6 @@
                 </div>
 
                 <div class="controls">
-                    <label style="font-size: 0.9rem; display: none;"><input type="checkbox" id="chords-toggle"> Show Chords</label>
-                    
                     <label style="font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
                         Size: <input type="range" id="font-size-slider" min="2" max="12" step="0.5" value="5">
                     </label>
@@ -832,7 +829,6 @@
             const slideList = document.getElementById('slide-list');
             const setlistContainer = document.getElementById('setlist-container');
             const themeSelect = document.getElementById('theme-select');
-            const chordsToggle = document.getElementById('chords-toggle');
             const fontSizeSlider = document.getElementById('font-size-slider');
 
             // Custom Toolbar Elements
@@ -867,7 +863,7 @@
                 customBg: "",
                 dimBg: false,
                 title: "Amazing Grace",
-                lyrics: "Amazing Grace\n\n# Verse 1\nAmazing grace, how sweet the sound\nThat saved a wretch like [C]me\n\n# Chorus\nI once was [G]lost, but now am found\nWas blind, but now I [C]see"
+                lyrics: "Amazing Grace\n\n# Verse 1\nAmazing grace, how sweet the sound\nThat saved a wretch like me\n\n# Chorus\nI once was lost, but now am found\nWas blind, but now I see"
             };
             
             let setlist = JSON.parse(localStorage.getItem('verseflow_setlist')) || [defaultSong];
@@ -1180,8 +1176,6 @@
                 html = html.replace(/\n(?=\s*\d+)/g, '<br><span class="verse-space"></span>');
                 html = html.replace(/\n/g, '<br>');
                 html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-                if (chordsToggle.checked) html = html.replace(/\[(.*?)\]/g, '<span class="chord">$1</span>');
-                else html = html.replace(/\[(.*?)\]/g, ''); 
                 return html;
             }
 
@@ -1532,7 +1526,6 @@
             });
 
             editor.addEventListener('input', parseText);
-            chordsToggle.addEventListener('change', () => { renderSlideList(); if(liveIndex !== -1) goLive(liveIndex); });
             
             document.getElementById('cast-btn').addEventListener('click', () => {
                 const baseUrl = window.location.href.split('?')[0].split('#')[0];
