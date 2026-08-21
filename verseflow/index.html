@@ -867,7 +867,7 @@
             };
             
             let setlist = JSON.parse(localStorage.getItem('verseflow_setlist')) || [defaultSong];
-            let activeSongId = setlist[0]?.id;
+            let activeSongId = Number(localStorage.getItem('verseflow_active_song')) || setlist[0]?.id;
 
             function saveSetlist() {
                 localStorage.setItem('verseflow_setlist', JSON.stringify(setlist));
@@ -982,6 +982,7 @@
 
             function loadSong(id) {
                 activeSongId = id;
+                localStorage.setItem('verseflow_active_song', id);
                 const song = setlist.find(s => s.id === id);
                 editor.value = song.lyrics;
                 themeSelect.value = song.theme || 'theme-dark';
