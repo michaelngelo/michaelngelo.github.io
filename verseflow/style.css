@@ -429,3 +429,62 @@ textarea:focus { outline: none; }
 .fade-animation {
     animation: fadeIn 0.25s ease-in-out forwards;
 }
+
+/* --- MOBILE WARNING SCREEN --- */
+#mobile-warning {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    text-align: center;
+    padding: 24px;
+    background-color: var(--bg-dark);
+    z-index: 3000;
+}
+
+/* If the screen is narrower than a standard iPad (768px), trigger the warning */
+@media (max-width: 768px) {
+    /* 1. Removed !important so the JS "Continue Anyway" button can successfully override this */
+    #dashboard-ui { display: none; }
+    #mobile-warning { display: flex; }
+
+    /* 2. Release the 100vh lock so the page can actually grow and scroll */
+    body { 
+        overflow-y: auto; 
+        overflow-x: hidden; 
+        height: auto; 
+        min-height: 100vh; 
+    }
+    
+    .dashboard { 
+        height: auto; 
+        min-height: 100vh; 
+    }
+    
+    /* 3. Stack the top header and let buttons wrap to new lines */
+    header { flex-direction: column; align-items: flex-start; gap: 16px; height: auto; padding: 16px; }
+    header > div { flex-wrap: wrap; border-right: none !important; padding-right: 0 !important; width: 100%; }
+    
+    /* 4. Let the Custom Toolbar expand vertically so colors don't overlap */
+    #custom-theme-toolbar.show-toolbar { flex-wrap: wrap; max-height: 300px; height: auto; padding: 12px 16px; }
+    
+    /* 5. Stack the workspace columns and allow them to expand */
+    .workspace { flex-direction: column; overflow: visible; height: auto; }
+    
+    /* 6. Enforce exact heights and prevent the browser from shrinking them */
+    .setlist-pane, .editor-pane, .preview-container { 
+        width: 100%; 
+        border-right: none; 
+        border-bottom: 4px solid #222; 
+        flex-shrink: 0; 
+    }
+    
+    /* 7. Give specific heights to the stacked panes */
+    .setlist-pane { flex: none; height: 350px; }
+    .editor-pane { flex: none; height: 350px; }
+    .preview-container { flex: none; height: 500px; }
+    
+    /* 8. Hide physical keyboard hotkey hints (mobile users don't have them) */
+    .hotkey-hints { display: none; }
+}

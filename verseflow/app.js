@@ -209,7 +209,16 @@ if (isProjector) {
     const onlineImgUrl = document.getElementById('online-img-url');
     const applyOnlineUrlBtn = document.getElementById('apply-online-url-btn');
     const urlValidationStatus = document.getElementById('url-validation-status');
-    
+
+    // Mobile Warning Screen Bypass
+    const continueAnywayBtn = document.getElementById('continue-anyway-btn');
+    if (continueAnywayBtn) {
+        continueAnywayBtn.addEventListener('click', () => {
+            document.getElementById('mobile-warning').style.display = 'none';
+            document.getElementById('dashboard-ui').style.display = 'flex';
+        });
+    }
+
     let slides = [];
     let previewIndex = 0;
     let liveIndex = -1;
