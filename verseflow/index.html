@@ -58,14 +58,30 @@
 
         /* --- CUSTOM THEME TOOLBAR (Progressive Disclosure) --- */
         #custom-theme-toolbar {
-            display: none; /* Hidden by default */
+            display: flex;
             align-items: center;
             gap: 16px;
-            padding: 8px 24px;
+            padding: 0 24px; /* Starts at 0 for the animation */
             background-color: #171717;
-            border-bottom: 1px solid #292929;
+            border-bottom: 0px solid transparent;
             font-size: 0.85rem;
             color: var(--text-muted);
+            
+            /* The Animation Magic */
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            pointer-events: none;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* The active state that triggers the slide-down */
+        #custom-theme-toolbar.show-toolbar {
+            max-height: 60px;
+            opacity: 1;
+            padding: 8px 24px;
+            border-bottom: 1px solid #292929;
+            pointer-events: auto;
         }
 
         .toolbar-item {
@@ -883,7 +899,7 @@
                 if (!song) return;
 
                 if (song.theme === 'theme-custom') {
-                    customToolbar.style.display = 'flex';
+                    customToolbar.classList.add('show-toolbar'); // Triggers the slide down
                     customTextColor.value = song.customColor || '#ffffff';
                     customBgColor.value = song.customBgColor || '#000000';
                     dimBgCheckbox.checked = !!song.dimBg;
@@ -898,7 +914,7 @@
                         clearCustomBgBtn.style.display = 'none';
                     }
                 } else {
-                    customToolbar.style.display = 'none';
+                    customToolbar.classList.remove('show-toolbar'); // Triggers the slide up
                 }
             }
 
@@ -1327,7 +1343,31 @@
 
             openMediaBinBtn.addEventListener('click', () => {
                 modal.style.display = 'flex';
-                renderLocalMediaGrid();
+                
+                const activeSong = setlist.find(s => s.id === activeSongId);
+                
+                // If the song has a custom background AND it is a web URL (not a local IDB file)
+                if (activeSong && activeSong.customBg && !activeSong.customBg.startsWith('idb_')) {
+                    
+                    // 1. Force the tabs to switch to the Online Tab
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+                    document.querySelector('[data-tab="tab-online"]').classList.add('active');
+                    document.getElementById('tab-online').style.display = 'block';
+                    
+                    // 2. Paste the active URL into the box so the operator can see/copy it
+                    onlineImgUrl.value = activeSong.customBg;
+                    urlValidationStatus.innerHTML = '<span style="color: #4CAF50; font-size: 0.85rem;">Currently active link.</span>';
+                    
+                } else {
+                    // Otherwise, default to the Local Image tab
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+                    document.querySelector('[data-tab="tab-local"]').classList.add('active');
+                    document.getElementById('tab-local').style.display = 'block';
+                    
+                    renderLocalMediaGrid();
+                }
             });
 
             closeMediaBin.addEventListener('click', () => { modal.style.display = 'none'; });
