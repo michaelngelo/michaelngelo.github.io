@@ -17,9 +17,22 @@
             --accent: #5b7cff;
             --accent-hover: #4a65d8;
             --live-color: #ff4b4b;
-            /* Traditional Chinese & UI font fallbacks */
+            
+            /* --- MASTER FONT STACKS --- */
+            /* UI Font */
             --font-ui: -apple-system, BlinkMacSystemFont, "PingFang HK", "Microsoft JhengHei", "Noto Sans TC", sans-serif;
-            --font-lyric: "PingFang HK", "Microsoft JhengHei", "Noto Sans TC", "Helvetica Neue", sans-serif;
+            
+            /* Sans-Serif: Clean, modern, highly legible (Inter + TC Fallbacks) */
+            --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "PingFang HK", "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+            
+            /* Serif: Classic, traditional, hymnal style (Merriweather + TC Fallbacks) */
+            --font-serif: "Merriweather", "Georgia", "Songti TC", "Noto Serif TC", "PMingLiU", "Times New Roman", serif;
+            
+            /* Display: Geometric and wide for minimalist themes */
+            --font-display: "Montserrat", var(--font-sans);
+            
+            /* Projector Default (Can be overridden by themes) */
+            --font-lyric: var(--font-sans);
         }
 
         .slide-content, .projector-text {
@@ -368,14 +381,14 @@
         .theme-dark { background-color: #000000; }
         .theme-dark .projector-text { 
             color: #ffffff; 
-            font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: var(--font-sans);
             font-weight: 700;
         }
 
         .theme-blue-wash { background: radial-gradient(circle at center, #112240 0%, #060a14 100%); }
         .theme-blue-wash .projector-text {
             color: #ffffff;
-            font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: var(--font-sans);
             font-weight: 700;
             text-shadow: 0px 4px 12px rgba(0, 0, 0, 0.6);
         }
@@ -383,14 +396,14 @@
         .theme-traditional { background-color: #000000; }
         .theme-traditional .projector-text { 
             color: #fdf6e3; 
-            font-family: "Merriweather", "Georgia", "Times New Roman", serif; 
+            font-family: var(--font-serif); 
             font-weight: 400; 
         }
 
         .theme-minimalist { background-color: #000000; }
         .theme-minimalist .projector-text {
             color: #ffffff;
-            font-family: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: var(--font-display);
             font-weight: 400; 
             text-transform: uppercase; 
             letter-spacing: 0.15em; 
@@ -403,7 +416,7 @@
         }
         .theme-lower-third .projector-text {
             color: #ffffff;
-            font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: var(--font-sans);
             font-weight: 700;
             text-shadow: 2px 2px 8px rgba(0,0,0,1);
         }
@@ -411,14 +424,14 @@
         .theme-paper { background-color: #f4ecd8; }
         .theme-paper .projector-text { 
             color: #2c2c2c; 
-            font-family: "Merriweather", "Georgia", "Times New Roman", serif; 
+            font-family: var(--font-serif); 
             font-weight: 400; 
         }
 
         .theme-scripture { background-color: #000000; }
         .theme-scripture .projector-text { 
             color: #fdf6e3; 
-            font-family: "Merriweather", "Georgia", "Songti TC", "Noto Serif TC", "PMingLiU", "Times New Roman", serif; 
+            font-family: var(--font-serif); 
             font-weight: 400; 
             text-align: justify;
             letter-spacing: 0.05em;
@@ -447,6 +460,17 @@
             margin-bottom: 1vh;
             margin-top: 0;
             letter-spacing: normal;
+        }
+
+        .theme-custom .projector-text {
+            font-family: var(--font-sans);
+            font-weight: 900; 
+            letter-spacing: 0.02em;
+            
+            /* The "Halo" Effect */
+            text-shadow: 
+                0px 2px 4px rgba(0, 0, 0, 1),
+                0px 8px 24px rgba(0, 0, 0, 0.8);
         }
 
         @keyframes fadeIn {
