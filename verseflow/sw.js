@@ -31,17 +31,24 @@ self.addEventListener('activate', (event) => {
     self.clients.claim();
 });
 
-// Fetch Event - Serve Offline First
+// Fetch Event - Serve Offline First & Dynamically Cache External Links
 self.addEventListener('fetch', (event) => {
     const requestUrl = new URL(event.request.url);
     if (requestUrl.search.includes('mode=projector')) {
-        event.respondWith(fetch(event.request).catch(() => caches.match('./index.html')));
+        event.respondWith(fetch(event.request).catch(() => caches.match('./index.html', { ignoreSearch: true })));
         return;
     }
 
     event.respondWith(
-        caches.match(event.request).then((response) => {
-            return response || fetch(event.request);
+        caches.match(event.request, { ignoreSearch: true }).then((response) => {
+            return response || fetch(event.request).then((networkResponse) => {
+                // Dynamically cache any KaTeX assets fetched from the CDN
+                if (requestUrl.hostname === 'cdn.jsdelivr.net') {
+                    const clone = networkResponse.clone();
+                    caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+                }
+                return networkResponse;
+            });
         })
     );
 });
