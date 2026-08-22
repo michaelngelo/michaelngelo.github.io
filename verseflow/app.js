@@ -224,19 +224,48 @@ if (isProjector) {
     let liveIndex = -1;
     let liveSongId = null;
 
-    const defaultSong = { 
-        id: Date.now(),
-        theme: "theme-dark",
-        fontSize: "5",
-        customColor: "#ffffff",
-        customBgColor: "#000000",
-        customBg: "",
-        dimBg: false,
-        title: "Amazing Grace",
-        lyrics: "Amazing Grace\n\n# Verse 1\nAmazing grace, how sweet the sound\nThat saved a wretch like me\n\n# Chorus\nI once was lost, but now am found\nWas blind, but now I see"
-    };
-    
-    let setlist = JSON.parse(localStorage.getItem('verseflow_setlist')) || [defaultSong];
+    const defaultSetlist = [
+        {
+            id: 1,
+            theme: "theme-custom",
+            fontSize: "5",
+            customColor: "#ffffff",
+            customBgColor: "#000000",
+            customBg: "./default-bg.avif",
+            dimBg: true,
+            title: "Amazing Grace",
+            lyrics: "Amazing Grace\n\n# Verse 1\nAmazing grace, how sweet the sound\nThat saved a wretch like me\n\n# Chorus\nI once was lost, but now am found\nWas blind, but now I see"
+        },
+        {
+            id: 2,
+            theme: "theme-blue-wash",
+            fontSize: "5",
+            customColor: "#ffffff",
+            customBgColor: "#000000",
+            title: "歡迎 / Welcome",
+            lyrics: "歡迎參加主日崇拜\n\n# 準備 \n請安靜預備心敬拜\nPlease prepare your heart for worship"
+        },
+        {
+            id: 3,
+            theme: "theme-traditional",
+            fontSize: "5",
+            customColor: "#ffffff",
+            customBgColor: "#000000",
+            title: "祢真偉大 (How Great Thou Art)",
+            lyrics: "祢真偉大\n\n# Verse 1\n主啊我神，我每逢舉目觀看\n祢手所造，一切奇妙大工\n\n# Chorus\n我心神唱出，讚美祢歌聲\n何等偉大，何等偉大"
+        },
+        {
+            id: 4,
+            theme: "theme-scripture",
+            fontSize: "5",
+            customColor: "#ffffff",
+            customBgColor: "#000000",
+            title: "詩篇 23:1-4",
+            lyrics: "詩篇 23:1-4\n\n# Rolling\n> 詩篇 23:1-4\n1 耶和華是我的牧者，我必不致缺乏。\n2 他使我躺臥在青草地上，領我在可安歇的水邊。\n3 他使我的靈魂甦醒，為自己的名引導我走義路。\n4 我雖然行過死蔭的幽谷，也不怕遭害..."
+        }
+    ];
+
+    let setlist = JSON.parse(localStorage.getItem('verseflow_setlist')) || defaultSetlist;
     let activeSongId = Number(localStorage.getItem('verseflow_active_song')) || setlist[0]?.id;
 
     function saveSetlist() {

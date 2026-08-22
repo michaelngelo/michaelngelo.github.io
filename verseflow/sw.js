@@ -4,7 +4,8 @@ const URLS_TO_CACHE = [
     './index.html',
     './style.css',
     './app.js',
-    './manifest.json'
+    './manifest.json',
+    './default-bg.avif'
 ];
 
 // Install Event - Cache Files
