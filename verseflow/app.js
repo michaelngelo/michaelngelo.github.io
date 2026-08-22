@@ -890,7 +890,6 @@ if (isProjector) {
     document.querySelector('.brand').addEventListener('click', async (e) => {
         e.preventDefault(); 
 
-        // 1. Abort immediately if the device knows it is offline
         if (!navigator.onLine) {
             e.target.textContent = "⚠️ Offline: Cannot Update";
             setTimeout(() => e.target.textContent = "⚡ VerseFlow", 3000);
@@ -899,21 +898,22 @@ if (isProjector) {
 
         e.target.textContent = "🔄 Updating...";
 
-        if ('serviceWorker' in navigator) {
+        if ('caches' in window) {
             try {
-                const registrations = await navigator.serviceWorker.getRegistrations();
-                for (let registration of registrations) {
-                    await registration.unregister();
+                const cache = await caches.open('verseflow-cache-v1');
+                const urlsToUpdate = ['./', './index.html', './style.css', './app.js', './manifest.json'];
+                for (const url of urlsToUpdate) {
+                    const response = await fetch(`${url}?_t=${Date.now()}`);                    
+                    if (response.ok) {
+                        await cache.put(url, response.clone());
+                    }
                 }
-                window.location.href = window.location.pathname + '?update=' + Date.now();
+                window.location.reload();
             } catch (error) {
-                console.error('Failed to unregister Service Worker:', error);
+                console.error('Background update failed:', error);
                 e.target.textContent = "⚠️ Please Hard Refresh Manually";
                 setTimeout(() => e.target.textContent = "⚡ VerseFlow", 3000);
             }
-        } else {
-            // Fallback for browsers with service workers disabled
-            window.location.href = window.location.pathname + '?update=' + Date.now();
         }
     });
 
