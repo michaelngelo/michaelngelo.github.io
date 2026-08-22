@@ -1,6 +1,6 @@
 {
   "short_name": "VerseFlow",
-  "name": "VerseFlow - Live Stage Presenter",
+  "name": "VerseFlow - Lightweight Presenter",
   "description": "A lightweight, offline-ready live presentation tool for lyrics and scripture.",
   "start_url": "./index.html",
   "display": "standalone",
