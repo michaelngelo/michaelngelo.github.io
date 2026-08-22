@@ -887,6 +887,36 @@ if (isProjector) {
         }
     });
 
+    document.querySelector('.brand').addEventListener('click', async (e) => {
+        e.preventDefault(); 
+
+        // 1. Abort immediately if the device knows it is offline
+        if (!navigator.onLine) {
+            e.target.textContent = "⚠️ Offline: Cannot Update";
+            setTimeout(() => e.target.textContent = "⚡ VerseFlow", 3000);
+            return;
+        }
+
+        e.target.textContent = "🔄 Updating...";
+
+        if ('serviceWorker' in navigator) {
+            try {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for (let registration of registrations) {
+                    await registration.unregister();
+                }
+                window.location.href = window.location.pathname + '?update=' + Date.now();
+            } catch (error) {
+                console.error('Failed to unregister Service Worker:', error);
+                e.target.textContent = "⚠️ Please Hard Refresh Manually";
+                setTimeout(() => e.target.textContent = "⚡ VerseFlow", 3000);
+            }
+        } else {
+            // Fallback for browsers with service workers disabled
+            window.location.href = window.location.pathname + '?update=' + Date.now();
+        }
+    });
+
     loadSong(activeSongId);
 }
 
