@@ -941,7 +941,7 @@ if (isProjector) {
             } catch (error) {
                 console.error('Background update failed:', error);
                 e.target.textContent = "⚠️ Please Hard Refresh Manually";
-                setTimeout(() => e.target.textContent = "⚡ VerseFlow", 3000);
+                setTimeout(() => e.target.textContent = "🌊 VerseFlow", 3000);
             }
         }
     });
