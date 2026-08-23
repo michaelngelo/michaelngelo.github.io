@@ -16,31 +16,29 @@
 <body>
     <!-- MOBILE WARNING OVERLAY -->
     <div id="mobile-warning">
-        <h2 style="margin-bottom: 12px;">🖥️ Desktop Recommended</h2>
-        <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 24px; max-width: 320px; line-height: 1.5;">
+        <h2 class="warning-title">🖥️ Desktop Recommended</h2>
+        <p class="warning-text">
             This presentation tool is designed for dual-screen setups and physical keyboard hotkeys. It is highly recommended to use a laptop or desktop computer.
         </p>
-        <button id="continue-anyway-btn" class="primary" style="padding: 10px 20px; font-size: 1rem; border-radius: 6px;">
-            Continue Anyway
-        </button>
+        <button id="continue-anyway-btn" class="primary warning-btn">Continue Anyway</button>
     </div>
 
     <div id="dashboard-ui" class="dashboard">
         <header>
-            <div style="display: flex; gap: 24px; align-items: center;">
-                <div style="display: flex; gap: 8px; align-items: center; border-right: 1px solid #444; padding-right: 24px;">
-                    <div style="display: flex; flex-direction: column; gap: 4px; align-items: center;">
-                        <div style="display: flex; gap: 8px;">
+            <div class="header-left">
+                <div class="header-divider">
+                    <div class="flex-col-center">
+                        <div class="flex-row-gap">
                             <button id="export-btn" class="btn-small" title="Export Setlist">💾 Export</button>
                             <button id="import-btn" class="btn-small" title="Import Setlist">📂 Import</button>
                         </div>
-                        <span style="font-size: 0.65rem; color: #777; letter-spacing: 0.02em;">*Text only (No local media)</span>
+                        <span class="text-micro">*Text only (No local media)</span>
                     </div>
                     <input type="file" id="import-file" accept=".json" style="display: none;">
                 </div>
 
                 <div class="controls">
-                    <label style="font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
+                    <label class="slider-label">
                         Text Size: <input type="range" id="font-size-slider" min="2" max="12" step="0.5" value="5">
                     </label>
 
@@ -57,8 +55,8 @@
                 </div>
             </div>
             
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <button id="clear-screen-btn" style="background: #e65100; border-color: #e65100; color: white; padding: 8px 12px; border-radius: 6px; cursor: pointer;">Clear Live Text</button>
+            <div class="header-right">
+                <button id="clear-screen-btn" class="btn-warning">Clear Live Text</button>
                 <button class="primary" id="cast-btn">Launch Projector</button>
             </div>
         </header>
@@ -76,13 +74,13 @@
 
             <div class="toolbar-item">
                 <div id="toolbar-thumb" class="toolbar-thumb-preview"></div>
-                <button id="open-media-bin-btn" class="btn-small" style="background: #383838; border: 1px solid #555;">🖼️ Media Bin</button>
-                <button id="clear-custom-bg-btn" class="btn-small" style="background: #4a2222; color: #ff8888; display: none;">Remove Image</button>
+                <button id="open-media-bin-btn" class="btn-small btn-secondary">🖼️ Media Bin</button>
+                <button id="clear-custom-bg-btn" class="btn-small btn-danger" style="display: none;">Remove Image</button>
             </div>
 
-            <div class="toolbar-item" style="cursor: pointer;">
-                <input type="checkbox" id="dim-bg-checkbox" style="cursor: pointer;">
-                <label for="dim-bg-checkbox" style="cursor: pointer;">Dim Overlay</label>
+            <div class="toolbar-item cursor-pointer">
+                <input type="checkbox" id="dim-bg-checkbox" class="cursor-pointer">
+                <label for="dim-bg-checkbox" class="cursor-pointer">Dim Overlay</label>
             </div>
         </div>
 
@@ -93,8 +91,8 @@
                     <button id="add-song-btn" class="btn-small">+ New</button>
                 </div>
                 
-                <div style="padding: 8px 12px; border-bottom: 1px solid #333;">
-                    <input type="text" id="search-input" placeholder="Filter setlist..." style="width: 100%; padding: 4px 8px; font-size: 0.85rem;">
+                <div class="search-container">
+                    <input type="text" id="search-input" class="search-input" placeholder="Filter setlist...">
                 </div>
 
                 <div id="setlist-container" class="setlist-items"></div>
@@ -111,18 +109,18 @@
 
         <div id="undo-toast">
             <span id="undo-text">Song deleted.</span>
-            <button id="undo-btn" class="btn-small" style="background: var(--accent);">Undo</button>
+            <button id="undo-btn" class="btn-small">Undo</button>
         </div>
 
         <div class="hotkey-hints">
-            <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center;">
-                <span><strong style="color: #fff;">Enter:</strong> Go Live &nbsp;|&nbsp;</span>
-                <span><strong style="color: #fff;">Esc:</strong> Clear Live Text &nbsp;|&nbsp;</span>
-                <span><strong style="color: #fff;">Space/Arrows:</strong> Change Slide &nbsp;|&nbsp;</span>
-                <span><strong style="color: #fff;">PgUp/PgDn:</strong> Change Song &nbsp;|&nbsp;</span>
-                <span><strong style="color: #fff;">Sections:</strong> <strong>T</strong> (Title), <strong>V</strong> (Verse), <strong>C</strong> (Chorus), <strong>B</strong> (Bridge), <strong>P</strong> (Pre), <strong>E</strong> (Ending), <strong>0-99</strong></span>
+            <div class="hotkey-list">
+                <span><strong>Enter:</strong> Go Live &nbsp;|&nbsp;</span>
+                <span><strong>Esc:</strong> Clear Live Text &nbsp;|&nbsp;</span>
+                <span><strong>Space/Arrows:</strong> Change Slide &nbsp;|&nbsp;</span>
+                <span><strong>PgUp/PgDn:</strong> Change Song &nbsp;|&nbsp;</span>
+                <span><strong>Sections:</strong> <strong>T</strong> (Title), <strong>V</strong> (Verse), <strong>C</strong> (Chorus), <strong>B</strong> (Bridge), <strong>P</strong> (Pre), <strong>E</strong> (Ending), <strong>0-99</strong></span>
             </div>
-            <a href="#" class="brand" style="flex-shrink: 0;">🌊 VerseFlow</a>
+            <a href="#" class="brand">🌊 VerseFlow</a>
         </div>
     </div>
 
@@ -130,7 +128,7 @@
     <div id="media-bin-modal" class="modal-overlay" style="display: none;">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 style="font-size: 1.1rem;">Media Bin</h3>
+                <h3 class="modal-title">Media Bin</h3>
                 <button id="close-media-bin" class="close-btn">&times;</button>
             </div>
 
@@ -142,20 +140,20 @@
             <!-- Tab 1: Local IndexedDB Library -->
             <div id="tab-local" class="tab-content">
                 <div class="upload-zone">
-                    <label for="local-image-upload" class="btn-small" style="background: var(--accent); padding: 6px 12px; font-size: 0.85rem;">📥 Add Local Image</label>
+                    <label for="local-image-upload" class="btn-small btn-upload">📥 Add Local Image</label>
                     <input type="file" id="local-image-upload" accept="image/*" style="display: none;">
-                    <span style="color: #888; font-size: 0.8rem;">Permanently saved to this computer's browser storage</span>
+                    <span class="upload-note">Permanently saved to this computer's browser storage</span>
                 </div>
                 <div class="image-grid" id="local-image-grid"></div>
             </div>
 
             <!-- Tab 2: Direct Online URL -->
             <div id="tab-online" class="tab-content" style="display: none;">
-                <div style="display: flex; flex-direction: column; gap: 10px;">
-                    <label style="font-size: 0.85rem; color: #aaa;">Paste Direct Image Link (e.g. JPG, PNG, WebP):</label>
-                    <div style="display: flex; gap: 8px;">
-                        <input type="text" id="online-img-url" placeholder="https://example.com/image.jpg" style="flex: 1;">
-                        <button id="apply-online-url-btn" class="btn-small" style="background: var(--accent); font-weight: bold;">Apply Link</button>
+                <div class="url-input-container">
+                    <label class="text-muted-small">Paste Direct Image Link (e.g. JPG, PNG, WebP):</label>
+                    <div class="url-input-group">
+                        <input type="text" id="online-img-url" class="online-input" placeholder="https://example.com/image.jpg">
+                        <button id="apply-online-url-btn" class="btn-small btn-apply">Apply Link</button>
                     </div>
                     <div id="url-validation-status"></div>
                 </div>
@@ -168,6 +166,5 @@
         <div id="projector-overlay" class="projector-overlay"></div>
         <div id="projector-content" class="projector-text"></div>
     </div>
-
 </body>
 </html>
