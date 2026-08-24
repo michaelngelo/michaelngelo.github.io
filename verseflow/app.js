@@ -486,7 +486,9 @@ if (isProjector) {
                 content = blockLines.slice(1).join('\n').trim();
             }
 
-            if (label.toLowerCase() === 'rolling') {
+            const rollingMatch = label.match(/^rolling(?:\s+(\d+))?$/i);            
+            if (rollingMatch) {
+                const linesPerSlide = rollingMatch[1] ? parseInt(rollingMatch[1], 10) : 2;
                 const contentLines = content.split('\n');
                 let citation = '';
                 let verses = [...contentLines];
@@ -495,18 +497,15 @@ if (isProjector) {
                     citation = verses.shift().trim() + '\n';
                 }
 
-                if (verses.length < 2) return [{ label, content }];
+                if (verses.length < linesPerSlide) return [{ label, content }];
 
                 const rollingSlides = [];
-                for (let i = 0; i < verses.length - 1; i++) {
-                    const pair = verses[i] + '\n' + verses[i + 1];
+                for (let i = 0; i < verses.length; i++) {
+                    const chunk = verses.slice(i, i + linesPerSlide).join('\n');
                     const match = verses[i].trim().match(/^(\d+)/);
                     const verseLabel = match ? match[1] : (i === 0 ? label : '');
-                    rollingSlides.push({ label: verseLabel, content: citation + pair });
+                    rollingSlides.push({ label: verseLabel, content: citation + chunk });
                 }
-                const finalVerse = verses[verses.length - 1];
-                const finalMatch = finalVerse.trim().match(/^(\d+)/);
-                rollingSlides.push({ label: finalMatch ? finalMatch[1] : '', content: citation + finalVerse });
 
                 return rollingSlides;
             }
