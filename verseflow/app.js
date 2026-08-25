@@ -310,6 +310,12 @@ if (isProjector) {
             delBtn.innerHTML = '×';
             delBtn.onclick = (e) => {
                 e.stopPropagation();
+
+                if (song.id === liveSongId) {
+                    alert("⚠️ This song is currently live on the projector. Please clear the screen (Esc) before deleting it.");
+                    return;
+                }
+
                 if(confirm(`Delete "${song.title}"?`)) {
                     deletedSongIndex = index;
                     deletedSongCache = song;
