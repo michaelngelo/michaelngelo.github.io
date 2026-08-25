@@ -998,10 +998,13 @@ if (isProjector) {
 
     document.addEventListener('keydown', (e) => {
         const searchInput = document.getElementById('search-input');
-        if (document.activeElement === editor || 
-            document.activeElement === fontSizeSlider || 
+        if (document.activeElement === editor ||
+            document.activeElement === fontSizeSlider ||
+            document.activeElement === tuneW ||
+            document.activeElement === tuneX ||
+            document.activeElement === tuneY ||
             document.activeElement === searchInput ||
-            document.activeElement === onlineImgUrl) return; 
+            document.activeElement === onlineImgUrl) return;
 
         const key = e.key.toLowerCase();
         const navKeys = ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'enter', ' ', 'escape', 'backspace', 'pagedown', 'pageup', 'v', 'c', 'b', 'p', 'e', 't'];
