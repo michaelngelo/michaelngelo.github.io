@@ -1026,28 +1026,30 @@ if (isProjector) {
 
         if (!navigator.onLine) {
             e.target.textContent = "⚠️ Offline: Cannot Update";
-            setTimeout(() => e.target.textContent = "⚡ VerseFlow", 3000);
+            setTimeout(() => e.target.textContent = "🌊 VerseFlow", 3000);
             return;
         }
 
         e.target.textContent = "🔄 Updating...";
 
-        if ('caches' in window) {
-            try {
-                const cache = await caches.open('verseflow-cache-v1');
-                const urlsToUpdate = ['./', './index.html', './style.css', './app.js', './manifest.json'];
-                for (const url of urlsToUpdate) {
-                    const response = await fetch(`${url}?_t=${Date.now()}`);                    
-                    if (response.ok) {
-                        await cache.put(url, response.clone());
-                    }
+        try {
+            if ('caches' in window) {
+                const cacheNames = await caches.keys();
+                for (const name of cacheNames) {
+                    await caches.delete(name);
                 }
-                window.location.reload();
-            } catch (error) {
-                console.error('Background update failed:', error);
-                e.target.textContent = "⚠️ Please Hard Refresh Manually";
-                setTimeout(() => e.target.textContent = "🌊 VerseFlow", 3000);
             }
+            if ('serviceWorker' in navigator) {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for (const registration of registrations) {
+                    await registration.unregister();
+                }
+            }
+            window.location.reload();
+        } catch (error) {
+            console.error('Hard refresh failed:', error);
+            e.target.textContent = "⚠️ Please Hard Refresh Manually";
+            setTimeout(() => e.target.textContent = "🌊 VerseFlow", 3000);
         }
     });
 
