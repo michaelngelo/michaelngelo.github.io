@@ -43,15 +43,26 @@
                     </label>
 
                     <select id="theme-select">
-                        <option value="theme-dark">Modern Center (Default)</option>
+                        <option value="theme-dark">Dark (Default)</option>
                         <option value="theme-blue-wash">Deep Blue Wash</option>
                         <option value="theme-traditional">Traditional Hymnal</option>
                         <option value="theme-minimalist">Contemporary Minimalist</option>
-                        <option value="theme-lower-third">Lower Third</option>
                         <option value="theme-paper">Classic Parchment (Light)</option>
                         <option value="theme-scripture">Scripture Reading</option>
                         <option value="theme-custom">🎨 Custom Style & Media...</option>
                     </select>
+
+                    <select id="layout-select" title="Screen Position">
+                        <option value="layout-center" data-default-w="100">Center</option>
+                        <option value="layout-top-left" data-default-w="65">Top Left</option>
+                        <option value="layout-top-right" data-default-w="65">Top Right</option>
+                        <option value="layout-lower" data-default-w="100">Lower</option>
+                        <option value="layout-top" data-default-w="100">Top</option>
+                        <option value="layout-left" data-default-w="65">Left</option>
+                        <option value="layout-right" data-default-w="65">Right</option>
+                    </select>
+
+                    <button id="toggle-tune-btn" class="btn-secondary" title="Fine-tune position">📏 Adjust</button>
                 </div>
             </div>
             
@@ -82,6 +93,25 @@
                 <input type="checkbox" id="dim-bg-checkbox" class="cursor-pointer">
                 <label for="dim-bg-checkbox" class="cursor-pointer">Dim Overlay</label>
             </div>
+        </div>
+
+        <div id="tune-toolbar" class="toolbar-drawer">
+            <div class="toolbar-item">
+                <label style="width: 60px;">Width:</label>
+                <input type="range" id="tune-w-slider" min="20" max="100" value="100">
+                <span id="tune-w-val" class="text-micro">100vw</span>
+            </div>
+            <div class="toolbar-item">
+                <label style="width: 60px;">X Shift:</label>
+                <input type="range" id="tune-x-slider" min="-50" max="50" value="0">
+                <span id="tune-x-val" class="text-micro">0vw</span>
+            </div>
+            <div class="toolbar-item">
+                <label style="width: 60px;">Y Shift:</label>
+                <input type="range" id="tune-y-slider" min="-50" max="50" value="0">
+                <span id="tune-y-val" class="text-micro">0vh</span>
+            </div>
+            <button id="reset-tune-btn" class="btn-small btn-danger" style="margin-left: auto;">Reset</button>
         </div>
 
         <div class="workspace">

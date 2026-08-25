@@ -131,8 +131,10 @@ if (isProjector) {
     projUI.style.display = 'flex';
 
     function applyProjectorTheme(data) {
+        const themeClass = data.theme || 'theme-dark';
+        const layoutClass = data.layoutStyle || 'layout-center';
         if (data.theme === 'theme-custom') {
-            projUI.className = 'projector theme-custom';
+            projUI.className = `projector theme-custom ${layoutClass}`;
             projUI.style.backgroundColor = data.customBgColor || '#000000';
             if (data.customBg) {
                 projUI.style.backgroundImage = `url("${data.customBg}")`;
@@ -146,18 +148,25 @@ if (isProjector) {
             projUI.style.backgroundImage = '';
             projOverlay.style.display = 'none';
             projContent.style.color = '';
-            projUI.className = `projector ${data.theme || 'theme-dark'}`;
+            projUI.className = `projector ${themeClass} ${layoutClass}`;
         }
     }
 
     channel.onmessage = (e) => {
         if (e.data.type === 'UPDATE_SLIDE') {
             applyProjectorTheme(e.data);
+            projContent.style.setProperty('--tune-w', (e.data.tuneW !== undefined ? e.data.tuneW : 100) + 'vw');
+            projContent.style.setProperty('--tune-x', (e.data.tuneX !== undefined ? e.data.tuneX : 0) + 'vw');
+            projContent.style.setProperty('--tune-y', (e.data.tuneY !== undefined ? e.data.tuneY : 0) + 'vh');
             projContent.classList.remove('fade-animation');
             void projContent.offsetWidth; 
             projContent.innerHTML = e.data.html;
             if (e.data.fontSize) projContent.style.fontSize = e.data.fontSize;
             projContent.classList.add('fade-animation');
+        } else if (e.data.type === 'UPDATE_TUNE') {
+            projContent.style.setProperty('--tune-w', e.data.w + 'vw');
+            projContent.style.setProperty('--tune-x', e.data.x + 'vw');
+            projContent.style.setProperty('--tune-y', e.data.y + 'vh');
         } else if (e.data.type === 'CLEAR_SLIDE') {
             projContent.innerHTML = '';
             applyProjectorTheme(e.data);
@@ -192,6 +201,7 @@ if (isProjector) {
     const slideList = document.getElementById('slide-list');
     const setlistContainer = document.getElementById('setlist-container');
     const themeSelect = document.getElementById('theme-select');
+    const layoutSelect = document.getElementById('layout-select');
     const fontSizeSlider = document.getElementById('font-size-slider');
 
     const customToolbar = document.getElementById('custom-theme-toolbar');
@@ -257,6 +267,8 @@ if (isProjector) {
         {
             id: 4,
             theme: "theme-scripture",
+            layoutStyle: 'layout-top-left',
+            tuneW: "65",
             fontSize: "5",
             customColor: "#ffffff",
             customBgColor: "#000000",
@@ -367,17 +379,22 @@ if (isProjector) {
         const song = setlist.find(s => s.id === id);
         editor.value = song.lyrics;
         themeSelect.value = song.theme || 'theme-dark';
+        layoutSelect.value = song.layoutStyle || 'layout-center';
         fontSizeSlider.value = song.fontSize || "5";
         previewIndex = 0;
         if (activeSongId !== liveSongId) liveIndex = -1;
         updateCustomToolbarUI();
+        updateTuneUI();
         renderSetlist();
         parseText();
     }
 
     document.getElementById('add-song-btn').addEventListener('click', () => {
         const newSong = { 
-            id: Date.now(), theme: "theme-dark", fontSize: "5", customColor: "#ffffff",
+            id: Date.now(), theme: "theme-dark",
+            layoutStyle: "layout-center",
+            tuneW: 100, tuneX: 0, tuneY: 0,
+            fontSize: "5", customColor: "#ffffff",
             customBgColor: "#000000", customBg: "", dimBg: false,
             title: "New Song", lyrics: "New Song\n\n# Verse 1\nType lyrics here..." 
         };
@@ -617,11 +634,15 @@ if (isProjector) {
             type: 'UPDATE_SLIDE', 
             html: formatContent(slide.content), 
             theme: activeSong.theme || themeSelect.value,
+            layoutStyle: activeSong.layoutStyle || layoutSelect.value,
             fontSize: (activeSong.fontSize || fontSizeSlider.value) + 'vw',
             customColor: activeSong.customColor || '#ffffff',
             customBgColor: activeSong.customBgColor || '#000000',
             customBg: resolvedBg,
-            dimBg: !!activeSong.dimBg
+            dimBg: !!activeSong.dimBg,
+            tuneW: activeSong.tuneW,
+            tuneX: activeSong.tuneX,
+            tuneY: activeSong.tuneY
         });
     }
 
@@ -643,6 +664,65 @@ if (isProjector) {
         }
     }
 
+    const tuneToolbar = document.getElementById('tune-toolbar');
+    const toggleTuneBtn = document.getElementById('toggle-tune-btn');
+    const tuneW = document.getElementById('tune-w-slider');
+    const tuneX = document.getElementById('tune-x-slider');
+    const tuneY = document.getElementById('tune-y-slider');
+    const tuneWVal = document.getElementById('tune-w-val');
+    const tuneXVal = document.getElementById('tune-x-val');
+    const tuneYVal = document.getElementById('tune-y-val');
+
+    toggleTuneBtn.addEventListener('click', () => tuneToolbar.classList.toggle('show-drawer'));
+
+    function updateTuneUI() {
+        const activeSong = setlist.find(s => s.id === activeSongId);
+        if (!activeSong) return;
+        
+        const layoutVal = activeSong.layoutStyle || 'layout-center';
+        const optionEl = layoutSelect.querySelector(`option[value="${layoutVal}"]`);
+        const defaultW = optionEl ? parseInt(optionEl.dataset.defaultW, 10) : 100;
+
+        tuneW.value = activeSong.tuneW !== undefined ? activeSong.tuneW : defaultW;
+        tuneX.value = activeSong.tuneX !== undefined ? activeSong.tuneX : 0;
+        tuneY.value = activeSong.tuneY !== undefined ? activeSong.tuneY : 0;
+        
+        tuneWVal.textContent = tuneW.value + 'vw';
+        tuneXVal.textContent = tuneX.value + 'vw';
+        tuneYVal.textContent = tuneY.value + 'vh';
+    }
+
+    function updateTuneVariables() {
+        const activeSong = setlist.find(s => s.id === activeSongId);
+        if (!activeSong) return;
+
+        activeSong.tuneW = tuneW.value;
+        activeSong.tuneX = tuneX.value;
+        activeSong.tuneY = tuneY.value;
+        saveSetlist();
+
+        tuneWVal.textContent = tuneW.value + 'vw';
+        tuneXVal.textContent = tuneX.value + 'vw';
+        tuneYVal.textContent = tuneY.value + 'vh';
+
+        if (liveIndex !== -1 && activeSongId === liveSongId) {
+            channel.postMessage({ type: 'UPDATE_TUNE', w: tuneW.value, x: tuneX.value, y: tuneY.value });
+        }
+    }
+
+    [tuneW, tuneX, tuneY].forEach(slider => {
+        slider.addEventListener('input', updateTuneVariables);
+    });
+
+    document.getElementById('reset-tune-btn').addEventListener('click', () => {
+        const selectedOption = layoutSelect.options[layoutSelect.selectedIndex];
+        const defaultW = selectedOption ? parseInt(selectedOption.dataset.defaultW, 10) : 100;
+        tuneW.value = defaultW;
+        tuneX.value = 0;
+        tuneY.value = 0;
+        updateTuneVariables();
+    });
+
     fontSizeSlider.addEventListener('input', () => {
         const activeSong = setlist.find(s => s.id === activeSongId);
         if (activeSong) { activeSong.fontSize = fontSizeSlider.value; saveSetlist(); }
@@ -651,8 +731,25 @@ if (isProjector) {
 
     themeSelect.addEventListener('change', () => { 
         const activeSong = setlist.find(s => s.id === activeSongId);
-        if (activeSong) { activeSong.theme = themeSelect.value; saveSetlist(); }
+        if (activeSong) {
+             activeSong.theme = themeSelect.value;
+            saveSetlist();
+        }
         updateCustomToolbarUI();
+        if(liveIndex !== -1 && activeSongId === liveSongId) goLive(liveIndex); 
+    });
+
+    layoutSelect.addEventListener('change', () => {
+        const activeSong = setlist.find(s => s.id === activeSongId);
+        if (activeSong) { 
+            activeSong.layoutStyle = layoutSelect.value; 
+            const selectedOption = layoutSelect.options[layoutSelect.selectedIndex];
+            activeSong.tuneW = parseInt(selectedOption.dataset.defaultW, 10) || 100;
+            activeSong.tuneX = 0;
+            activeSong.tuneY = 0;
+            saveSetlist(); 
+        }
+        updateTuneUI();
         if(liveIndex !== -1 && activeSongId === liveSongId) goLive(liveIndex); 
     });
 
