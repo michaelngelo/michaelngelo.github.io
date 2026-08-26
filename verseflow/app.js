@@ -120,7 +120,17 @@ async function resolveBackgroundUrl(bgRef) {
 // MAIN APPLICATION LOGIC
 // ==========================================================
 const isProjector = new URLSearchParams(window.location.search).get('mode') === 'projector';
-const channel = new BroadcastChannel('verseflow_channel');
+
+let channel;
+if ('BroadcastChannel' in window) {
+    channel = new BroadcastChannel('verseflow_channel');
+} else {
+    console.warn("BroadcastChannel API not supported in this browser.");
+    alert("⚠️ Your browser does not support the dual-screen projector feature. The dashboard will function locally, but projecting is disabled.");
+    channel = { postMessage: () => {}, onmessage: null };
+}
+
+const navKeys = ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'enter', ' ', 'escape', 'backspace', 'pagedown', 'pageup', 'v', 'c', 'b', 'p', 'e', 't'];
 
 if (isProjector) {
     document.title = "Projector - VerseFlow";
@@ -129,9 +139,9 @@ if (isProjector) {
     const projOverlay = document.getElementById('projector-overlay');
     const projContent = document.getElementById('projector-content');
     projUI.style.display = 'flex';
+    let currentLiveState = null;
 
     function applyProjectorTheme(data) {
-        // DbC: Projector trusts that the dashboard payload is perfectly constructed
         const themeClass = data.theme;
         const layoutClass = data.layoutStyle;
         if (themeClass === 'theme-custom') {
@@ -155,6 +165,7 @@ if (isProjector) {
 
     channel.onmessage = (e) => {
         if (e.data.type === 'UPDATE_SLIDE') {
+            currentLiveState = { index: e.data.liveIndex, songId: e.data.liveSongId };
             applyProjectorTheme(e.data);
             projContent.style.setProperty('--tune-w', e.data.tuneW + 'vw');
             projContent.style.setProperty('--tune-x', e.data.tuneX + 'vw');
@@ -169,8 +180,15 @@ if (isProjector) {
             projContent.style.setProperty('--tune-x', e.data.x + 'vw');
             projContent.style.setProperty('--tune-y', e.data.y + 'vh');
         } else if (e.data.type === 'CLEAR_SLIDE') {
+            currentLiveState = null;
             projContent.innerHTML = '';
             applyProjectorTheme(e.data);
+        } else if (e.data.type === 'DASHBOARD_BOOT') {
+            if (currentLiveState) {
+                channel.postMessage({ type: 'PROJECTOR_SYNC', state: currentLiveState });
+            } else {
+                channel.postMessage({ type: 'PROJECTOR_READY' });
+            }
         }
     };
 
@@ -188,8 +206,6 @@ if (isProjector) {
 
     document.addEventListener('keydown', (e) => {
         const key = e.key.toLowerCase();
-        const navKeys = ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'enter', ' ', 'escape', 'backspace', 'pagedown', 'pageup', 'v', 'c', 'b', 'p', 'e', 't'];
-
         if (navKeys.includes(key) || (key >= '0' && key <= '9')) {
             channel.postMessage({ type: 'PROJECTOR_KEYPRESS', key: key });
             e.preventDefault();
@@ -220,6 +236,7 @@ if (isProjector) {
     const onlineImgUrl = document.getElementById('online-img-url');
     const applyOnlineUrlBtn = document.getElementById('apply-online-url-btn');
     const urlValidationStatus = document.getElementById('url-validation-status');
+    const searchInput = document.getElementById('search-input');
 
     const continueAnywayBtn = document.getElementById('continue-anyway-btn');
     if (continueAnywayBtn) {
@@ -234,11 +251,10 @@ if (isProjector) {
     let liveIndex = -1;
     let liveSongId = null;
 
-    // Boundary Data Sanitization: Enforces the contract shape for all song objects
     function sanitizeSetlist(list) {
         if (!Array.isArray(list)) return [];
         return list.map(song => ({
-            id: song.id || Date.now(),
+            id: (!isNaN(Number(song.id)) && song.id !== null) ? Number(song.id) : Date.now(),
             theme: song.theme || "theme-dark",
             layoutStyle: song.layoutStyle || "layout-center",
             tuneW: song.tuneW !== undefined ? song.tuneW : 100,
@@ -282,13 +298,18 @@ if (isProjector) {
     ];
 
     let setlist = sanitizeSetlist(JSON.parse(localStorage.getItem('verseflow_setlist')) || defaultSetlist);
-    let activeSongId = Number(localStorage.getItem('verseflow_active_song')) || setlist[0]?.id;
+    let storedId = Number(localStorage.getItem('verseflow_active_song'));
+    let activeSongId = (!isNaN(storedId) && storedId !== 0) ? storedId : setlist[0]?.id;
 
-    // Core DbC State Contract: Application state guarantees activeSongId is always valid
     const getActiveSong = () => setlist.find(s => s.id === activeSongId);
 
     function saveSetlist() {
-        localStorage.setItem('verseflow_setlist', JSON.stringify(setlist));
+        try {
+            localStorage.setItem('verseflow_setlist', JSON.stringify(setlist));
+        } catch (e) {
+            console.error("Storage limit reached:", e);
+            alert("⚠️ Browser storage is full! Your recent edits cannot be saved. Please export your setlist to make a backup, then delete some songs.");
+        }
     }
 
     let draggedIndex = null;
@@ -441,7 +462,6 @@ if (isProjector) {
         importFile.value = '';
     });
 
-    const searchInput = document.getElementById('search-input');
     searchInput.addEventListener('input', () => {
         const query = searchInput.value.toLowerCase().trim();
         const songItems = setlistContainer.querySelectorAll('.song-item');
@@ -456,6 +476,7 @@ if (isProjector) {
 
     async function clearScreen() {
         liveIndex = -1;
+        liveSongId = null;
         updateSelection();
         const activeSong = getActiveSong();
         const resolvedBg = await resolveBackgroundUrl(activeSong.customBg);
@@ -492,7 +513,9 @@ if (isProjector) {
             activeSong.title = firstLine || "Untitled";
             activeSong.lyrics = text;
             saveSetlist();
-            renderSetlist();
+            
+            const activeSongEl = setlistContainer.querySelector('.song-item.active span:not(.drag-handle)');
+            if (activeSongEl) activeSongEl.textContent = activeSong.title;
         } else {
             activeSong.lyrics = text;
             saveSetlist();
@@ -616,6 +639,12 @@ if (isProjector) {
             el.classList.toggle('preview', index === previewIndex);
             el.classList.toggle('live', index === liveIndex && activeSongId === liveSongId);
         });
+        
+        Array.from(setlistContainer.children).forEach((el) => {
+            const elId = setlist[el.dataset.index]?.id;
+            el.classList.toggle('active', elId === activeSongId);
+        });
+        
         scrollToPreview();
     }
 
@@ -635,7 +664,9 @@ if (isProjector) {
         const resolvedBg = await resolveBackgroundUrl(activeSong.customBg);
 
         channel.postMessage({ 
-            type: 'UPDATE_SLIDE', 
+            type: 'UPDATE_SLIDE',
+            liveIndex: liveIndex,
+            liveSongId: liveSongId,
             html: formatContent(slide.content), 
             theme: activeSong.theme,
             layoutStyle: activeSong.layoutStyle,
@@ -954,7 +985,6 @@ if (isProjector) {
         if (key === 'arrowup') { previewIndex = Math.max(0, previewIndex - 1); updateSelection(); }
         if (key === 'arrowdown') { previewIndex = Math.min(slides.length - 1, previewIndex + 1); updateSelection(); }
         
-        // DbC Execution Boundaries: The caller guarantees valid bounds before invoking goLive
         if (key === 'enter') { 
             if (slides.length > 0 && previewIndex >= 0 && previewIndex < slides.length) {
                 goLive(previewIndex); 
@@ -990,14 +1020,18 @@ if (isProjector) {
     channel.onmessage = (e) => {
         if (e.data.type === 'PROJECTOR_KEYPRESS') {
             handleNavigationKey(e.data.key);
+            
+        } else if (e.data.type === 'PROJECTOR_SYNC') {
+            liveIndex = e.data.state.index;
+            liveSongId = e.data.state.songId;
+            updateSelection();
+            
         } else if (e.data.type === 'PROJECTOR_READY') {
-            if (liveIndex !== -1 && activeSongId === liveSongId) goLive(liveIndex);
-            else clearScreen();
+            clearScreen();
         }
     };
 
     document.addEventListener('keydown', (e) => {
-        const searchInput = document.getElementById('search-input');
         if (document.activeElement === editor ||
             document.activeElement === fontSizeSlider ||
             document.activeElement === tuneW ||
@@ -1007,8 +1041,7 @@ if (isProjector) {
             document.activeElement === onlineImgUrl) return;
 
         const key = e.key.toLowerCase();
-        const navKeys = ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'enter', ' ', 'escape', 'backspace', 'pagedown', 'pageup', 'v', 'c', 'b', 'p', 'e', 't'];
-
+        
         if (navKeys.includes(key) || (key >= '0' && key <= '9')) {
             e.preventDefault();
             handleNavigationKey(key);
@@ -1047,6 +1080,8 @@ if (isProjector) {
         }
     });
 
+    channel.postMessage({ type: 'DASHBOARD_BOOT' });
+    
     loadSong(activeSongId);
 }
 
