@@ -423,3 +423,15 @@ textarea:focus { outline: none; }
     .preview-container { flex: none; height: 500px; }
     .hotkey-hints { display: none; }
 }
+
+/* ========================================= */
+/* 11. UI ROUTING & FOUC PREVENTION          */
+/* ========================================= */
+html.is-projector #dashboard-ui,
+html.is-projector #mobile-warning {
+    display: none !important;
+}
+
+html:not(.is-projector) #projector-ui {
+    display: none !important;
+}

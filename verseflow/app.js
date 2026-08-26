@@ -134,11 +134,9 @@ const navKeys = ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'enter', ' '
 
 if (isProjector) {
     document.title = "Projector - VerseFlow";
-    document.getElementById('dashboard-ui').style.display = 'none';
     const projUI = document.getElementById('projector-ui');
     const projOverlay = document.getElementById('projector-overlay');
     const projContent = document.getElementById('projector-content');
-    projUI.style.display = 'flex';
     let currentLiveState = null;
 
     function applyProjectorTheme(data) {
@@ -250,6 +248,12 @@ if (isProjector) {
     let previewIndex = 0;
     let liveIndex = -1;
     let liveSongId = null;
+    let cachedBgUrl = '';
+
+    async function updateCachedBg() {
+        const activeSong = getActiveSong();
+        cachedBgUrl = await resolveBackgroundUrl(activeSong.customBg);
+    }
 
     function sanitizeSetlist(list) {
         if (!Array.isArray(list)) return [];
@@ -383,7 +387,7 @@ if (isProjector) {
         });
     }
 
-    async function updateCustomToolbarUI() {
+    function updateCustomToolbarUI() {
         const song = getActiveSong();
         if (song.theme === 'theme-custom') {
             customToolbar.classList.add('show-toolbar');
@@ -392,8 +396,7 @@ if (isProjector) {
             dimBgCheckbox.checked = song.dimBg;
 
             if (song.customBg) {
-                const url = await resolveBackgroundUrl(song.customBg);
-                toolbarThumb.style.backgroundImage = `url('${url}')`;
+                toolbarThumb.style.backgroundImage = `url('${cachedBgUrl}')`;
                 toolbarThumb.style.display = 'block';
                 clearCustomBgBtn.style.display = 'inline-block';
             } else {
@@ -405,7 +408,7 @@ if (isProjector) {
         }
     }
 
-    function loadSong(id) {
+    async function loadSong(id) {
         activeSongId = id;
         localStorage.setItem('verseflow_active_song', id);
         const song = getActiveSong();
@@ -415,6 +418,7 @@ if (isProjector) {
         fontSizeSlider.value = song.fontSize;
         previewIndex = 0;
         if (activeSongId !== liveSongId) liveIndex = -1;
+        await updateCachedBg();
         updateCustomToolbarUI();
         updateTuneUI();
         renderSetlist();
@@ -474,19 +478,19 @@ if (isProjector) {
         });
     });
 
-    async function clearScreen() {
+    function clearScreen() {
         liveIndex = -1;
         liveSongId = null;
         updateSelection();
         const activeSong = getActiveSong();
-        const resolvedBg = await resolveBackgroundUrl(activeSong.customBg);
+        
         channel.postMessage({ 
             type: 'CLEAR_SLIDE',
             theme: activeSong.theme,
             layoutStyle: activeSong.layoutStyle,
             customColor: activeSong.customColor,
             customBgColor: activeSong.customBgColor,
-            customBg: resolvedBg,
+            customBg: cachedBgUrl,
             dimBg: activeSong.dimBg
         });
     }
@@ -653,7 +657,7 @@ if (isProjector) {
         if (activeEl) activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
-    async function goLive(index) {
+    function goLive(index) {
         liveIndex = index;
         previewIndex = index;
         liveSongId = activeSongId; 
@@ -661,7 +665,6 @@ if (isProjector) {
         
         const slide = slides[liveIndex];
         const activeSong = getActiveSong();
-        const resolvedBg = await resolveBackgroundUrl(activeSong.customBg);
 
         channel.postMessage({ 
             type: 'UPDATE_SLIDE',
@@ -673,7 +676,7 @@ if (isProjector) {
             fontSize: activeSong.fontSize + 'vw',
             customColor: activeSong.customColor,
             customBgColor: activeSong.customBgColor,
-            customBg: resolvedBg,
+            customBg: cachedBgUrl,
             dimBg: activeSong.dimBg,
             tuneW: activeSong.tuneW,
             tuneX: activeSong.tuneX,
@@ -793,9 +796,10 @@ if (isProjector) {
         if(liveIndex !== -1 && activeSongId === liveSongId) goLive(liveIndex);
     });
 
-    clearCustomBgBtn.addEventListener('click', () => {
+    clearCustomBgBtn.addEventListener('click', async () => {
         getActiveSong().customBg = '';
         saveSetlist();
+        await updateCachedBg();
         updateCustomToolbarUI();
         if(liveIndex !== -1 && activeSongId === liveSongId) goLive(liveIndex);
     });
@@ -836,6 +840,7 @@ if (isProjector) {
                     if (activeSong.customBg === item.id) {
                         activeSong.customBg = '';
                         saveSetlist();
+                        await updateCachedBg();
                         updateCustomToolbarUI();
                         if (liveIndex !== -1 && activeSongId === liveSongId) goLive(liveIndex);
                     }
@@ -843,9 +848,10 @@ if (isProjector) {
                 }
             };
 
-            thumb.onclick = () => {
+            thumb.onclick = async () => {
                 getActiveSong().customBg = item.id;
                 saveSetlist();
+                await updateCachedBg();
                 updateCustomToolbarUI();
                 if (liveIndex !== -1 && activeSongId === liveSongId) goLive(liveIndex);
                 modal.style.display = 'none';
@@ -899,6 +905,7 @@ if (isProjector) {
                 const id = await saveImageToDB(file);
                 getActiveSong().customBg = id;
                 saveSetlist();
+                await updateCachedBg();
                 updateCustomToolbarUI();
                 if (liveIndex !== -1 && activeSongId === liveSongId) goLive(liveIndex);
             } catch (error) {
@@ -924,13 +931,14 @@ if (isProjector) {
             urlValidationStatus.innerHTML = '<span style="color: #ff6b6b; font-size: 0.85rem;">⚠️ Request timed out. Ensure link is accessible.</span>';
         }, 6000);
 
-        testImg.onload = () => {
+        testImg.onload = async () => {
             if (timedOut) return;
             clearTimeout(timer);
             urlValidationStatus.innerHTML = '<span style="color: #4CAF50; font-size: 0.85rem;">✓ Valid image link!</span>';
             
             getActiveSong().customBg = url;
             saveSetlist();
+            await updateCachedBg();
             updateCustomToolbarUI();
             if (liveIndex !== -1 && activeSongId === liveSongId) goLive(liveIndex);
             
@@ -1027,7 +1035,11 @@ if (isProjector) {
             updateSelection();
             
         } else if (e.data.type === 'PROJECTOR_READY') {
-            clearScreen();
+            if (liveIndex !== -1 && activeSongId === liveSongId) {
+                goLive(liveIndex);
+            } else {
+                clearScreen();
+            }
         }
     };
 
@@ -1080,9 +1092,9 @@ if (isProjector) {
         }
     });
 
-    channel.postMessage({ type: 'DASHBOARD_BOOT' });
-    
-    loadSong(activeSongId);
+    loadSong(activeSongId).then(() => {
+        channel.postMessage({ type: 'DASHBOARD_BOOT' });
+    });
 }
 
 // ==========================================================
