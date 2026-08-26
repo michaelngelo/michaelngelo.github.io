@@ -134,6 +134,7 @@ const navKeys = ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'enter', ' '
 
 if (isProjector) {
     document.title = "Projector - VerseFlow";
+    
     const projUI = document.getElementById('projector-ui');
     const projOverlay = document.getElementById('projector-overlay');
     const projContent = document.getElementById('projector-content');
@@ -324,10 +325,7 @@ if (isProjector) {
         setlistContainer.innerHTML = '';
         setlist.forEach((song, index) => {
             const el = document.createElement('div');
-            el.className = `song-item ${song.id === activeSongId ? 'active' : ''}`;
-            el.draggable = true;
-            el.dataset.index = index;
-
+            
             const handle = document.createElement('span');
             handle.className = 'drag-handle';
             handle.innerHTML = '⋮⋮';
@@ -335,6 +333,10 @@ if (isProjector) {
             const titleSpan = document.createElement('span');
             titleSpan.textContent = song.title;
             titleSpan.style.flex = '1';
+
+            const liveBadge = document.createElement('span');
+            liveBadge.textContent = 'LIVE';
+            liveBadge.className = 'sidebar-live-badge';
 
             const delBtn = document.createElement('button');
             delBtn.className = 'delete-btn';
@@ -353,7 +355,9 @@ if (isProjector) {
                     
                     setlist = setlist.filter(s => s.id !== song.id);
                     if(setlist.length === 0) setlist = sanitizeSetlist([{}]);
-                    renderSetlist(); // Re-render before loading array offsets
+                    
+                    renderSetlist(); 
+                    
                     if(activeSongId === song.id) loadSong(setlist[0].id);
                     saveSetlist();
                     
@@ -364,6 +368,8 @@ if (isProjector) {
                 }
             };
 
+            el.draggable = true;
+            el.dataset.index = index;
             el.addEventListener('dragstart', () => { draggedIndex = index; el.classList.add('dragging'); });
             el.addEventListener('dragend', () => { el.classList.remove('dragging'); document.querySelectorAll('.song-item').forEach(i => i.classList.remove('drag-over')); });
             el.addEventListener('dragover', (e) => { e.preventDefault(); el.classList.add('drag-over'); });
@@ -380,10 +386,14 @@ if (isProjector) {
 
             el.appendChild(handle);
             el.appendChild(titleSpan);
+            el.appendChild(liveBadge);
             el.appendChild(delBtn);
             el.onclick = () => loadSong(song.id);
             setlistContainer.appendChild(el);
         });
+        
+        // Ensure class states map perfectly after a fresh render
+        updateSelection();
     }
 
     function updateCustomToolbarUI() {
@@ -416,9 +426,12 @@ if (isProjector) {
         layoutSelect.value = song.layoutStyle;
         fontSizeSlider.value = song.fontSize;
         previewIndex = 0;
+        
         await updateCachedBg();
         updateCustomToolbarUI();
         updateTuneUI();
+        
+        // Implicitly updates all UI selection classes
         parseText(); 
     }
 
@@ -621,8 +634,6 @@ if (isProjector) {
         slides.forEach((slide, index) => {
             const el = document.createElement('div');
             el.className = 'slide-card';
-            if (index === previewIndex) el.classList.add('preview');
-            if (index === liveIndex && activeSongId === liveSongId) el.classList.add('live');
             
             let innerHTML = `<div class="status-badge">LIVE</div>`;
             if (slide.label) innerHTML += `<div class="slide-label">${slide.label}</div>`;
@@ -633,24 +644,24 @@ if (isProjector) {
             el.ondblclick = () => { goLive(index); };
             slideList.appendChild(el);
         });
+        
         renderQuickJumpBar();
-        scrollToPreview();
+        updateSelection(); // Offloads class updates to prevent DOM thrashing
     }
 
     function updateSelection() {
+        // 1. Update Slides in Preview Pane
         Array.from(slideList.children).forEach((el, index) => {
             el.classList.toggle('preview', index === previewIndex);
             el.classList.toggle('live', index === liveIndex && activeSongId === liveSongId);
         });
 
-        const currentActive = setlistContainer.querySelector('.song-item.active');
-        if (currentActive) currentActive.classList.remove('active');
-        
-        const newActiveIndex = setlist.findIndex(s => s.id === activeSongId);
-        if (newActiveIndex !== -1 && setlistContainer.children[newActiveIndex]) {
-            setlistContainer.children[newActiveIndex].classList.add('active');
-        }
-        
+        // 2. Update Setlist Sidebar (Active Box & Live Badge visibility)
+        Array.from(setlistContainer.children).forEach((el, index) => {
+            const songId = setlist[index]?.id;
+            el.className = `song-item ${songId === activeSongId ? 'active' : ''} ${songId === liveSongId ? 'is-live' : ''}`;
+        });
+
         scrollToPreview();
     }
 
@@ -995,6 +1006,11 @@ if (isProjector) {
         if (key === 'arrowup') { previewIndex = Math.max(0, previewIndex - 1); updateSelection(); }
         if (key === 'arrowdown') { previewIndex = Math.min(slides.length - 1, previewIndex + 1); updateSelection(); }
         
+        if (key === 'enter') { 
+            if (slides.length > 0 && previewIndex >= 0 && previewIndex < slides.length) {
+                goLive(previewIndex); 
+            }
+        }
         if (key === ' ' || key === 'arrowright') { 
             if (slides.length > 0) {
                 if (activeSongId === liveSongId && liveIndex + 1 < slides.length) {
@@ -1007,12 +1023,6 @@ if (isProjector) {
         if (key === 'arrowleft') { 
             if (slides.length > 0 && activeSongId === liveSongId && liveIndex > 0) {
                 goLive(liveIndex - 1);
-            }
-        }
-        
-        if (key === 'enter') { 
-            if (slides.length > 0 && previewIndex >= 0 && previewIndex < slides.length) {
-                goLive(previewIndex); 
             }
         }
         

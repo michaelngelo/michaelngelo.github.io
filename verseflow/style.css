@@ -191,12 +191,31 @@ textarea:focus { outline: none; }
 .song-item {
     padding: 10px; background: #222; border-radius: 6px; cursor: pointer;
     font-size: 0.9rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center;
-    border: 1px solid transparent;
+    border: 1px solid transparent; transition: background 0.15s ease;
 }
 .song-item:hover { border-color: #444; }
+
+/* The Active/Preview State */
 .song-item.active { background: #2a2a2a; color: white; border-color: var(--accent); font-weight: bold; }
+
+/* Drag & Drop states */
 .song-item.dragging { opacity: 0.4; border: 2px dashed var(--accent); }
 .song-item.drag-over { border-top: 2px solid var(--accent); }
+
+/* The Live Indicator Logic */
+.sidebar-live-badge {
+    font-size: 0.65rem;
+    background-color: var(--live-color);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: bold;
+    margin-right: 8px;
+    display: none; /* Hidden by default */
+}
+.song-item.is-live .sidebar-live-badge {
+    display: inline-block; /* Revealed only when the song is live */
+}
 
 .delete-btn { color: #ff4b4b; background: none; border: none; font-weight: bold; cursor: pointer; padding: 0 4px; font-size: 1.1rem; }
 .delete-btn:hover { text-shadow: 0 0 5px red; }
