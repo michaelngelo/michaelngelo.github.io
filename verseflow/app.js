@@ -240,7 +240,6 @@ if (isProjector) {
     if (continueAnywayBtn) {
         continueAnywayBtn.addEventListener('click', () => {
             document.getElementById('mobile-warning').style.display = 'none';
-            document.getElementById('dashboard-ui').style.display = 'flex';
         });
     }
 
@@ -354,8 +353,8 @@ if (isProjector) {
                     
                     setlist = setlist.filter(s => s.id !== song.id);
                     if(setlist.length === 0) setlist = sanitizeSetlist([{}]);
+                    renderSetlist(); // Re-render before loading array offsets
                     if(activeSongId === song.id) loadSong(setlist[0].id);
-                    else renderSetlist();
                     saveSetlist();
                     
                     const toast = document.getElementById('undo-toast');
@@ -417,18 +416,17 @@ if (isProjector) {
         layoutSelect.value = song.layoutStyle;
         fontSizeSlider.value = song.fontSize;
         previewIndex = 0;
-        if (activeSongId !== liveSongId) liveIndex = -1;
         await updateCachedBg();
         updateCustomToolbarUI();
         updateTuneUI();
-        renderSetlist();
-        parseText();
+        parseText(); 
     }
 
     document.getElementById('add-song-btn').addEventListener('click', () => {
         const newSong = sanitizeSetlist([{ id: Date.now() }])[0];
         setlist.push(newSong);
         saveSetlist();
+        renderSetlist(); 
         loadSong(newSong.id);
     });
 
@@ -457,6 +455,7 @@ if (isProjector) {
                     if (confirm("Replace current setlist with imported data?")) {
                         setlist = sanitizeSetlist(importedSetlist);
                         saveSetlist();
+                        renderSetlist();
                         loadSong(setlist[0].id);
                     }
                 } else alert("Invalid setlist file format.");
@@ -643,11 +642,14 @@ if (isProjector) {
             el.classList.toggle('preview', index === previewIndex);
             el.classList.toggle('live', index === liveIndex && activeSongId === liveSongId);
         });
+
+        const currentActive = setlistContainer.querySelector('.song-item.active');
+        if (currentActive) currentActive.classList.remove('active');
         
-        Array.from(setlistContainer.children).forEach((el) => {
-            const elId = setlist[el.dataset.index]?.id;
-            el.classList.toggle('active', elId === activeSongId);
-        });
+        const newActiveIndex = setlist.findIndex(s => s.id === activeSongId);
+        if (newActiveIndex !== -1 && setlistContainer.children[newActiveIndex]) {
+            setlistContainer.children[newActiveIndex].classList.add('active');
+        }
         
         scrollToPreview();
     }
@@ -993,19 +995,24 @@ if (isProjector) {
         if (key === 'arrowup') { previewIndex = Math.max(0, previewIndex - 1); updateSelection(); }
         if (key === 'arrowdown') { previewIndex = Math.min(slides.length - 1, previewIndex + 1); updateSelection(); }
         
-        if (key === 'enter') { 
-            if (slides.length > 0 && previewIndex >= 0 && previewIndex < slides.length) {
-                goLive(previewIndex); 
-            }
-        }
         if (key === ' ' || key === 'arrowright') { 
-            if (slides.length > 0 && liveIndex + 1 < slides.length) {
-                goLive(liveIndex + 1);
+            if (slides.length > 0) {
+                if (activeSongId === liveSongId && liveIndex + 1 < slides.length) {
+                    goLive(liveIndex + 1);
+                } else if (activeSongId !== liveSongId) {
+                    goLive(previewIndex);
+                }
             }
         }
         if (key === 'arrowleft') { 
-            if (slides.length > 0 && liveIndex > 0) {
+            if (slides.length > 0 && activeSongId === liveSongId && liveIndex > 0) {
                 goLive(liveIndex - 1);
+            }
+        }
+        
+        if (key === 'enter') { 
+            if (slides.length > 0 && previewIndex >= 0 && previewIndex < slides.length) {
+                goLive(previewIndex); 
             }
         }
         
@@ -1092,6 +1099,7 @@ if (isProjector) {
         }
     });
 
+    renderSetlist();
     loadSong(activeSongId).then(() => {
         channel.postMessage({ type: 'DASHBOARD_BOOT' });
     });
