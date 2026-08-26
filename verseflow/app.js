@@ -244,11 +244,16 @@ if (isProjector) {
         });
     }
 
+    // Engine 1: Preview State
     let slides = [];
     let previewIndex = 0;
+    let cachedBgUrl = '';
+
+    // Engine 2: Live State
     let liveIndex = -1;
     let liveSongId = null;
-    let cachedBgUrl = '';
+    let liveSlides = [];
+    let liveCachedBgUrl = '';
 
     async function updateCachedBg() {
         const activeSong = getActiveSong();
@@ -392,7 +397,6 @@ if (isProjector) {
             setlistContainer.appendChild(el);
         });
         
-        // Ensure class states map perfectly after a fresh render
         updateSelection();
     }
 
@@ -431,7 +435,6 @@ if (isProjector) {
         updateCustomToolbarUI();
         updateTuneUI();
         
-        // Implicitly updates all UI selection classes
         parseText(); 
     }
 
@@ -491,20 +494,26 @@ if (isProjector) {
     });
 
     function clearScreen() {
-        liveIndex = -1;
-        liveSongId = null;
-        updateSelection();
-        const activeSong = getActiveSong();
+        if (liveSongId === null) return;
+        
+        const liveSong = setlist.find(s => s.id === liveSongId) || getActiveSong();
         
         channel.postMessage({ 
             type: 'CLEAR_SLIDE',
-            theme: activeSong.theme,
-            layoutStyle: activeSong.layoutStyle,
-            customColor: activeSong.customColor,
-            customBgColor: activeSong.customBgColor,
-            customBg: cachedBgUrl,
-            dimBg: activeSong.dimBg
+            theme: liveSong.theme,
+            layoutStyle: liveSong.layoutStyle,
+            customColor: liveSong.customColor,
+            customBgColor: liveSong.customBgColor,
+            customBg: liveCachedBgUrl,
+            dimBg: liveSong.dimBg
         });
+        
+        liveIndex = -1;
+        liveSongId = null;
+        liveSlides = [];
+        liveCachedBgUrl = '';
+        
+        updateSelection();
     }
 
     document.getElementById('clear-screen-btn').addEventListener('click', clearScreen);
@@ -519,26 +528,9 @@ if (isProjector) {
         }
     });
 
-    function parseText() {
-        const text = editor.value;
-        const lines = text.split('\n');
-        const firstLine = lines[0].trim();
-        const activeSong = getActiveSong();
-        
-        if (activeSong.title !== firstLine) {
-            activeSong.title = firstLine || "Untitled";
-            activeSong.lyrics = text;
-            saveSetlist();
-            
-            const activeSongEl = setlistContainer.querySelector('.song-item.active span:not(.drag-handle)');
-            if (activeSongEl) activeSongEl.textContent = activeSong.title;
-        } else {
-            activeSong.lyrics = text;
-            saveSetlist();
-        }
-
+    function parseTextToSlides(text) {
         const blocks = text.split(/\n\s*\n/);
-        slides = blocks.flatMap((block) => {
+        const parsedSlides = blocks.flatMap((block) => {
             let label = '';
             let content = block.trim();
             if (content.startsWith('#')) {
@@ -574,7 +566,37 @@ if (isProjector) {
             return [{ label, content }];
         }).filter(s => s.content || s.label);
         
-        slides.forEach((s, idx) => s.id = idx);
+        parsedSlides.forEach((s, idx) => s.id = idx);
+        return parsedSlides;
+    }
+
+    function parseText() {
+        const text = editor.value;
+        const lines = text.split('\n');
+        const firstLine = lines[0].trim();
+        const activeSong = getActiveSong();
+        
+        if (activeSong.title !== firstLine) {
+            activeSong.title = firstLine || "Untitled";
+            activeSong.lyrics = text;
+            saveSetlist();
+            
+            const activeSongEl = setlistContainer.querySelector('.song-item.active span:not(.drag-handle)');
+            if (activeSongEl) activeSongEl.textContent = activeSong.title;
+        } else {
+            activeSong.lyrics = text;
+            saveSetlist();
+        }
+
+        slides = parseTextToSlides(text);
+        
+        // Auto-sync the Live Engine if the user is editing the currently live song
+        if (activeSong.id === liveSongId) {
+            liveSlides = [...slides];
+            if (liveIndex >= liveSlides.length) liveIndex = Math.max(0, liveSlides.length - 1);
+            if (liveSlides.length > 0) goLive(liveIndex);
+        }
+
         renderSlideList();
     }
     
@@ -646,22 +668,28 @@ if (isProjector) {
         });
         
         renderQuickJumpBar();
-        updateSelection(); // Offloads class updates to prevent DOM thrashing
+        updateSelection(); 
     }
 
     function updateSelection() {
-        // 1. Update Slides in Preview Pane
         Array.from(slideList.children).forEach((el, index) => {
             el.classList.toggle('preview', index === previewIndex);
             el.classList.toggle('live', index === liveIndex && activeSongId === liveSongId);
         });
-
-        // 2. Update Setlist Sidebar (Active Box & Live Badge visibility)
+        
+        const currentActive = setlistContainer.querySelector('.song-item.active');
+        if (currentActive) currentActive.classList.remove('active');
+        
+        const newActiveIndex = setlist.findIndex(s => s.id === activeSongId);
+        if (newActiveIndex !== -1 && setlistContainer.children[newActiveIndex]) {
+            setlistContainer.children[newActiveIndex].classList.add('active');
+        }
+        
         Array.from(setlistContainer.children).forEach((el, index) => {
             const songId = setlist[index]?.id;
             el.className = `song-item ${songId === activeSongId ? 'active' : ''} ${songId === liveSongId ? 'is-live' : ''}`;
         });
-
+        
         scrollToPreview();
     }
 
@@ -674,9 +702,13 @@ if (isProjector) {
         liveIndex = index;
         previewIndex = index;
         liveSongId = activeSongId; 
+        
+        liveSlides = [...slides]; 
+        liveCachedBgUrl = cachedBgUrl;
+
         updateSelection();
         
-        const slide = slides[liveIndex];
+        const slide = liveSlides[liveIndex];
         const activeSong = getActiveSong();
 
         channel.postMessage({ 
@@ -689,11 +721,42 @@ if (isProjector) {
             fontSize: activeSong.fontSize + 'vw',
             customColor: activeSong.customColor,
             customBgColor: activeSong.customBgColor,
-            customBg: cachedBgUrl,
+            customBg: liveCachedBgUrl,
             dimBg: activeSong.dimBg,
             tuneW: activeSong.tuneW,
             tuneX: activeSong.tuneX,
             tuneY: activeSong.tuneY
+        });
+    }
+
+    function stepLive(direction) {
+        if (liveIndex === -1 || liveSlides.length === 0) return;
+        
+        const newIndex = liveIndex + direction;
+        if (newIndex < 0 || newIndex >= liveSlides.length) return;
+        
+        liveIndex = newIndex;
+        updateSelection(); 
+        
+        const slide = liveSlides[liveIndex];
+        const liveSong = setlist.find(s => s.id === liveSongId); 
+        if (!liveSong) return;
+
+        channel.postMessage({ 
+            type: 'UPDATE_SLIDE',
+            liveIndex: liveIndex,
+            liveSongId: liveSongId,
+            html: formatContent(slide.content), 
+            theme: liveSong.theme,
+            layoutStyle: liveSong.layoutStyle,
+            fontSize: liveSong.fontSize + 'vw',
+            customColor: liveSong.customColor,
+            customBgColor: liveSong.customBgColor,
+            customBg: liveCachedBgUrl, 
+            dimBg: liveSong.dimBg,
+            tuneW: liveSong.tuneW,
+            tuneX: liveSong.tuneX,
+            tuneY: liveSong.tuneY
         });
     }
 
@@ -1011,19 +1074,13 @@ if (isProjector) {
                 goLive(previewIndex); 
             }
         }
+        
+        // Locked to Live Engine 
         if (key === ' ' || key === 'arrowright') { 
-            if (slides.length > 0) {
-                if (activeSongId === liveSongId && liveIndex + 1 < slides.length) {
-                    goLive(liveIndex + 1);
-                } else if (activeSongId !== liveSongId) {
-                    goLive(previewIndex);
-                }
-            }
+            stepLive(1);
         }
         if (key === 'arrowleft') { 
-            if (slides.length > 0 && activeSongId === liveSongId && liveIndex > 0) {
-                goLive(liveIndex - 1);
-            }
+            stepLive(-1);
         }
         
         if (key === 'escape' || key === 'backspace') document.getElementById('clear-screen-btn').click();
@@ -1049,11 +1106,40 @@ if (isProjector) {
         } else if (e.data.type === 'PROJECTOR_SYNC') {
             liveIndex = e.data.state.index;
             liveSongId = e.data.state.songId;
-            updateSelection();
+            
+            // Rebuild the Live Engine Memory silently 
+            const liveSong = setlist.find(s => s.id === liveSongId);
+            if (liveSong) {
+                liveSlides = parseTextToSlides(liveSong.lyrics);
+                resolveBackgroundUrl(liveSong.customBg).then(url => {
+                    liveCachedBgUrl = url;
+                    updateSelection();
+                });
+            } else {
+                updateSelection();
+            }
             
         } else if (e.data.type === 'PROJECTOR_READY') {
-            if (liveIndex !== -1 && activeSongId === liveSongId) {
-                goLive(liveIndex);
+            if (liveIndex !== -1 && liveSlides.length > 0) {
+                const liveSong = setlist.find(s => s.id === liveSongId);
+                if (liveSong) {
+                    channel.postMessage({ 
+                        type: 'UPDATE_SLIDE',
+                        liveIndex: liveIndex,
+                        liveSongId: liveSongId,
+                        html: formatContent(liveSlides[liveIndex].content), 
+                        theme: liveSong.theme,
+                        layoutStyle: liveSong.layoutStyle,
+                        fontSize: liveSong.fontSize + 'vw',
+                        customColor: liveSong.customColor,
+                        customBgColor: liveSong.customBgColor,
+                        customBg: liveCachedBgUrl,
+                        dimBg: liveSong.dimBg,
+                        tuneW: liveSong.tuneW,
+                        tuneX: liveSong.tuneX,
+                        tuneY: liveSong.tuneY
+                    });
+                }
             } else {
                 clearScreen();
             }
