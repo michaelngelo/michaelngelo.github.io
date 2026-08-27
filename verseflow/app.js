@@ -590,11 +590,9 @@ if (isProjector) {
 
         slides = parseTextToSlides(text);
         
-        // Auto-sync the Live Engine if the user is editing the currently live song
         if (activeSong.id === liveSongId) {
             liveSlides = [...slides];
             if (liveIndex >= liveSlides.length) liveIndex = Math.max(0, liveSlides.length - 1);
-            if (liveSlides.length > 0) goLive(liveIndex);
         }
 
         renderSlideList();
