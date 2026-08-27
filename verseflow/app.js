@@ -638,14 +638,25 @@ if (isProjector) {
 
     function formatContent(text) {
         let html = escapeHTML(text);
+        
+        const unescapeMath = (str) => {
+            return str.replace(/&lt;/g, '<')
+                      .replace(/&gt;/g, '>')
+                      .replace(/&amp;/g, '&')
+                      .replace(/&#39;/g, "'")
+                      .replace(/&quot;/g, '"');
+        };
+
         html = html.replace(/\$\$(.*?)\$\$/gs, (match, equation) => {
-            try { return katex.renderToString(equation, { displayMode: true, throwOnError: false }); } 
+            try { return katex.renderToString(unescapeMath(equation), { displayMode: true, throwOnError: false }); } 
             catch (e) { return match; }
         });
+        
         html = html.replace(/\$(.*?)\$/g, (match, equation) => {
-            try { return katex.renderToString(equation, { displayMode: false, throwOnError: false }); } 
+            try { return katex.renderToString(unescapeMath(equation), { displayMode: false, throwOnError: false }); } 
             catch (e) { return match; }
         });
+        
         html = html.replace(/^&gt;\s*(.*)(\r?\n)?/gm, '<div class="citation">$1</div>');
         html = html.replace(/\n(?=\s*\d+)/g, '<br><span class="verse-space"></span>');
         html = html.replace(/\n/g, '<br>');
