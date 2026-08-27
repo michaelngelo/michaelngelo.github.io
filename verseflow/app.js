@@ -306,10 +306,44 @@ if (isProjector) {
         }
     ];
 
-    let setlist = sanitizeSetlist(JSON.parse(localStorage.getItem('verseflow_setlist')) || defaultSetlist);
-    let storedId = Number(localStorage.getItem('verseflow_active_song'));
-    let activeSongId = (!isNaN(storedId) && storedId !== 0) ? storedId : setlist[0]?.id;
+    const resetSetlistBtn = document.getElementById('reset-setlist-btn');
+    const emergencyResetBtn = document.getElementById('emergency-reset-btn');
+    const recoveryUI = document.getElementById('recovery-ui');
+    const dashboardUI = document.getElementById('dashboard-ui');
 
+    resetSetlistBtn.addEventListener('click', () => {
+        if (confirm("This will clear your current setlist and load the samples. \n\nMake sure you have exported your setlist first. Continue?")) {
+            localStorage.removeItem('verseflow_setlist');
+            localStorage.removeItem('verseflow_active_song');
+            window.location.reload();
+        }
+    });
+
+    emergencyResetBtn.addEventListener('click', () => {
+        localStorage.removeItem('verseflow_setlist');
+        localStorage.removeItem('verseflow_active_song');
+        window.location.reload();
+    });
+
+    let setlist;
+    let storedId;
+
+    try {
+        const storedData = localStorage.getItem('verseflow_setlist');
+        setlist = sanitizeSetlist(JSON.parse(storedData) || defaultSetlist);
+        storedId = Number(localStorage.getItem('verseflow_active_song'));
+    } catch (error) {
+        console.error("Corrupted setlist detected:", error);
+
+        // Hide the main dashboard and show the recovery UI
+        dashboardUI.style.display = 'none';
+        recoveryUI.classList.remove('hidden');
+
+        // Halt further execution
+        throw new Error("Boot halted due to corrupted data.");
+    }
+
+    let activeSongId = (!isNaN(storedId) && storedId !== 0) ? storedId : setlist[0]?.id;
     const getActiveSong = () => setlist.find(s => s.id === activeSongId);
 
     function saveSetlist() {

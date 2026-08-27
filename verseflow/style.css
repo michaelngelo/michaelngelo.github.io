@@ -184,6 +184,13 @@ textarea:focus { outline: none; }
     color: var(--text-muted); border-bottom: 1px solid #333; 
     display: flex; justify-content: space-between; align-items: center;
 }
+.setlist-footer {
+    padding: 12px;
+    border-top: 1px solid #333;
+    background: #151515;
+    display: flex;
+    justify-content: center;
+}
 .search-container { padding: 8px 12px; border-bottom: 1px solid #333; }
 .search-input { width: 100%; padding: 4px 8px; font-size: 0.85rem; }
 
@@ -453,4 +460,41 @@ html.is-projector #mobile-warning {
 
 html:not(.is-projector) #projector-ui {
     display: none !important;
+}
+
+/* ========================================= */
+/* 12. RECOVERY SCREEN                       */
+/* ========================================= */
+.recovery-screen {
+    display: flex; 
+    justify-content: center;
+    align-items: center; 
+    height: 100vh; 
+    background-color: var(--bg-dark);
+    z-index: 4000;
+}
+
+.recovery-screen.hidden {
+    display: none;
+}
+
+.recovery-content {
+    text-align: center;
+    padding: 2.5rem;
+    background: var(--bg-panel);
+    border: 1px solid #333;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    max-width: 400px;
+}
+
+.recovery-content p {
+    color: var(--text-muted);
+    margin: 12px 0 24px 0;
+    line-height: 1.5;
+}
+
+.emergency-btn {
+    margin-top: 20px;
+    width: 100%;
 }

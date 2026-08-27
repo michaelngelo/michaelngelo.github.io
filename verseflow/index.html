@@ -28,6 +28,16 @@
         <button id="continue-anyway-btn" class="primary warning-btn">Continue Anyway</button>
     </div>
 
+    <div id="recovery-ui" class="recovery-screen hidden">
+        <div class="recovery-content">
+            <h2>⚠️ Data Corruption Detected</h2>
+            <p>VerseFlow could not load your saved setlist. The data may be corrupted.</p>
+            <button id="emergency-reset-btn" class="btn-warning emergency-btn">
+                Load Sample Setlist
+            </button>
+        </div>
+    </div>
+
     <div id="dashboard-ui" class="dashboard">
         <header>
             <div class="header-left">
@@ -131,6 +141,10 @@
                 </div>
 
                 <div id="setlist-container" class="setlist-items"></div>
+
+                <div class="setlist-footer">
+                    <button id="reset-setlist-btn" class="btn-small btn-danger" title="Clear Workspace">⚠️ Clear & Load Samples</button>
+                </div>
             </div>
             <div class="editor-pane">
                 <div class="editor-header">Top line is Song Title. Double enter = New Slide. # = Section Label (e.g., # Verse 1).</div>
