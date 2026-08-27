@@ -779,6 +779,9 @@ if (isProjector) {
         if (newIndex < 0 || newIndex >= liveSlides.length) return;
         
         liveIndex = newIndex;
+        if (activeSongId === liveSongId) {
+            previewIndex = liveIndex;
+        }
         updateSelection(); 
         
         const slide = liveSlides[liveIndex];
