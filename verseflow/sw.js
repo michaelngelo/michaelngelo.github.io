@@ -31,23 +31,33 @@ self.addEventListener('activate', (event) => {
     self.clients.claim();
 });
 
-// Fetch Event - Serve Offline First & Dynamically Cache External Links
+// Fetch Event - Stale-While-Revalidate & Dynamic CDN Caching
 self.addEventListener('fetch', (event) => {
     const requestUrl = new URL(event.request.url);
+
     if (requestUrl.search.includes('mode=projector')) {
-        event.respondWith(fetch(event.request).catch(() => caches.match('./index.html', { ignoreSearch: true })));
+        event.respondWith(caches.match('./index.html', { ignoreSearch: true }));
         return;
     }
 
     event.respondWith(
-        caches.match(event.request, { ignoreSearch: true }).then((response) => {
-            return response || fetch(event.request).then((networkResponse) => {
-                // Dynamically cache any KaTeX assets fetched from the CDN
-                if (requestUrl.hostname === 'cdn.jsdelivr.net') {
-                    const clone = networkResponse.clone();
-                    caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-                }
-                return networkResponse;
+        caches.open(CACHE_NAME).then((cache) => {
+            return cache.match(event.request, { ignoreSearch: true }).then((cachedResponse) => {
+                
+                // The Background Fetch (Revalidate)
+                const fetchPromise = fetch(event.request).then((networkResponse) => {
+                    // Cache dynamic KaTeX CDN requests OR our core static assets
+                    if (requestUrl.hostname === 'cdn.jsdelivr.net' || URLS_TO_CACHE.includes(requestUrl.pathname)) {
+                        cache.put(event.request, networkResponse.clone());
+                    }
+                    return networkResponse;
+                }).catch(() => {
+                    // Silently fail the background fetch if offline
+                    console.log('Offline: Using stale cache for', requestUrl.pathname);
+                });
+
+                // Return the fast cache immediately if it exists, otherwise wait for the network
+                return cachedResponse || fetchPromise;
             });
         })
     );
