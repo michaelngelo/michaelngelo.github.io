@@ -161,13 +161,31 @@
             <button id="undo-btn" class="btn-small">Undo</button>
         </div>
 
-        <div class="hotkey-hints">
+        <div class="hotkey-bar">
             <div class="hotkey-list">
-                <span><strong>Enter:</strong> Go Live &nbsp;|&nbsp;</span>
-                <span><strong>Esc:</strong> Clear Live Text &nbsp;|&nbsp;</span>
-                <span><strong>Space/Arrows:</strong> Change Slide &nbsp;|&nbsp;</span>
-                <span><strong>PgUp/PgDn:</strong> Change Song &nbsp;|&nbsp;</span>
-                <span><strong>Sections:</strong> <strong>T</strong> (Title), <strong>V</strong> (Verse), <strong>C</strong> (Chorus), <strong>B</strong> (Bridge), <strong>P</strong> (Pre), <strong>E</strong> (Ending), <strong>0-99</strong></span>
+                <div class="hotkey-group">
+                    <span class="hotkey-title">🔴 LIVE:</span>
+                    <kbd>Enter</kbd> Go Live &bull; 
+                    <kbd>Space</kbd> <kbd>←</kbd> <kbd>→</kbd> Change Slide &bull; 
+                    <kbd>Esc</kbd> Clear
+                </div>
+                
+                <div class="hotkey-group">
+                    <span class="hotkey-title">👀 PREVIEW:</span>
+                    <kbd>↑</kbd> <kbd>↓</kbd> Move &bull; 
+                    <kbd>PgUp</kbd> <kbd>PgDn</kbd> Change Song
+                </div>
+
+                <div class="hotkey-group">
+                    <span class="hotkey-title">⚡ JUMP:</span>
+                    <kbd>V</kbd> Verse &bull; 
+                    <kbd>C</kbd> Chorus &bull; 
+                    <kbd>B</kbd> Bridge &bull; 
+                    <kbd>P</kbd> Pre &bull; 
+                    <kbd>E</kbd> End &bull; 
+                    <kbd>T</kbd> Top &bull; 
+                    <kbd>0</kbd>-<kbd>99</kbd> Num
+                </div>
             </div>
             <a href="#" class="brand">🌊 VerseFlow</a>
         </div>

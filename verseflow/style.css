@@ -133,13 +133,53 @@ textarea {
 }
 textarea:focus { outline: none; }
 
-.hotkey-hints { 
-    padding: 12px 24px; background: var(--bg-panel); border-top: 1px solid #333; 
-    font-size: 0.8rem; color: var(--text-muted); display: flex; gap: 20px; 
-    align-items: center; justify-content: space-between; 
+.hotkey-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 20px;
+    background: var(--bg-panel);
+    border-top: 1px solid #333;
+    font-size: 0.8rem;
+    color: var(--text-muted);
 }
-.hotkey-list { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
-.hotkey-list strong { color: #ffffff; }
+
+.hotkey-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 15px;
+}
+
+.hotkey-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-right: 1px solid #444;
+    padding-right: 20px;
+}
+.hotkey-group:last-child {
+    border-right: none;
+    padding-right: 0;
+}
+
+.hotkey-title {
+    color: var(--accent);
+    font-weight: 700;
+    margin-right: 2px;
+}
+
+kbd {
+    background-color: #2a2a2a;
+    border: 1px solid #444;
+    border-radius: 4px;
+    box-shadow: 0 2px 0 #111;
+    color: var(--text-main);
+    font-family: monospace;
+    font-size: 0.8rem;
+    font-weight: bold;
+    padding: 2px 6px;
+    text-transform: uppercase;
+}
 
 .slider-label { font-size: 0.9rem; display: flex; align-items: center; gap: 8px; }
 
@@ -432,8 +472,10 @@ textarea:focus { outline: none; }
 .warning-btn { padding: 10px 20px; font-size: 1rem; border-radius: 6px; }
 
 @media (max-width: 768px) {
-    #dashboard-ui { display: none; }
-    #mobile-warning { display: flex; }
+    body:not(.mobile-unlocked) #dashboard-ui { display: none; }
+    body:not(.mobile-unlocked) #mobile-warning { display: flex; }
+    body.mobile-unlocked #mobile-warning { display: none; }
+    
     body { overflow-y: auto; overflow-x: hidden; height: auto; min-height: 100vh; }
     .dashboard { height: auto; min-height: 100vh; }
     
@@ -451,7 +493,7 @@ textarea:focus { outline: none; }
     .setlist-pane { flex: none; height: 350px; }
     .editor-pane { flex: none; height: 350px; }
     .preview-container { flex: none; height: 500px; }
-    .hotkey-hints { display: none; }
+    .hotkey-list { display: none; }
 }
 
 /* ========================================= */

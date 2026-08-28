@@ -240,7 +240,7 @@ if (isProjector) {
     const continueAnywayBtn = document.getElementById('continue-anyway-btn');
     if (continueAnywayBtn) {
         continueAnywayBtn.addEventListener('click', () => {
-            document.getElementById('mobile-warning').style.display = 'none';
+            document.body.classList.add('mobile-unlocked');
         });
     }
 
@@ -1112,29 +1112,22 @@ if (isProjector) {
             return;
         }
 
-        if (key === 'arrowup') { previewIndex = Math.max(0, previewIndex - 1); updateSelection(); }
-        if (key === 'arrowdown') { previewIndex = Math.min(slides.length - 1, previewIndex + 1); updateSelection(); }
-        
-        if (key === 'enter') { 
-            if (slides.length > 0 && previewIndex >= 0 && previewIndex < slides.length) {
-                goLive(previewIndex); 
-            }
+        if (key === 'arrowup') { 
+            previewIndex = Math.max(0, previewIndex - 1); 
+            updateSelection(); 
         }
-        
-        // Locked to Live Engine 
-        if (key === ' ' || key === 'arrowright') { 
-            stepLive(1);
+        if (key === 'arrowdown') { 
+            previewIndex = Math.min(slides.length - 1, previewIndex + 1); 
+            updateSelection(); 
         }
-        if (key === 'arrowleft') { 
-            stepLive(-1);
-        }
-        
-        if (key === 'escape' || key === 'backspace') document.getElementById('clear-screen-btn').click();
 
-        if (key === 'pagedown' || key === 'pageup') {
+        if (key === 'pagedown') {
             const currentIndex = setlist.findIndex(s => s.id === activeSongId);
-            if (key === 'pagedown' && currentIndex < setlist.length - 1) loadSong(setlist[currentIndex + 1].id);
-            else if (key === 'pageup' && currentIndex > 0) loadSong(setlist[currentIndex - 1].id);
+            if (currentIndex < setlist.length - 1) loadSong(setlist[currentIndex + 1].id);
+        }
+        if (key === 'pageup') {
+            const currentIndex = setlist.findIndex(s => s.id === activeSongId);
+            if (currentIndex > 0) loadSong(setlist[currentIndex - 1].id);
         }
 
         if (key === 'v') jumpToSection('verse');
@@ -1143,6 +1136,23 @@ if (isProjector) {
         if (key === 'p') jumpToSection('pre');
         if (key === 'e') jumpToSection(['coda', 'ending']);
         if (key === 't') { previewIndex = 0; updateSelection(); }
+
+        if (key === 'enter') { 
+            if (slides.length > 0 && previewIndex >= 0 && previewIndex < slides.length) {
+                goLive(previewIndex); 
+            }
+        }
+
+        if (key === ' ' || key === 'arrowright') { 
+            stepLive(1); 
+        }
+        if (key === 'arrowleft') { 
+            stepLive(-1); 
+        }
+
+        if (key === 'escape' || key === 'backspace') {
+            document.getElementById('clear-screen-btn').click();
+        }
     }
 
     channel.onmessage = (e) => {
