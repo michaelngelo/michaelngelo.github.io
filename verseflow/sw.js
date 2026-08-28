@@ -1,4 +1,4 @@
-const CACHE_NAME = 'verseflow-cache-v1';
+const CACHE_NAME = 'verseflow-cache-v2';
 const URLS_TO_CACHE = [
     './',
     './index.html',

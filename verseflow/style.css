@@ -48,6 +48,10 @@ body {
     flex-shrink: 0;
 }
 .brand:hover { color: var(--accent); }
+.brand.update-ready {
+    color: var(--accent);
+    font-weight: 900;
+}
 
 /* ========================================= */
 /* 3. MACRO LAYOUT & SCAFFOLDING             */

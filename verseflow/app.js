@@ -1210,7 +1210,13 @@ if (isProjector) {
     });
 
     document.querySelector('.brand').addEventListener('click', async (e) => {
-        e.preventDefault(); 
+        e.preventDefault();
+
+        if (e.target.classList.contains('update-ready')) {
+            refreshing = true;
+            window.location.reload();
+            return;
+        }
 
         if (!navigator.onLine) {
             e.target.textContent = "⚠️ Offline: Cannot Update";
@@ -1248,7 +1254,7 @@ if (isProjector) {
 }
 
 // ==========================================================
-// SERVICE WORKER REGISTRATION (Offline PWA Installer)
+// SERVICE WORKER REGISTRATION & UPDATE NOTIFIER
 // ==========================================================
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
@@ -1259,5 +1265,23 @@ if ('serviceWorker' in navigator) {
             .catch((error) => {
                 console.warn('VerseFlow ServiceWorker failed:', error);
             });
+    });
+
+    // Detect when a new service worker takes over
+    let isInitialInstall = !navigator.serviceWorker.controller;
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (refreshing) return;
+
+        if (isInitialInstall) {
+            isInitialInstall = false;
+            return;
+        }
+        
+        const brandLink = document.querySelector('.brand');
+        if (brandLink) {
+            brandLink.textContent = "✨ Update Ready! Click to Reload";
+            brandLink.classList.add('update-ready');
+        }
     });
 }
