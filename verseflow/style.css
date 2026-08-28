@@ -475,25 +475,55 @@ kbd {
     body:not(.mobile-unlocked) #dashboard-ui { display: none; }
     body:not(.mobile-unlocked) #mobile-warning { display: flex; }
     body.mobile-unlocked #mobile-warning { display: none; }
-    
+
     body { overflow-y: auto; overflow-x: hidden; height: auto; min-height: 100vh; }
     .dashboard { height: auto; min-height: 100vh; }
-    
-    header { flex-direction: column; align-items: flex-start; gap: 16px; height: auto; padding: 16px; }
-    .header-divider { border-right: none !important; padding-right: 0 !important; width: 100%; }
-    .header-left { flex-wrap: wrap; width: 100%; }
-    
-    #custom-theme-toolbar.show-toolbar { flex-wrap: wrap; max-height: 300px; height: auto; padding: 12px 16px; }
-    .workspace { flex-direction: column; overflow: visible; height: auto; }
-    
-    .setlist-pane, .editor-pane, .preview-container { 
-        width: 100%; border-right: none; border-bottom: 4px solid #222; flex-shrink: 0; 
+
+    header { flex-direction: column; align-items: stretch; gap: 12px; padding: 12px 16px; height: auto; }
+    .header-left { flex-wrap: wrap; width: 100%; gap: 12px; }
+    .header-right { flex-wrap: wrap; width: 100%; justify-content: flex-start; padding-top: 8px; }
+    .header-divider {
+        border-right: none !important;
+        padding-right: 0 !important;
+        border-bottom: 1px solid #333;
+        padding-bottom: 12px;
+        width: 100%;
+        flex-wrap: wrap;
     }
-    
-    .setlist-pane { flex: none; height: 350px; }
-    .editor-pane { flex: none; height: 350px; }
-    .preview-container { flex: none; height: 500px; }
+
+    .controls {
+        flex-wrap: wrap;
+        gap: 8px;
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    #custom-theme-toolbar.show-toolbar,
+    .toolbar-drawer.show-drawer {
+        flex-wrap: wrap;
+        max-height: 400px;
+        height: auto;
+        padding: 12px 16px;
+        gap: 12px;
+        overflow: visible;
+    }
+
+    .workspace { flex-direction: column; overflow: visible; height: auto; }
+
+    .setlist-pane, .editor-pane, .preview-container { 
+        width: 100%; 
+        border-right: none; 
+        border-bottom: 6px solid #000;
+        flex: none; 
+        height: 55vh;
+        min-height: 400px;
+    }
+
     .hotkey-list { display: none; }
+    .hotkey-bar {
+        justify-content: center;
+        padding: 16px;
+    }
 }
 
 /* ========================================= */
