@@ -132,6 +132,9 @@ if ('BroadcastChannel' in window) {
 
 const navKeys = ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'enter', ' ', 'escape', 'backspace', 'pagedown', 'pageup', 'v', 'c', 'b', 'p', 'e', 't'];
 
+let refreshing = false;
+let isInitialInstall = false;
+
 if (isProjector) {
     document.title = "Projector - VerseFlow";
     
@@ -1288,9 +1291,7 @@ if ('serviceWorker' in navigator) {
             });
     });
 
-    // Detect when a new service worker takes over
-    let isInitialInstall = !navigator.serviceWorker.controller;
-    let refreshing = false;
+    isInitialInstall = !navigator.serviceWorker.controller;
     navigator.serviceWorker.addEventListener('controllerchange', () => {
         if (refreshing) return;
 
