@@ -1108,52 +1108,68 @@ if (isProjector) {
                 let idx = slides.findIndex(s => s.label.trim() === targetNum);
                 if (idx === -1) idx = slides.findIndex(s => s.label.toLowerCase() === `verse ${targetNum}`);
                 if (idx !== -1) { previewIndex = idx; updateSelection(); }
-            }, 200);
+            }, 250);
             return;
         }
 
-        if (key === 'arrowup') { 
-            previewIndex = Math.max(0, previewIndex - 1); 
-            updateSelection(); 
-        }
-        if (key === 'arrowdown') { 
-            previewIndex = Math.min(slides.length - 1, previewIndex + 1); 
-            updateSelection(); 
-        }
-
-        if (key === 'pagedown') {
-            const currentIndex = setlist.findIndex(s => s.id === activeSongId);
-            if (currentIndex < setlist.length - 1) loadSong(setlist[currentIndex + 1].id);
-        }
-        if (key === 'pageup') {
-            const currentIndex = setlist.findIndex(s => s.id === activeSongId);
-            if (currentIndex > 0) loadSong(setlist[currentIndex - 1].id);
-        }
-
-        if (key === 'v') jumpToSection('verse');
-        if (key === 'c') jumpToSection('chorus');
-        if (key === 'b') jumpToSection('bridge');
-        if (key === 'p') jumpToSection('pre');
-        if (key === 'e') jumpToSection(['coda', 'ending']);
-        if (key === 't') { previewIndex = 0; updateSelection(); }
-
-        if (key === 'enter') { 
-            if (slides.length > 0 && previewIndex >= 0 && previewIndex < slides.length) {
-                goLive(previewIndex); 
+        switch (key) {
+            case 'pagedown': {
+                const idx = setlist.findIndex(s => s.id === activeSongId);
+                if (idx < setlist.length - 1) loadSong(setlist[idx + 1].id);
+                break;
             }
-        }
-
-        if (key === ' ' || key === 'arrowright') { 
-            stepLive(1); 
-        }
-        if (key === 'arrowleft') { 
-            stepLive(-1); 
-        }
-
-        if (key === 'escape' || key === 'backspace') {
-            document.getElementById('clear-screen-btn').click();
+            case 'pageup': {
+                const idx = setlist.findIndex(s => s.id === activeSongId);
+                if (idx > 0) loadSong(setlist[idx - 1].id);
+                break;
+            }
+            case 'arrowdown':
+                previewIndex = Math.min(slides.length - 1, previewIndex + 1);
+                updateSelection();
+                break;
+            case 'arrowup':
+                previewIndex = Math.max(0, previewIndex - 1);
+                updateSelection();
+                break;
+            case 'v': jumpToSection(['verse', 'v']); break;
+            case 'c': jumpToSection(['chorus', 'c']); break;
+            case 'b': jumpToSection(['bridge', 'b']); break;
+            case 'p': jumpToSection(['pre', 'p-c', 'pre-chorus']); break;
+            case 'e': jumpToSection(['coda', 'ending', 'outro', 'e']); break;
+            case 't':
+                previewIndex = 0;
+                updateSelection();
+                break;
+            case 'enter':
+                if (slides.length > 0 && previewIndex >= 0 && previewIndex < slides.length) {
+                    goLive(previewIndex);
+                }
+                break;
+            case ' ':
+            case 'arrowright':
+                stepLive(1);
+                break;
+            case 'arrowleft':
+                stepLive(-1);
+                break;
+            case 'escape':
+            case 'backspace':
+                clearScreen();
+                break;
         }
     }
+
+    document.addEventListener('keydown', (e) => {
+        const activeEl = document.activeElement;
+        const isInput = activeEl && (['INPUT', 'TEXTAREA', 'SELECT'].includes(activeEl.tagName) || activeEl.isContentEditable);
+        if (isInput) return;
+
+        const key = e.key.toLowerCase();
+        if (navKeys.includes(key) || (key >= '0' && key <= '9')) {
+            e.preventDefault();
+            handleNavigationKey(key);
+        }
+    });
 
     channel.onmessage = (e) => {
         if (e.data.type === 'PROJECTOR_KEYPRESS') {
@@ -1201,23 +1217,6 @@ if (isProjector) {
             }
         }
     };
-
-    document.addEventListener('keydown', (e) => {
-        if (document.activeElement === editor ||
-            document.activeElement === fontSizeSlider ||
-            document.activeElement === tuneW ||
-            document.activeElement === tuneX ||
-            document.activeElement === tuneY ||
-            document.activeElement === searchInput ||
-            document.activeElement === onlineImgUrl) return;
-
-        const key = e.key.toLowerCase();
-        
-        if (navKeys.includes(key) || (key >= '0' && key <= '9')) {
-            e.preventDefault();
-            handleNavigationKey(key);
-        }
-    });
 
     document.querySelector('.brand').addEventListener('click', async (e) => {
         e.preventDefault();
