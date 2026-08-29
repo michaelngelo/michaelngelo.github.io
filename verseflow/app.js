@@ -637,30 +637,42 @@ if (isProjector) {
     }
 
     function formatContent(text) {
-        let html = escapeHTML(text);
-        
-        const unescapeMath = (str) => {
-            return str.replace(/&lt;/g, '<')
-                      .replace(/&gt;/g, '>')
-                      .replace(/&amp;/g, '&')
-                      .replace(/&#39;/g, "'")
-                      .replace(/&quot;/g, '"');
-        };
+        if (!text) return '';
 
-        html = html.replace(/\$\$(.*?)\$\$/gs, (match, equation) => {
-            try { return katex.renderToString(unescapeMath(equation), { displayMode: true, throwOnError: false }); } 
-            catch (e) { return match; }
+        const mathTokens = [];
+        let processed = text;
+
+        processed = processed.replace(/\$\$(.*?)\$\$/gs, (match, eq) => {
+            const token = `___BLOCK_MATH_${mathTokens.length}___`;
+            try {
+                mathTokens.push(katex.renderToString(eq.trim(), { displayMode: true, throwOnError: false }));
+            } catch (e) {
+                mathTokens.push(match);
+            }
+            return token;
         });
-        
-        html = html.replace(/\$(.*?)\$/g, (match, equation) => {
-            try { return katex.renderToString(unescapeMath(equation), { displayMode: false, throwOnError: false }); } 
-            catch (e) { return match; }
+
+        processed = processed.replace(/\$(.*?)\$/g, (match, eq) => {
+            const token = `___INLINE_MATH_${mathTokens.length}___`;
+            try {
+                mathTokens.push(katex.renderToString(eq.trim(), { displayMode: false, throwOnError: false }));
+            } catch (e) {
+                mathTokens.push(match);
+            }
+            return token;
         });
-        
+
+        let html = escapeHTML(processed);
         html = html.replace(/^&gt;\s*(.*)(\r?\n)?/gm, '<div class="citation">$1</div>');
+        html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
         html = html.replace(/\n(?=\s*\d+)/g, '<br><span class="verse-space"></span>');
         html = html.replace(/\n/g, '<br>');
-        html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+        mathTokens.forEach((renderedMath, i) => {
+            html = html.replace(`___BLOCK_MATH_${i}___`, renderedMath);
+            html = html.replace(`___INLINE_MATH_${i}___`, renderedMath);
+        });
+
         return html;
     }
 
