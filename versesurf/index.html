@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VerseSurf - Live Presenter</title>
+    <meta name="description" content="Zero-config, WebRTC-powered live presentation web app for lyrics, scriptures, and announcements.">
+    <meta name="theme-color" content="#09090b">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%236366f1'/><text y='65' x='15' fill='white' font-size='50' font-family='sans-serif' font-weight='bold'>VS</text></svg>">
+    <link rel="manifest" href="./manifest.json">
+    
+    <!-- KaTeX CDN (Math Engine) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.18.4/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.18.4/dist/katex.min.js"></script>
+
+    <!-- WebRTC PeerJS & QRCode.js (Zero-config P2P Cross-device Remote) -->
+    <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+
+    <link rel="stylesheet" href="./style.css">
+    <script>
+        if (window.location.search.includes('mode=projector')) {
+            document.documentElement.classList.add('is-projector');
+        } else if (window.location.search.includes('mode=remote')) {
+            document.documentElement.classList.add('is-remote');
+        }
+    </script>
+    <script defer src="./app.js"></script>
+</head>
+<body>
+    <!-- MULTI-DIGIT ON-SCREEN HUD -->
+    <div id="jump-hud">
+        <span>⚡ Jump:</span>
+        <span id="jump-hud-num" style="color: var(--accent); font-family: var(--font-mono); font-size: 1.2rem;">-</span>
+    </div>
+
+    <!-- DATA RECOVERY SCREEN (Only shown on real JSON corruption) -->
+    <div id="recovery-ui" class="recovery-screen hidden" role="dialog" aria-modal="true" aria-label="Data Recovery">
+        <div class="recovery-content">
+            <h2>⚠️ Data Recovery (Storage Corrupted)</h2>
+            <p>VerseSurf could not parse your saved setlist data from browser storage. You can restore from a backup file or load the sample worship setlist.</p>
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 16px;">
+                <button id="emergency-reset-btn" class="btn-warning emergency-btn">
+                    🔄 Load Sample Worship Setlist
+                </button>
+                <button id="emergency-import-btn" class="btn-secondary emergency-btn">
+                    📂 Restore from Backup File (.json)
+                </button>
+                <input type="file" id="emergency-import-file" accept=".json" style="display: none;">
+            </div>
+        </div>
+    </div>
+
+    <!-- MOBILE WARNING & ROLE SELECTOR -->
+    <div id="mobile-warning">
+        <h2 style="font-size: 1.4rem; margin-bottom: 10px;">📱 Mobile Device Detected</h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 24px; max-width: 320px; line-height: 1.5;">
+            VerseSurf can be used as a wireless Stage Remote controller or as a full desktop presentation studio.
+        </p>
+        <div style="display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 280px;">
+            <button id="enter-remote-btn" class="primary" style="padding: 12px; font-size: 0.95rem; font-weight: 700;">📱 Wireless Stage Remote</button>
+            <button id="continue-anyway-btn" class="btn-secondary" style="padding: 10px;">🖥️ Full Desktop UI</button>
+        </div>
+    </div>
+
+    <!-- MOBILE STAGE REMOTE UI (WEBRTC P2P) -->
+    <div id="mobile-remote-ui">
+        <div class="remote-hud">
+            <div>
+                <span id="remote-room-label" class="remote-room-tag">ROOM: Connecting...</span>
+                <span id="remote-latency" style="font-size: 0.72rem; color: #64748b; margin-left: 6px;">● P2P</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span id="remote-timer" class="remote-timer">⏱️ 00:00</span>
+                <button id="remote-reconnect-btn" class="btn-small btn-warning" style="display: none; padding: 3px 6px;">🔄 Reconnect</button>
+                <button id="remote-exit-btn" class="btn-small btn-secondary" style="padding: 3px 6px;">🖥️ Full</button>
+            </div>
+        </div>
+
+        <!-- Room PIN Entry Card (Shown if no room code in URL or disconnected) -->
+        <div id="remote-connect-card" style="display: none; background: #141418; border: 1px solid #27272a; border-radius: 8px; padding: 14px; text-align: center;">
+            <div style="font-size: 0.9rem; font-weight: 700; margin-bottom: 8px; color: #f8fafc;">📱 Connect to Live Session</div>
+            <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 10px;">Enter the Room PIN shown on the host computer screen:</p>
+            <div style="display: flex; gap: 8px; justify-content: center; max-width: 280px; margin-inline: auto;">
+                <input type="text" id="remote-room-input" placeholder="e.g. vf-a1b2" style="text-transform: lowercase; font-family: var(--font-mono); font-weight: 700; text-align: center; font-size: 1rem; width: 140px;" maxlength="10">
+                <button id="remote-connect-btn" class="primary" style="padding: 6px 14px; font-weight: 700;">Connect</button>
+            </div>
+        </div>
+
+        <!-- Song Navigation & Selector Bar -->
+        <div class="remote-song-bar" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 2px 4px;">
+            <button id="remote-prev-song-btn" class="btn-small btn-secondary" title="Previous Song">⏮️</button>
+            <div style="flex: 1; min-width: 0; text-align: center;">
+                <select id="remote-song-select" style="width: 100%; font-size: 0.85rem; font-weight: 700; text-overflow: ellipsis; background: #18181c; border-color: #333;"></select>
+                <div id="remote-slide-indicator" style="font-size: 0.75rem; color: var(--live-color); font-weight: 700; margin-top: 2px;">LIVE: None</div>
+            </div>
+            <button id="remote-next-song-btn" class="btn-small btn-secondary" title="Next Song">⏭️</button>
+        </div>
+
+        <div id="remote-live-card" class="remote-card-live">
+            <div class="remote-card-label" id="remote-live-card-label">🔴 CURRENT LIVE SLIDE</div>
+            <div id="remote-live-text" class="remote-card-text">Screen is clear</div>
+        </div>
+
+        <div class="remote-next-peek">
+            <div class="remote-next-label" id="remote-next-card-label">👁️ UP NEXT (PREVIEW)</div>
+            <div id="remote-next-text" class="remote-next-text">-</div>
+        </div>
+
+        <div id="remote-chips-bar" class="remote-chips-scroll"></div>
+
+        <div class="remote-big-pad">
+            <button id="remote-prev-btn" class="btn-touch-large btn-touch-prev">◀ PREV</button>
+            <button id="remote-next-btn" class="btn-touch-large btn-touch-next">NEXT ▶</button>
+        </div>
+
+        <div class="remote-action-row">
+            <button id="remote-live-btn" class="btn-touch-action primary">🔴 GO LIVE</button>
+            <button id="remote-clear-btn" class="btn-touch-action btn-warning">🚫 CLEAR</button>
+            <button id="remote-blackout-btn" class="btn-touch-action btn-blackout">⬛ BLACKOUT</button>
+        </div>
+    </div>
+
+    <!-- P2P REMOTE QR PAIRING MODAL -->
+    <div id="remote-pairing-modal" class="modal-overlay" style="display: none;" role="dialog" aria-modal="true" aria-label="Mobile Stage Remote">
+        <div class="modal-content" style="max-width: 380px; text-align: center; padding: 22px;">
+            <div class="modal-header" style="border: none; padding: 0 0 12px 0; justify-content: space-between;">
+                <h3 style="font-size: 1.1rem;">📱 Mobile Stage Remote</h3>
+                <button id="close-pairing-modal-btn" class="close-btn">&times;</button>
+            </div>
+            <p style="color: var(--text-muted); font-size: 0.82rem; margin-bottom: 14px;">
+                Scan with any phone camera to control slides wirelessly over WebRTC P2P (Zero setup required):
+            </p>
+            <div id="qrcode-container" style="display: flex; justify-content: center; margin-bottom: 14px; background: white; padding: 10px; border-radius: 8px; width: fit-content; margin-inline: auto;"></div>
+            <div style="font-size: 0.85rem; color: #888; margin-bottom: 12px;">
+                Room PIN: <strong id="room-code-display" style="color: var(--accent); font-family: var(--font-mono); font-size: 1.15rem; letter-spacing: 0.05em;">...</strong>
+            </div>
+            <div id="connected-remotes-status" style="font-size: 0.8rem; color: var(--success-color); font-weight: 600; margin-bottom: 12px;">
+                📱 0 Stage Remotes Connected
+            </div>
+            <button id="copy-remote-link-btn" class="btn-secondary" style="width: 100%; font-size: 0.85rem; padding: 8px;">📋 Copy Remote Link</button>
+        </div>
+    </div>
+
+    <!-- MAIN DASHBOARD UI -->
+    <div id="dashboard-ui" class="dashboard">
+        <header>
+            <div class="header-left">
+                <div class="brand-wrapper">
+                    <a href="#" class="brand">🏄‍♂️ VerseSurf <span class="brand-badge">Studio</span></a>
+                </div>
+
+                <!-- P2P Connected Pill -->
+                <div id="p2p-status-pill" class="p2p-status-pill" title="Click to view QR Code for Stage Remote">
+                    <span id="p2p-dot" class="p2p-dot offline"></span>
+                    <span id="p2p-pill-text">P2P: Ready</span>
+                </div>
+
+                <div style="display: flex; gap: 6px; align-items: center; border-left: 1px solid var(--border-color); padding-left: 12px;">
+                    <label class="slider-label" title="Projector Font Size (vw)">
+                        Size: <input type="range" id="font-size-slider" min="2" max="12" step="0.5" value="5">
+                    </label>
+
+                    <select id="theme-select" title="Preset Visual Style">
+                        <option value="theme-dark">Dark Minimal (Default)</option>
+                        <option value="theme-blue-wash">Deep Blue Wash</option>
+                        <option value="theme-traditional">Traditional Hymnal</option>
+                        <option value="theme-minimalist">Contemporary Minimalist</option>
+                        <option value="theme-paper">Classic Parchment</option>
+                        <option value="theme-scripture">Scripture Reading</option>
+                        <option value="theme-custom">🎨 Custom Style & Media...</option>
+                    </select>
+
+                    <select id="layout-select" title="Screen Text Alignment & Width">
+                        <option value="layout-center" data-default-w="100">Center</option>
+                        <option value="layout-top-left" data-default-w="70">Top Left</option>
+                        <option value="layout-top-right" data-default-w="70">Top Right</option>
+                        <option value="layout-lower" data-default-w="100">Lower Third</option>
+                        <option value="layout-top" data-default-w="100">Top Header</option>
+                        <option value="layout-left" data-default-w="70">Left Aligned</option>
+                        <option value="layout-right" data-default-w="70">Right Aligned</option>
+                    </select>
+
+                    <button id="toggle-tune-btn" class="btn-secondary" title="Fine-tune screen position & margin">📏 Margin</button>
+                </div>
+            </div>
+            
+            <div class="header-right">
+                <button id="blackout-btn" class="btn-blackout" title="Toggle Pure Black Screen [.]">
+                    <span>⬛</span> Blackout
+                </button>
+                <button id="clear-screen-btn" class="btn-warning" title="Clear Text from Screen [Esc]">Clear Text</button>
+                <button id="mobile-mode-btn" class="btn-secondary" title="Open Stage Remote QR Code">📱 Remote</button>
+                <button class="primary" id="cast-btn" title="Open Projector Display Screen">Launch Projector</button>
+            </div>
+        </header>
+
+        <!-- CUSTOM THEME TOOLBAR -->
+        <div id="custom-theme-toolbar">
+            <div class="toolbar-item">
+                <label for="custom-text-color">Font:</label>
+                <input type="color" id="custom-text-color" value="#ffffff" title="Text Color">
+            </div>
+
+            <div class="toolbar-item">
+                <label for="custom-bg-color">Background:</label>
+                <input type="color" id="custom-bg-color" value="#000000" title="Background Color">
+            </div>
+
+            <div class="toolbar-item">
+                <div id="toolbar-thumb" class="toolbar-thumb-preview"></div>
+                <button id="open-media-bin-btn" class="btn-small btn-secondary">🖼️ Media Bin</button>
+                <button id="clear-custom-bg-btn" class="btn-small btn-danger" style="display: none;">Remove Image</button>
+            </div>
+
+            <div class="toolbar-item" style="cursor: pointer;">
+                <input type="checkbox" id="dim-bg-checkbox" style="cursor: pointer;">
+                <label for="dim-bg-checkbox" style="cursor: pointer;">Dim Background Overlay</label>
+            </div>
+        </div>
+
+        <!-- FINE-TUNE MARGIN DRAWER -->
+        <div id="tune-toolbar" class="toolbar-drawer">
+            <div class="toolbar-item">
+                <label style="width: 48px;">Width:</label>
+                <input type="range" id="tune-w-slider" min="20" max="100" value="100">
+                <span id="tune-w-val" class="text-micro">100vw</span>
+            </div>
+            <div class="toolbar-item">
+                <label style="width: 50px;">X Shift:</label>
+                <input type="range" id="tune-x-slider" min="-50" max="50" value="0">
+                <span id="tune-x-val" class="text-micro">0vw</span>
+            </div>
+            <div class="toolbar-item">
+                <label style="width: 50px;">Y Shift:</label>
+                <input type="range" id="tune-y-slider" min="-50" max="50" value="0">
+                <span id="tune-y-val" class="text-micro">0vh</span>
+            </div>
+            <button id="reset-tune-btn" class="btn-small btn-danger" style="margin-left: auto;">Reset Alignment</button>
+        </div>
+
+        <div class="workspace">
+            <!-- SETLIST PANE -->
+            <div class="setlist-pane">
+                <div class="setlist-header">
+                    <span>SETLIST (<span id="song-count">0</span>)</span>
+                    <button id="add-song-btn" class="btn-small btn-accent">+ New Song</button>
+                </div>
+                
+                <div class="search-container">
+                    <input type="text" id="search-input" class="search-input" placeholder="Search songs or lyrics...">
+                </div>
+
+                <div id="setlist-container" class="setlist-items"></div>
+
+                <div class="setlist-footer">
+                    <button id="export-btn" class="btn-small btn-secondary" title="Export Setlist to JSON">💾 Export</button>
+                    <button id="import-btn" class="btn-small btn-secondary" title="Import Setlist from JSON">📂 Import</button>
+                    <button id="reset-setlist-btn" class="btn-small btn-danger" title="Reset to Sunday sample setlist">⚠️ Samples</button>
+                    <input type="file" id="import-file" accept=".json" style="display: none;">
+                </div>
+            </div>
+
+            <!-- EDITOR PANE -->
+            <div class="editor-pane">
+                <div class="editor-quick-bar">
+                    <button class="quick-tag-btn" data-tag="# Verse 1">+ Verse 1</button>
+                    <button class="quick-tag-btn" data-tag="# Verse 2">+ Verse 2</button>
+                    <button class="quick-tag-btn" data-tag="# Chorus">+ Chorus</button>
+                    <button class="quick-tag-btn" data-tag="# Bridge">+ Bridge</button>
+                    <button class="quick-tag-btn" data-tag="# Pre-Chorus">+ Pre-Chorus</button>
+                    <button class="quick-tag-btn" data-tag="# Ending">+ Ending</button>
+                    <button class="quick-tag-btn" data-tag="# rolling 2">+ Rolling 2</button>
+                    <button class="quick-tag-btn" data-tag="> Citation">+ Citation</button>
+                </div>
+                <textarea id="lyric-editor" placeholder="Title of Song or Scripture&#10;&#10;# Verse 1&#10;Amazing grace, how sweet the sound&#10;That saved a wretch like me&#10;&#10;# Chorus&#10;My chains are gone, I've been set free&#10;My God, my Savior has ransomed me"></textarea>
+            </div>
+
+            <!-- PREVIEW PANE -->
+            <div class="preview-container">
+                <div id="quick-jump-bar" class="quick-jump-bar"></div>
+                <div class="preview-pane" id="slide-list"></div>
+            </div>
+        </div>
+
+        <div id="undo-toast">
+            <span id="undo-text">Song deleted.</span>
+            <button id="undo-btn" class="btn-small btn-accent">Undo</button>
+        </div>
+
+        <!-- 3-TIER HOTKEY HUD FOOTER -->
+        <div class="hotkey-bar">
+            <div class="hotkey-list">
+                <div class="hotkey-group">
+                    <span class="hotkey-title">🔴 LIVE:</span>
+                    <kbd>Space</kbd> / <kbd>→</kbd> Next &bull; 
+                    <kbd>←</kbd> Prev &bull; 
+                    <kbd>Enter</kbd> Go Live &bull; 
+                    <kbd>Esc</kbd> Clear &bull; 
+                    <kbd>.</kbd> Blackout
+                </div>
+                
+                <div class="hotkey-group">
+                    <span class="hotkey-title">👀 CUE:</span>
+                    <kbd>↑</kbd> <kbd>↓</kbd> Browse Slides &bull; 
+                    <kbd>PgUp</kbd> <kbd>PgDn</kbd> Song
+                </div>
+
+                <div class="hotkey-group">
+                    <span class="hotkey-title">⚡ JUMP:</span>
+                    <kbd>V</kbd> Verse &bull; 
+                    <kbd>C</kbd> Chorus &bull; 
+                    <kbd>B</kbd> Bridge &bull; 
+                    <kbd>P</kbd> Pre &bull; 
+                    <kbd>E</kbd> End &bull; 
+                    <kbd>T</kbd> Tag &bull; 
+                    <kbd>0</kbd>-<kbd>99</kbd> Num
+                </div>
+
+                <div class="hotkey-group">
+                    <span class="hotkey-title">🖥️ DISPLAY:</span>
+                    <kbd>F</kbd> Fullscreen
+                </div>
+            </div>
+            <span style="color: #64748b; font-size: 0.72rem;">VerseSurf Live Presenter</span>
+        </div>
+    </div>
+
+    <!-- MEDIA BIN MODAL -->
+    <div id="media-bin-modal" class="modal-overlay" style="display: none;" role="dialog" aria-modal="true" aria-label="Media Bin">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">🖼️ Media Bin</h3>
+                <button id="close-media-bin" class="close-btn">&times;</button>
+            </div>
+
+            <div class="modal-tabs">
+                <button class="tab-btn active" data-tab="tab-local">📁 Saved Local Images</button>
+                <button class="tab-btn" data-tab="tab-online">🌐 Online Image URL</button>
+            </div>
+
+            <div id="tab-local" class="tab-content">
+                <div class="upload-zone" style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
+                    <label for="local-image-upload" class="btn-small btn-accent">📥 Upload Image</label>
+                    <input type="file" id="local-image-upload" accept="image/*" style="display: none;">
+                    <span style="color: #888; font-size: 0.78rem;">Stored in local browser storage (IndexedDB)</span>
+                </div>
+                <div class="image-grid" id="local-image-grid"></div>
+            </div>
+
+            <div id="tab-online" class="tab-content" style="display: none;">
+                <div class="url-input-container">
+                    <label class="text-muted-small" style="font-size: 0.82rem; color: #aaa; margin-bottom: 6px; display: block;">Direct Image URL (.jpg, .png, .webp, .avif):</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="online-img-url" style="flex: 1;" placeholder="https://images.unsplash.com/...">
+                        <button id="apply-online-url-btn" class="btn-small btn-accent">Apply</button>
+                    </div>
+                    <div id="url-validation-status" style="margin-top: 6px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PROJECTOR DISPLAY SCREEN UI -->
+    <div id="projector-ui" class="projector">
+        <div id="projector-overlay" class="projector-overlay"></div>
+        <div id="projector-blackout" class="projector-blackout-layer"></div>
+        <div id="projector-content" class="projector-text"></div>
+    </div>
+</body>
+</html>
