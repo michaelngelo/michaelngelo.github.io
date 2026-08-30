@@ -60,6 +60,13 @@ html, body {
     -moz-osx-font-smoothing: grayscale;
 }
 
+html.is-remote, body.remote-mode {
+    height: auto;
+    min-height: 100dvh;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
 .slide-content, .projector-text, .remote-card-text {
     word-break: break-word;
     line-break: strict;
@@ -801,13 +808,13 @@ kbd {
 #mobile-remote-ui {
     display: none;
     flex-direction: column;
-    height: 100vh;
+    min-height: 100dvh;
     width: 100vw;
     background-color: #000000;
     padding: 12px;
     gap: 10px;
     z-index: 2500;
-    overflow-y: auto;
+    overflow-y: visible;
 }
 
 body.remote-mode #mobile-remote-ui,
@@ -849,8 +856,9 @@ html.is-remote #mobile-warning {
     border: 2px solid var(--live-color);
     border-radius: 8px;
     padding: 14px;
-    flex: 1;
-    min-height: 120px;
+    flex: 0 0 auto;
+    min-height: 35vh;
+    max-height: 50vh;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
