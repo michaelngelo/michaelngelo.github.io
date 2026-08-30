@@ -2376,6 +2376,7 @@ if (isProjector) {
     }
     if (continueAnywayBtn) {
         continueAnywayBtn.onclick = () => {
+            document.documentElement.classList.add('mobile-unlocked');
             document.body.classList.add('mobile-unlocked');
         };
     }
