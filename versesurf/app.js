@@ -830,31 +830,31 @@ if (isProjector) {
             id: 1, theme: "theme-blue-wash", layoutStyle: "layout-center",
             tuneW: 100, tuneX: 0, tuneY: 0, fontSize: "5.5",
             customColor: "#ffffff", customBgColor: "#000000", customBg: "", dimBg: false,
-            title: "Call to Worship & Opening Prayer", lyrics: "Call to Worship & Opening Prayer\n\n# Call to Worship\nShout for joy to the LORD, all the earth!\nWorship the LORD with gladness; come before Him with joyful songs.\n\n# Silent Prayer\nPlease prepare your hearts and minds for worship.\nThe LORD is in His holy temple; let all the earth be silent before Him."
+            title: "崇拜宣召 / 靜默祈禱", lyrics: "崇拜宣召\n\n# Call to Worship\n普天下當向耶和華歡呼！\n當樂意事奉耶和華，當向他歌唱！\n\n# 靜默祈禱\n請安靜預備心，全心全意敬拜上帝\nPlease prepare your hearts for worship"
         },
         {
             id: 2, theme: "theme-traditional", layoutStyle: "layout-center",
             tuneW: 100, tuneX: 0, tuneY: 0, fontSize: "5",
             customColor: "#ffffff", customBgColor: "#000000", customBg: "", dimBg: false,
-            title: "How Great Thou Art", lyrics: "How Great Thou Art\n\n# Verse 1\nO Lord my God, when I in awesome wonder\nConsider all the worlds Thy hands have made\nI see the stars, I hear the rolling thunder\nThy power throughout the universe displayed\n\n# Chorus\nThen sings my soul, my Savior God, to Thee\nHow great Thou art, how great Thou art\nThen sings my soul, my Savior God, to Thee\nHow great Thou art, how great Thou art!\n\n# Verse 2\nAnd when I think that God, His Son not sparing\nSent Him to die, I scarce can take it in\nThat on the cross, my burden gladly bearing\nHe bled and died to take away my sin\n\n# Ending\nThen sings my soul, my Savior God, to Thee\nHow great Thou art, how great Thou art!"
+            title: "祢真偉大 (How Great Thou Art)", lyrics: "祢真偉大 (How Great Thou Art)\n\n# Verse 1\n主啊我神，我每逢舉目觀看\n(O Lord my God, when I in awesome wonder)\n祢手所造，一切奇妙大工\n(Consider all the worlds Thy hands have made)\n\n# Chorus\n我心神唱出，讚美祢歌聲\n(Then sings my soul, my Savior God, to Thee)\n何等偉大，何等偉大\n(How great Thou art, how great Thou art)\n\n# Verse 2\n當我想到，神竟不吝惜獨生子\n(And when I think that God, His Son not sparing)\n差祂受死，赦免我的罪孽\n(Sent Him to die, I scarce can take it in)\n\n# Ending\n何等偉大，何等偉大！\n(How great Thou art, how great Thou art!)"
         },
         {
             id: 3, theme: "theme-dark", layoutStyle: "layout-center",
             tuneW: 100, tuneX: 0, tuneY: 0, fontSize: "5",
             customColor: "#ffffff", customBgColor: "#000000", customBg: "", dimBg: false,
-            title: "10,000 Reasons (Bless the Lord)", lyrics: "10,000 Reasons (Bless the Lord)\n\n# Chorus\nBless the Lord, O my soul, O my soul\nWorship His holy name\nSing like never before, O my soul\nI'll worship Your holy name\n\n# Verse 1\nThe sun comes up, it's a new day dawning\nIt's time to sing Your song again\nWhatever may pass, and whatever lies before me\nLet me be singing when the evening comes\n\n# Verse 2\nYou're rich in love, and You're slow to anger\nYour name is great, and Your heart is kind\nFor all Your goodness I will keep on singing\nTen thousand reasons for my heart to find\n\n# Bridge\nAnd on that day when my strength is failing\nThe end draws near and my time has come\nStill my soul will sing Your praise unending\nTen thousand years and then forevermore"
+            title: "恩典之路 (The Path of Grace)", lyrics: "恩典之路\n\n# Verse 1\n祢是我的主，引導我走義路\n高山或低谷，祢都與我同在\n\n# Chorus\n一步又一步，這是恩典之路\n祢愛、祢手將我緊緊抓住\n\n# Bridge\n光明照射在黑暗之處\n祢是我一生的祝福"
         },
         {
             id: 4, theme: "theme-scripture", layoutStyle: "layout-top-left",
             tuneW: 75, tuneX: 0, tuneY: 0, fontSize: "4.5",
             customColor: "#ffffff", customBgColor: "#000000", customBg: "", dimBg: false,
-            title: "Scripture Reading: Psalm 23:1-6", lyrics: "Scripture Reading: Psalm 23:1-6\n\n# rolling 2\n> Psalm 23:1-6 (Responsive Reading)\n【Leader】 The Lord is my shepherd; I shall not want.\n【People】 He makes me lie down in green pastures; He leads me beside still waters.\n【Leader】 He restores my soul; He leads me in paths of righteousness for His name's sake.\n【People】 Even though I walk through the valley of the shadow of death, I will fear no evil.\n【Leader】 For You are with me; Your rod and Your staff, they comfort me.\n【All】 Surely goodness and mercy shall follow me all the days of my life, and I shall dwell in the house of the Lord forever."
+            title: "啟應經文：詩篇 23:1-6", lyrics: "啟應經文：詩篇 23:1-6\n\n# rolling 2\n> 詩篇 23:1-6 (啟應經文)\n【啟】耶和華是我的牧者，我必不致缺乏。\n【應】他使我躺臥在青草地上，領我在可安歇的水邊。\n【啟】他使我的靈魂甦醒，為自己的名引導我走義路。\n【應】我雖然行過死蔭的幽谷，也不怕遭害，因為你與我同在；你的杖，你的竿，都安慰我。\n【啟】在我敵人面前，你為我擺設筵席；你用油膏了我的頭，使我的福杯滿溢。\n【眾】我一生一世必有恩惠慈愛隨著我；我且要住在耶和華的殿中，直到永遠。"
         },
         {
             id: 5, theme: "theme-dark", layoutStyle: "layout-center",
             tuneW: 100, tuneX: 0, tuneY: 0, fontSize: "5",
             customColor: "#ffffff", customBgColor: "#000000", customBg: "", dimBg: false,
-            title: "Church Announcements & Welcome", lyrics: "Church Announcements & Welcome\n\n# Announcement 1\nCommunity Fellowship & Small Groups\nTime: Friday at 7:30 PM\nLocation: Fellowship Hall (All are welcome!)\n\n# Announcement 2\nTithes & Offerings\nSupport our church ministries and mission outreach.\n\"Each of you should give what you have decided in your heart to give.\""
+            title: "堂會消息 / 家事報告", lyrics: "堂會消息\n\n# 報告 1\n週五青年團契聚會\n時間：本週五晚上 7:30\n地點：副堂 (歡迎全體青年參加)\n\n# 報告 2\n主日崇拜奉獻提醒\n支持教會宣教及各項事工發展\n願神賜福甘心樂意奉獻的人"
         }
     ];
 
