@@ -221,7 +221,8 @@ function formatContent(text) {
 
 function parseTextToSlides(text) {
     if (!text || typeof text !== 'string') return [];
-    const normalized = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    let normalized = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    normalized = normalized.replace(/\n(?=#)/g, '\n\n');
     const blocks = normalized.split(/\n\s*\n/);
     const parsedSlides = blocks.flatMap((block, blockIndex) => {
         let label = '';
@@ -507,6 +508,7 @@ class PresentationBus {
                     const connectCard = document.getElementById('remote-connect-card');
                     if (connectCard) connectCard.style.display = 'none';
                     if (isRemote) this.broadcast({ type: 'REMOTE_JOINED' });
+                    else if (isProjector) this.broadcast({ type: 'PROJECTOR_READY' });
                 } else {
                     this.updateRemoteStatusUI('error', targetRoom);
                 }
@@ -831,14 +833,16 @@ if (isProjector) {
                 });
             }
 
+            const liveHtml = (data.liveSlide && data.liveSlide.html) || data.html || '';
             if (data.isBlackout) {
                 remoteSlideIndicator.textContent = "LIVE: Blackout";
                 remoteLiveText.innerHTML = "<i>⬛ Display screen is in Blackout</i>";
                 remoteBlackoutBtn.classList.add('active');
-            } else if (data.liveSlide && data.liveSlide.html) {
-                const slideLabel = data.liveSlide.label ? `[${data.liveSlide.label}]` : `Slide ${data.liveIndex + 1}`;
-                remoteSlideIndicator.textContent = `LIVE: ${slideLabel} (${data.liveIndex + 1}/${data.totalSlides})`;
-                remoteLiveText.innerHTML = data.liveSlide.html;
+            } else if (liveHtml) {
+                const slideLabel = (data.liveSlide && data.liveSlide.label) ? `[${data.liveSlide.label}]` : `Slide ${(data.liveIndex !== undefined && data.liveIndex !== -1 ? data.liveIndex : 0) + 1}`;
+                const totalCount = data.totalSlides || (data.liveIndex !== undefined ? data.liveIndex + 1 : 1);
+                remoteSlideIndicator.textContent = `LIVE: ${slideLabel} (${(data.liveIndex !== undefined && data.liveIndex !== -1 ? data.liveIndex : 0) + 1}/${totalCount})`;
+                remoteLiveText.innerHTML = liveHtml;
                 remoteBlackoutBtn.classList.remove('active');
             } else {
                 remoteSlideIndicator.textContent = "LIVE: Screen Clear";
@@ -987,7 +991,8 @@ if (isProjector) {
     function sanitizeSetlist(list) {
         if (!Array.isArray(list) || list.length === 0) return [];
         const seenIds = new Set();
-        return list.map((song, idx) => {
+        return list.map((rawSong, idx) => {
+            const song = rawSong || {};
             let validId = (!isNaN(Number(song.id)) && song.id !== null && song.id !== undefined && song.id !== '') ? Number(song.id) : (Date.now() + idx);
             while (seenIds.has(validId)) {
                 validId = Date.now() + Math.floor(Math.random() * 10000) + idx;
@@ -1200,7 +1205,7 @@ if (isProjector) {
         if (fromIndex === null || fromIndex === undefined) return;
         if (fromIndex < 0 || fromIndex >= setlist.length) return;
         if (toIndex < 0 || toIndex >= setlist.length) return;
-        if (fromIndex === toIndex && (position === 'top' ? fromIndex === 0 : fromIndex === setlist.length - 1)) return;
+        if (fromIndex === toIndex) return;
 
         const item = setlist.splice(fromIndex, 1)[0];
         let insertIdx = (fromIndex > toIndex) ? toIndex : (toIndex - 1);
@@ -1485,9 +1490,19 @@ if (isProjector) {
 
         slides = parseTextToSlides(text);
         
+        if (slides.length === 0) {
+            previewIndex = 0;
+        } else if (previewIndex >= slides.length) {
+            previewIndex = slides.length - 1;
+        }
+
         if (Number(activeSong.id) === Number(liveSongId)) {
             liveSlides = [...slides];
-            if (liveIndex >= liveSlides.length) liveIndex = Math.max(0, liveSlides.length - 1);
+            if (liveSlides.length === 0) {
+                liveIndex = -1;
+            } else if (liveIndex >= liveSlides.length) {
+                liveIndex = liveSlides.length - 1;
+            }
             
             if (liveIndex !== -1 && liveSlides[liveIndex]) {
                 const slide = liveSlides[liveIndex];
@@ -1844,7 +1859,7 @@ if (isProjector) {
         else if (data.type === 'CMD_CLEAR_TEXT') clearScreen();
         else if (data.type === 'CMD_TOGGLE_BLACKOUT') toggleBlackout();
         else if (data.type === 'CMD_SELECT_SONG') {
-            if (data.songId && setlist.some(s => Number(s.id) === Number(data.songId))) {
+            if (data.songId !== undefined && data.songId !== null && setlist.some(s => Number(s.id) === Number(data.songId))) {
                 loadSong(Number(data.songId));
             }
         }
@@ -1857,6 +1872,23 @@ if (isProjector) {
             if (curIdx < setlist.length - 1) loadSong(setlist[curIdx + 1].id);
         }
         else if (data.type === 'PROJECTOR_KEYPRESS') handleNavigationKey(data.key);
+        else if (data.type === 'PROJECTOR_SYNC' && data.state) {
+            if (data.state.songId !== null && data.state.songId !== undefined) {
+                liveSongId = Number(data.state.songId);
+                liveIndex = data.state.index !== undefined ? data.state.index : -1;
+                isBlackout = !!data.state.isBlackout;
+                const liveSong = setlist.find(s => Number(s.id) === Number(liveSongId));
+                if (liveSong) {
+                    liveSlides = parseTextToSlides(liveSong.lyrics);
+                    resolveBackgroundUrl(liveSong.customBg).then(url => {
+                        liveCachedBgUrl = url;
+                    });
+                }
+                blackoutBtn.classList.toggle('active', isBlackout);
+                updateSelection();
+                broadcastState();
+            }
+        }
     });
 
     window.addEventListener('click', (e) => {
@@ -2384,7 +2416,7 @@ if (isProjector) {
                 if (urlValidationStatus) urlValidationStatus.innerHTML = '';
             }, 400);
         };
-        img.onerror = () => {
+        img.onerror = async () => {
             if (urlValidationStatus) {
                 urlValidationStatus.innerHTML = '<span style="color:var(--live-color); font-size:0.8rem;">⚠️ Could not verify image URL. Applied anyway.</span>';
             }
@@ -2392,7 +2424,7 @@ if (isProjector) {
             if (song) {
                 song.customBg = url;
                 saveSetlist();
-                updateCachedBg();
+                await updateCachedBg();
                 updateCustomToolbarUI();
                 if (liveIndex !== -1 && Number(activeSongId) === Number(liveSongId)) goLive(liveIndex);
             }
@@ -2467,12 +2499,16 @@ if (isProjector) {
         remoteUrl.hash = '';
         const remoteUrlStr = remoteUrl.toString();
         
-        navigator.clipboard.writeText(remoteUrlStr).then(() => {
-            copyRemoteLinkBtn.textContent = '✓ Link Copied!';
-            setTimeout(() => copyRemoteLinkBtn.textContent = '📋 Copy Remote Link', 2000);
-        }).catch(() => {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(remoteUrlStr).then(() => {
+                copyRemoteLinkBtn.textContent = '✓ Link Copied!';
+                setTimeout(() => copyRemoteLinkBtn.textContent = '📋 Copy Remote Link', 2000);
+            }).catch(() => {
+                prompt("Copy this remote link:", remoteUrlStr);
+            });
+        } else {
             prompt("Copy this remote link:", remoteUrlStr);
-        });
+        }
     };
 
     castBtn.onclick = () => {
@@ -2506,6 +2542,7 @@ if (isProjector) {
 
     renderSetlist();
     loadSong(activeSongId);
+    bus.broadcast({ type: 'DASHBOARD_BOOT' });
 }
 
 // ==========================================================
