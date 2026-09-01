@@ -8,6 +8,7 @@ const URLS_TO_CACHE = [
     'https://cdn.jsdelivr.net/npm/katex@0.18.4/dist/katex.min.css',
     'https://cdn.jsdelivr.net/npm/katex@0.18.4/dist/katex.min.js',
     'https://cdn.jsdelivr.net/npm/peerjs@1.5.2/dist/peerjs.min.js',
+    'https://cdn.jsdelivr.net/npm/mqtt/dist/mqtt.min.js',
     'https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js'
 ];
 

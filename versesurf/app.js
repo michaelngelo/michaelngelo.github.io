@@ -176,7 +176,7 @@ function formatContent(text) {
         return token;
     });
 
-    // Inline Math: $ ... $ (Cross-browser safe capture group, avoiding lookbehind syntax error)
+    // Inline Math: $ ... $ 
     processed = processed.replace(/\$(?!\s|\d)([^$\n]*?[^\s$])\$/g, (match, equation) => {
         const token = `___KATEX_INLINE_${mathTokens.length}___`;
         try {
@@ -194,7 +194,7 @@ function formatContent(text) {
     // Step 2: Safe HTML escape of text
     let html = escapeHTML(processed);
 
-    // Step 3: Responsive Scripture Role Markers (English & Traditional Chinese)
+    // Step 3: Responsive Scripture Role Markers 
     html = html.replace(/【(Leader|領|啟|Reader)】/gi, match => `<span class="role-leader">${match}</span>`)
                .replace(/【(People|Congregation|應)】/gi, match => `<span class="role-congregation">${match}</span>`)
                .replace(/【(All|眾|Everyone)】/gi, match => `<span class="role-all">${match}</span>`);
@@ -203,14 +203,14 @@ function formatContent(text) {
     html = html.replace(/^&gt;\s*(.*)(\r?\n)?/gm, '<div class="citation">$1</div>');
     html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
 
-    // Step 5: Bilingual / Secondary Subtitles Formatting (lines starting with /, in half-width parens, or in full-width parens)
+    // Step 5: Bilingual / Secondary Subtitles Formatting 
     html = html.replace(/^(\/|\([^\)]*\)|（[^）]*）)(.*)$/gm, '<span class="bilingual-sub">$1$2</span>');
 
     // Step 6: Line breaks and verse number spacing
     html = html.replace(/\n(?=\s*\d+)/g, '<br><span class="verse-space"></span>');
     html = html.replace(/\n/g, '<br>');
 
-    // Step 7: Re-insert KaTeX rendered HTML tokens using function replacer to avoid '$' regex replacement issues
+    // Step 7: Re-insert KaTeX rendered HTML tokens
     mathTokens.forEach((renderedHtml, idx) => {
         html = html.replace(`___KATEX_BLOCK_${idx}___`, () => renderedHtml);
         html = html.replace(`___KATEX_INLINE_${idx}___`, () => renderedHtml);
@@ -293,7 +293,7 @@ function parseTextToSlides(text) {
 }
 
 // ==========================================================
-// 3. CLOUD COMMUNICATION BUS (MQTT over Secure WebSockets)
+// 3. DUAL COMMUNICATION BUS (MQTT Cloud + WebRTC P2P)
 // ==========================================================
 const urlParams = new URLSearchParams(window.location.search);
 const isProjector = urlParams.get('mode') === 'projector';
@@ -304,8 +304,18 @@ class PresentationBus {
     constructor() {
         this.onMessageHandlers = [];
         this.roomId = null;
-        this.client = null;
+        
+        // P2P variables
+        this.p2pConnections = [];
+        this.peer = null;
+        
+        // MQTT variables
+        this.mqttClient = null;
         this.baseTopic = 'versesurf/session/';
+        
+        // Check URL first, then LocalStorage, default to P2P (Local)
+        const urlRelay = urlParams.get('relay');
+        this.activeTransport = urlRelay || localStorage.getItem('versesurf_transport') || 'p2p';
 
         if ('BroadcastChannel' in window) {
             this.localChannel = new BroadcastChannel('versesurf_channel');
@@ -314,39 +324,67 @@ class PresentationBus {
             this.localChannel = { postMessage: () => {}, onmessage: null };
         }
 
-        this.initMQTT();
+        this.initActiveTransport();
     }
 
-    initMQTT() {
-        if (typeof mqtt === 'undefined') return;
+    initActiveTransport() {
+        if (this.activeTransport === 'mqtt') {
+            this.initMQTT();
+        } else {
+            this.initP2P();
+        }
+    }
 
-        // Connect to public EMQX broker via Secure WebSockets (port 8084)
+    switchTransport(newTransport) {
+        if (this.activeTransport === newTransport) return;
+        
+        // 1. Teardown active transport
+        if (this.activeTransport === 'mqtt' && this.mqttClient) {
+            try { this.mqttClient.end(true); } catch(e){}
+            this.mqttClient = null;
+        } else if (this.activeTransport === 'p2p' && this.peer) {
+            this.p2pConnections.forEach(c => { try { c.close(); } catch(e){} });
+            this.p2pConnections = [];
+            try { this.peer.destroy(); } catch(e){}
+            this.peer = null;
+        }
+
+        // 2. Set new mode and save preference (Host only saves pref)
+        this.activeTransport = newTransport;
+        if (!isRemote && !isProjector) {
+            localStorage.setItem('versesurf_transport', newTransport);
+        }
+
+        // 3. Boot new transport
+        this.initActiveTransport();
+    }
+
+    // --- ENGINE 1: MQTT CLOUD ---
+    initMQTT() {
+        if (typeof mqtt === 'undefined') {
+            console.warn("MQTT library missing.");
+            return;
+        }
+
         const brokerUrl = 'wss://broker.emqx.io:8084/mqtt';
         const clientId = 'vs-client-' + Math.random().toString(16).substring(2, 10);
+        this.mqttClient = mqtt.connect(brokerUrl, { clientId });
 
-        this.client = mqtt.connect(brokerUrl, { clientId });
-
-        this.client.on('connect', () => {
+        this.mqttClient.on('connect', () => {
             if (isRemote && targetRoom) {
                 this.connectToRoom(targetRoom);
             } else if (isProjector && targetRoom) {
                 this.connectToRoom(targetRoom);
                 this.broadcast({ type: 'PROJECTOR_READY' });
             } else if (!isRemote && (!isProjector || !targetRoom)) {
-                // Host Mode: Generate random room code
-                this.roomId = 'vs-' + Math.random().toString(36).substring(2, 6);
-
-                const pillText = document.getElementById('p2p-pill-text');
-                const roomCodeDisplay = document.getElementById('room-code-display');
-                if (pillText) pillText.textContent = `☁️ Cloud: ${this.roomId}`;
-                if (roomCodeDisplay) roomCodeDisplay.textContent = this.roomId;
+                if (!this.roomId) this.roomId = 'vs-' + Math.random().toString(36).substring(2, 6);
+                
                 this.updateRemoteCountUI();
-
-                this.client.subscribe(`${this.baseTopic}${this.roomId}`);
+                this.mqttClient.subscribe(`${this.baseTopic}${this.roomId}`);
             }
         });
 
-        this.client.on('message', (topic, message) => {
+        this.mqttClient.on('message', (topic, message) => {
             try {
                 const data = JSON.parse(message.toString());
                 if (data && (data.type === 'REMOTE_JOINED' || data.type === 'REMOTE_REQUEST_SYNC')) {
@@ -360,42 +398,140 @@ class PresentationBus {
             }
         });
 
-        this.client.on('error', (err) => {
+        this.mqttClient.on('error', (err) => {
             console.warn('MQTT Connection Error:', err);
             if (isRemote) this.updateRemoteStatusUI('error');
         });
 
-        this.client.on('close', () => {
+        this.mqttClient.on('close', () => {
             if (isRemote) this.updateRemoteStatusUI('disconnected');
         });
     }
 
-    connectToRoom(roomId) {
-        if (!roomId || !this.client) return;
-        targetRoom = roomId.trim().toLowerCase();
-        localStorage.setItem('versesurf_last_room', targetRoom);
-
-        this.updateRemoteStatusUI('connecting', targetRoom);
-
-        if (this.roomId) {
-            this.client.unsubscribe(`${this.baseTopic}${this.roomId}`);
+    // --- ENGINE 2: WEBRTC P2P ---
+    initP2P() {
+        if (typeof Peer === 'undefined') {
+            console.warn("PeerJS library missing.");
+            return;
         }
 
-        this.roomId = targetRoom;
+        const peerConfig = {
+            config: {
+                'iceServers': [
+                    { urls: 'stun:stun.l.google.com:19302' }
+                ]
+            }
+        };
 
-        this.client.subscribe(`${this.baseTopic}${this.roomId}`, (err) => {
-            if (!err) {
+        if (isRemote) {
+            this.peer = new Peer(peerConfig);
+            this.peer.on('open', () => {
+                if (targetRoom) this.connectToRoom(targetRoom);
+                else this.updateRemoteStatusUI('no-room');
+            });
+            this.peer.on('error', (err) => {
+                console.warn('Remote PeerJS error:', err);
+                this.updateRemoteStatusUI('error');
+            });
+        } else if (isProjector && targetRoom) {
+            this.peer = new Peer(peerConfig);
+            this.peer.on('open', () => {
+                const conn = this.peer.connect(targetRoom, { reliable: true });
+                conn.on('open', () => {
+                    this.p2pConnections.push(conn);
+                    conn.send({ type: 'PROJECTOR_READY' });
+                });
+                conn.on('data', (data) => this.dispatchMessage(data, 'p2p'));
+                conn.on('close', () => {
+                    this.p2pConnections = this.p2pConnections.filter(c => c !== conn);
+                });
+            });
+        } else if (!isRemote && (!isProjector || !targetRoom)) {
+            const createHostPeer = (prefix = 'vs-') => {
+                if (!this.roomId) this.roomId = prefix + Math.random().toString(36).substring(2, 6);
+                
+                this.peer = new Peer(this.roomId, peerConfig);
+
+                this.peer.on('open', (id) => {
+                    this.roomId = id;
+                    this.updateRemoteCountUI();
+                });
+
+                this.peer.on('connection', (conn) => {
+                    conn.on('open', () => {
+                        if (!this.p2pConnections.includes(conn)) this.p2pConnections.push(conn);
+                        this.updateRemoteCountUI();
+                        if (window.syncFullStateToRemote) window.syncFullStateToRemote(conn);
+                    });
+                    conn.on('data', (data) => {
+                        if (data && (data.type === 'REMOTE_JOINED' || data.type === 'REMOTE_REQUEST_SYNC')) {
+                            if (window.syncFullStateToRemote) window.syncFullStateToRemote(conn);
+                        }
+                        this.dispatchMessage(data, 'p2p');
+                    });
+                    conn.on('close', () => {
+                        this.p2pConnections = this.p2pConnections.filter(c => c !== conn);
+                        this.updateRemoteCountUI();
+                    });
+                    conn.on('error', () => {
+                        this.p2pConnections = this.p2pConnections.filter(c => c !== conn);
+                        this.updateRemoteCountUI();
+                    });
+                });
+
+                this.peer.on('error', (err) => {
+                    console.warn('Host PeerJS error:', err);
+                    if (err.type === 'unavailable-id') {
+                        this.roomId = null; 
+                        setTimeout(() => createHostPeer('vs-'), 300);
+                    }
+                });
+            };
+            createHostPeer();
+        }
+    }
+
+    connectToRoom(roomId) {
+        targetRoom = roomId.trim().toLowerCase();
+        localStorage.setItem('versesurf_last_room', targetRoom);
+        this.updateRemoteStatusUI('connecting', targetRoom);
+
+        if (this.activeTransport === 'mqtt') {
+            if (!this.mqttClient) return;
+            if (this.roomId) this.mqttClient.unsubscribe(`${this.baseTopic}${this.roomId}`);
+            this.roomId = targetRoom;
+            
+            this.mqttClient.subscribe(`${this.baseTopic}${this.roomId}`, (err) => {
+                if (!err) {
+                    this.updateRemoteStatusUI('connected', targetRoom);
+                    const connectCard = document.getElementById('remote-connect-card');
+                    if (connectCard) connectCard.style.display = 'none';
+                    if (isRemote) this.broadcast({ type: 'REMOTE_JOINED' });
+                } else {
+                    this.updateRemoteStatusUI('error', targetRoom);
+                }
+            });
+        } else {
+            if (!this.peer) return;
+            this.p2pConnections.forEach(c => { try { c.close(); } catch(e){} });
+            this.p2pConnections = [];
+            this.roomId = targetRoom;
+
+            const conn = this.peer.connect(targetRoom, { reliable: true });
+            conn.on('open', () => {
+                this.p2pConnections.push(conn);
+                conn.send({ type: 'REMOTE_JOINED' });
                 this.updateRemoteStatusUI('connected', targetRoom);
                 const connectCard = document.getElementById('remote-connect-card');
                 if (connectCard) connectCard.style.display = 'none';
-
-                if (isRemote) {
-                    this.broadcast({ type: 'REMOTE_JOINED' });
-                }
-            } else {
-                this.updateRemoteStatusUI('error', targetRoom);
-            }
-        });
+            });
+            conn.on('data', (data) => this.dispatchMessage(data, 'p2p'));
+            conn.on('close', () => {
+                this.p2pConnections = this.p2pConnections.filter(c => c !== conn);
+                this.updateRemoteStatusUI('disconnected', targetRoom);
+            });
+            conn.on('error', () => this.updateRemoteStatusUI('disconnected', targetRoom));
+        }
     }
 
     updateRemoteStatusUI(status, roomId = targetRoom) {
@@ -407,7 +543,7 @@ class PresentationBus {
         if (status === 'connected') {
             if (tag) tag.textContent = `ROOM: ${roomId}`;
             if (latency) {
-                latency.textContent = `● Connected (Cloud)`;
+                latency.textContent = this.activeTransport === 'mqtt' ? `● Connected (Cloud)` : `● Connected (P2P)`;
                 latency.style.color = 'var(--success-color)';
             }
             if (reconnectBtn) reconnectBtn.style.display = 'none';
@@ -442,22 +578,39 @@ class PresentationBus {
         const pillText = document.getElementById('p2p-pill-text');
         const statusEl = document.getElementById('connected-remotes-status');
         const p2pDot = document.getElementById('p2p-dot');
-
-        if (pillText) pillText.textContent = `☁️ Cloud: ${this.roomId || 'Ready'}`;
-        if (statusEl) statusEl.textContent = `🌐 Cloud Relay Active`;
-        if (p2pDot) p2pDot.classList.remove('offline');
+        
+        if (this.activeTransport === 'mqtt') {
+            if (pillText) pillText.textContent = `☁️ Cloud: ${this.roomId || 'Ready'}`;
+            if (statusEl) statusEl.textContent = `🌐 Cloud Relay Active`;
+            if (p2pDot) p2pDot.classList.remove('offline');
+        } else {
+            const count = this.p2pConnections.length;
+            if (pillText) pillText.textContent = `📱 P2P: ${this.roomId || 'Ready'} (${count})`;
+            if (statusEl) statusEl.textContent = `📱 ${count} Stage Remote(s) Connected`;
+            if (p2pDot) p2pDot.classList.toggle('offline', count === 0);
+        }
     }
 
     broadcast(data) {
         this.localChannel.postMessage(data);
-        if (this.client && this.client.connected && this.roomId) {
-            data._senderId = this.client.options.clientId;
-            this.client.publish(`${this.baseTopic}${this.roomId}`, JSON.stringify(data));
+        
+        if (this.activeTransport === 'mqtt') {
+            if (this.mqttClient && this.mqttClient.connected && this.roomId) {
+                data._senderId = this.mqttClient.options.clientId;
+                this.mqttClient.publish(`${this.baseTopic}${this.roomId}`, JSON.stringify(data));
+            }
+        } else {
+            this.p2pConnections.forEach(conn => {
+                if (conn.open) {
+                    try { conn.send(data); } catch (err) { console.warn(err); }
+                }
+            });
         }
     }
 
     dispatchMessage(data, source) {
-        if (source === 'mqtt' && data._senderId === this.client?.options?.clientId) {
+        // Prevent MQTT self-echo
+        if (source === 'mqtt' && data._senderId === this.mqttClient?.options?.clientId) {
             return;
         }
         this.onMessageHandlers.forEach(h => h(data, source));
@@ -659,6 +812,7 @@ if (isProjector) {
         const url = new URL(window.location.href);
         url.searchParams.delete('mode');
         url.searchParams.delete('room');
+        url.searchParams.delete('relay');
         window.location.href = url.toString();
     };
 
@@ -741,7 +895,6 @@ if (isProjector) {
     const blackoutBtn = document.getElementById('blackout-btn');
     const clearScreenBtn = document.getElementById('clear-screen-btn');
     const castBtn = document.getElementById('cast-btn');
-    const mobileModeBtn = document.getElementById('mobile-mode-btn');
 
     const customToolbar = document.getElementById('custom-theme-toolbar');
     const customTextColor = document.getElementById('custom-text-color');
@@ -765,6 +918,7 @@ if (isProjector) {
     const closePairingBtn = document.getElementById('close-pairing-modal-btn');
     const qrcodeContainer = document.getElementById('qrcode-container');
     const copyRemoteLinkBtn = document.getElementById('copy-remote-link-btn');
+    const transportSelect = document.getElementById('transport-select');
 
     const modal = document.getElementById('media-bin-modal');
     const closeMediaBin = document.getElementById('close-media-bin');
@@ -777,7 +931,6 @@ if (isProjector) {
     const jumpHud = document.getElementById('jump-hud');
     const jumpHudNum = document.getElementById('jump-hud-num');
 
-    // Undo delete toast elements (Stack-based for sequential undos)
     const undoToast = document.getElementById('undo-toast');
     const undoText = document.getElementById('undo-text');
     const undoBtn = document.getElementById('undo-btn');
@@ -980,9 +1133,12 @@ if (isProjector) {
         };
     }
 
-    // Direct cloud broadcast for state sync (no WebRTC conn needed)
-    window.syncFullStateToRemote = function() {
-        bus.broadcast(getSyncStatePayload());
+    window.syncFullStateToRemote = function(conn) {
+        if (bus.activeTransport === 'p2p' && conn && conn.open) {
+            try { conn.send(getSyncStatePayload()); } catch (err) {}
+        } else {
+            bus.broadcast(getSyncStatePayload());
+        }
     };
 
     function broadcastState() {
@@ -2260,13 +2416,15 @@ if (isProjector) {
         }
 
         if (!roomId) {
-            qrcodeContainer.innerHTML = '<div style="padding:20px; color:#666; font-size:0.85rem;">Generating Cloud Room ID...</div>';
+            qrcodeContainer.innerHTML = '<div style="padding:20px; color:#666; font-size:0.85rem;">Generating Connection Room ID...</div>';
             return;
         }
 
+        // Appends both the room code AND the active relay engine to the URL
         const remoteUrl = new URL(window.location.href);
         remoteUrl.searchParams.set('mode', 'remote');
         remoteUrl.searchParams.set('room', roomId);
+        remoteUrl.searchParams.set('relay', bus.activeTransport);
         remoteUrl.hash = ''; 
         const remoteUrlStr = remoteUrl.toString();
         
@@ -2289,7 +2447,15 @@ if (isProjector) {
         }
     }
 
-    mobileModeBtn.onclick = openPairingModal;
+    if (transportSelect) {
+        transportSelect.value = bus.activeTransport;
+        transportSelect.addEventListener('change', (e) => {
+            bus.switchTransport(e.target.value);
+            // Refresh the QR code automatically if it's currently open
+            if (pairingModal.style.display === 'flex') openPairingModal();
+        });
+    }
+
     document.getElementById('p2p-status-pill').onclick = openPairingModal;
     closePairingBtn.onclick = () => pairingModal.style.display = 'none';
 
@@ -2297,6 +2463,7 @@ if (isProjector) {
         const remoteUrl = new URL(window.location.href);
         remoteUrl.searchParams.set('mode', 'remote');
         remoteUrl.searchParams.set('room', bus.roomId);
+        remoteUrl.searchParams.set('relay', bus.activeTransport);
         remoteUrl.hash = '';
         const remoteUrlStr = remoteUrl.toString();
         
@@ -2312,6 +2479,7 @@ if (isProjector) {
         const projUrl = new URL(window.location.href);
         projUrl.searchParams.set('mode', 'projector');
         projUrl.searchParams.delete('room'); 
+        projUrl.searchParams.delete('relay'); 
         projUrl.hash = '';
         window.open(projUrl.toString(), 'projectorWindow', 'width=1280,height=720');
     };
