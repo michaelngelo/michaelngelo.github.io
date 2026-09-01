@@ -44,7 +44,9 @@ self.addEventListener('activate', (event) => {
 
 // Fetch Event - Stale-While-Revalidate with Projector & Remote route handling
 self.addEventListener('fetch', (event) => {
+    if (event.request.method !== 'GET') return;
     const requestUrl = new URL(event.request.url);
+    if (!requestUrl.protocol.startsWith('http')) return;
 
     // Route query-based routes (projector / remote) back to cached index.html
     const mode = requestUrl.searchParams.get('mode');
