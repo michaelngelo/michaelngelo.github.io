@@ -199,6 +199,9 @@ function formatContent(text) {
                .replace(/【(People|Congregation|應)】/gi, match => `<span class="role-congregation">${match}</span>`)
                .replace(/【(All|眾|Everyone)】/gi, match => `<span class="role-all">${match}</span>`);
 
+    // Step 3.5: Worship Chords Formatting [C], [Am7], [G/B]
+    html = html.replace(/\[([A-G][b#]?(?:maj|min|m|M|sus|aug|dim|add|\d)*(?:\/[A-G][b#]?)?)\]/g, '<span class="lyric-chord">$1</span>');
+
     // Step 4: Markdown Formatting & Citations
     html = html.replace(/^&gt;\s*(.*)(\r?\n)?/gm, '<div class="citation">$1</div>');
     html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
@@ -768,6 +771,34 @@ if (isProjector) {
         }
     }
 
+    // Touch swipe navigation for Live Card
+    const remoteLiveCardEl = document.getElementById('remote-live-card');
+    let remoteTouchStartX = 0;
+    let remoteTouchStartY = 0;
+    if (remoteLiveCardEl) {
+        remoteLiveCardEl.addEventListener('touchstart', (e) => {
+            if (e.touches && e.touches[0]) {
+                remoteTouchStartX = e.touches[0].clientX;
+                remoteTouchStartY = e.touches[0].clientY;
+            }
+        }, { passive: true });
+
+        remoteLiveCardEl.addEventListener('touchend', (e) => {
+            if (e.changedTouches && e.changedTouches[0]) {
+                const deltaX = e.changedTouches[0].clientX - remoteTouchStartX;
+                const deltaY = e.changedTouches[0].clientY - remoteTouchStartY;
+                if (Math.abs(deltaX) > 40 && Math.abs(deltaX) > Math.abs(deltaY) * 1.4) {
+                    triggerHaptic();
+                    if (deltaX < 0) {
+                        bus.broadcast({ type: 'CMD_STEP_LIVE', direction: 1 });
+                    } else {
+                        bus.broadcast({ type: 'CMD_STEP_LIVE', direction: -1 });
+                    }
+                }
+            }
+        }, { passive: true });
+    }
+
     document.getElementById('remote-prev-btn').onclick = () => { triggerHaptic(); bus.broadcast({ type: 'CMD_STEP_LIVE', direction: -1 }); };
     document.getElementById('remote-next-btn').onclick = () => { triggerHaptic(); bus.broadcast({ type: 'CMD_STEP_LIVE', direction: 1 }); };
     document.getElementById('remote-live-btn').onclick = () => { triggerHaptic(); bus.broadcast({ type: 'CMD_GO_LIVE' }); };
@@ -862,6 +893,7 @@ if (isProjector) {
                 data.sectionChips.forEach(chip => {
                     const btn = document.createElement('button');
                     btn.className = 'remote-chip-btn';
+                    if (chip.index === data.liveIndex) btn.classList.add('active');
                     btn.textContent = chip.label;
                     btn.onclick = () => {
                         triggerHaptic();
@@ -895,6 +927,7 @@ if (isProjector) {
     const themeSelect = document.getElementById('theme-select');
     const layoutSelect = document.getElementById('layout-select');
     const fontSizeSlider = document.getElementById('font-size-slider');
+    const fontSizeVal = document.getElementById('font-size-val');
 
     const blackoutBtn = document.getElementById('blackout-btn');
     const clearScreenBtn = document.getElementById('clear-screen-btn');
@@ -924,6 +957,10 @@ if (isProjector) {
     const copyRemoteLinkBtn = document.getElementById('copy-remote-link-btn');
     const transportSelect = document.getElementById('transport-select');
 
+    const shortcutsModal = document.getElementById('shortcuts-modal');
+    const openShortcutsBtn = document.getElementById('open-shortcuts-modal-btn');
+    const closeShortcutsBtn = document.getElementById('close-shortcuts-modal');
+
     const modal = document.getElementById('media-bin-modal');
     const closeMediaBin = document.getElementById('close-media-bin');
     const localImageUpload = document.getElementById('local-image-upload');
@@ -932,6 +969,7 @@ if (isProjector) {
     const applyOnlineUrlBtn = document.getElementById('apply-online-url-btn');
     const urlValidationStatus = document.getElementById('url-validation-status');
     const searchInput = document.getElementById('search-input');
+    const searchClearBtn = document.getElementById('search-clear-btn');
     const jumpHud = document.getElementById('jump-hud');
     const jumpHudNum = document.getElementById('jump-hud-num');
 
@@ -1225,7 +1263,13 @@ if (isProjector) {
         songCountEl.textContent = setlist.length;
         const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
 
+        let matchCount = 0;
         setlist.forEach((song, index) => {
+            const titleLower = (song.title || '').toLowerCase();
+            const lyricsLower = (song.lyrics || '').toLowerCase();
+            const isMatch = !query || titleLower.includes(query) || lyricsLower.includes(query);
+            if (isMatch) matchCount++;
+
             const el = document.createElement('div');
             const isActive = Number(song.id) === Number(activeSongId);
             const isLive = Number(song.id) === Number(liveSongId);
@@ -1239,19 +1283,25 @@ if (isProjector) {
             handle.innerHTML = '⋮⋮';
             handle.title = 'Drag to reorder';
 
-            const titleSpan = document.createElement('span');
-            titleSpan.className = 'song-title-text';
-            titleSpan.textContent = `${index + 1}. ${song.title || "Untitled"}`;
-            titleSpan.style.flex = '1';
-            titleSpan.style.overflow = 'hidden';
-            titleSpan.style.textOverflow = 'ellipsis';
-            titleSpan.style.whiteSpace = 'nowrap';
-            titleSpan.style.pointerEvents = 'none';
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'song-item-content';
 
             const liveBadge = document.createElement('span');
             liveBadge.textContent = 'LIVE';
             liveBadge.className = 'sidebar-live-badge';
-            liveBadge.style.pointerEvents = 'none';
+
+            const titleSpan = document.createElement('span');
+            titleSpan.className = 'song-title-text';
+            titleSpan.textContent = `${index + 1}. ${song.title || "Untitled"}`;
+
+            const slideCount = parseTextToSlides(song.lyrics).length;
+            const countSpan = document.createElement('span');
+            countSpan.className = 'song-slide-count';
+            countSpan.textContent = `${slideCount}s`;
+
+            contentDiv.appendChild(liveBadge);
+            contentDiv.appendChild(titleSpan);
+            contentDiv.appendChild(countSpan);
 
             const delBtn = document.createElement('button');
             delBtn.className = 'delete-btn';
@@ -1391,17 +1441,23 @@ if (isProjector) {
             };
 
             el.appendChild(handle);
-            el.appendChild(titleSpan);
-            el.appendChild(liveBadge);
+            el.appendChild(contentDiv);
             el.appendChild(delBtn);
 
             if (query) {
-                const matches = (song.title || '').toLowerCase().includes(query) || (song.lyrics || '').toLowerCase().includes(query);
-                el.style.display = matches ? 'flex' : 'none';
+                el.style.display = isMatch ? 'flex' : 'none';
             }
 
             setlistContainer.appendChild(el);
         });
+
+        if (matchCount === 0) {
+            setlistContainer.innerHTML = `
+                <div class="setlist-empty-state">
+                    ${query ? 'No matching songs found' : 'Setlist is empty. Click "+ New Song" to start.'}
+                </div>
+            `;
+        }
 
         updateSelection();
     }
@@ -1430,6 +1486,7 @@ if (isProjector) {
         themeSelect.value = song.theme || 'theme-dark';
         layoutSelect.value = song.layoutStyle || 'layout-center';
         fontSizeSlider.value = song.fontSize || '5';
+        if (fontSizeVal) fontSizeVal.textContent = (song.fontSize || '5') + 'vw';
         previewIndex = 0;
 
         await updateCachedBg();
@@ -1565,13 +1622,43 @@ if (isProjector) {
 
     function renderSlideList() {
         slideList.innerHTML = '';
+        if (slides.length === 0) {
+            slideList.innerHTML = `
+                <div class="slide-empty-state">
+                    <div class="empty-icon">📝</div>
+                    <div class="empty-title">No Slides Generated</div>
+                    <div class="empty-subtitle">Type your lyrics in the editor with <code># Verse</code> or <code># Chorus</code> tags to create presentation slides.</div>
+                </div>
+            `;
+            renderQuickJumpBar();
+            updateSelection();
+            return;
+        }
+
         slides.forEach((slide, index) => {
             const el = document.createElement('div');
             el.className = 'slide-card';
+            el.dataset.slideIndex = index;
             
-            let innerHTML = `<div class="status-badge">LIVE</div>`;
-            if (slide.label) innerHTML += `<div class="slide-label">${escapeHTML(slide.label)}</div>`;
-            innerHTML += `<div class="slide-content">${formatContent(slide.content)}</div>`;
+            let labelClass = 'slide-tag-default';
+            const labelLower = (slide.label || '').toLowerCase();
+            if (labelLower.includes('verse') || labelLower.startsWith('v')) labelClass = 'slide-tag-verse';
+            else if (labelLower.includes('chorus') || labelLower.startsWith('c') || labelLower.includes('refrain')) labelClass = 'slide-tag-chorus';
+            else if (labelLower.includes('bridge') || labelLower.startsWith('b')) labelClass = 'slide-tag-bridge';
+            else if (labelLower.includes('pre')) labelClass = 'slide-tag-pre';
+            else if (labelLower.includes('end') || labelLower.includes('outro') || labelLower.includes('coda')) labelClass = 'slide-tag-ending';
+
+            let innerHTML = `
+                <div class="slide-card-header">
+                    <div class="slide-num-badge">#${String(index + 1).padStart(2, '0')}</div>
+                    ${slide.label ? `<div class="slide-label ${labelClass}">${escapeHTML(slide.label)}</div>` : '<div class="slide-label slide-tag-default">SLIDE</div>'}
+                    <div class="slide-badges-right">
+                        <span class="cue-badge">CUE</span>
+                        <span class="status-badge">🔴 LIVE</span>
+                    </div>
+                </div>
+                <div class="slide-content">${formatContent(slide.content)}</div>
+            `;
             
             el.innerHTML = innerHTML;
             el.onclick = () => { previewIndex = index; updateSelection(); broadcastState(); };
@@ -1894,6 +1981,7 @@ if (isProjector) {
     window.addEventListener('click', (e) => {
         if (e.target === pairingModal) pairingModal.style.display = 'none';
         if (e.target === modal) modal.style.display = 'none';
+        if (e.target === shortcutsModal) shortcutsModal.style.display = 'none';
     });
 
     document.addEventListener('keydown', (e) => {
@@ -1907,6 +1995,10 @@ if (isProjector) {
                 modal.style.display = 'none';
                 modalClosed = true;
             }
+            if (shortcutsModal && shortcutsModal.style.display === 'flex') {
+                shortcutsModal.style.display = 'none';
+                modalClosed = true;
+            }
             if (modalClosed) {
                 e.preventDefault();
                 return;
@@ -1918,6 +2010,15 @@ if (isProjector) {
         if (isInput) return;
 
         const key = e.key.toLowerCase();
+        if (key === '?' || (e.shiftKey && key === '/')) {
+            e.preventDefault();
+            if (shortcutsModal) {
+                const isShown = shortcutsModal.style.display === 'flex';
+                shortcutsModal.style.display = isShown ? 'none' : 'flex';
+            }
+            return;
+        }
+
         if (navKeys.includes(key) || (key >= '0' && key <= '9')) {
             e.preventDefault();
             handleNavigationKey(key);
@@ -1949,7 +2050,19 @@ if (isProjector) {
         debounceTimer = setTimeout(() => { parseText(); }, 80);
     });
 
+    if (searchClearBtn) {
+        searchClearBtn.onclick = () => {
+            searchInput.value = '';
+            searchClearBtn.style.display = 'none';
+            renderSetlist();
+            searchInput.focus();
+        };
+    }
+
     searchInput.addEventListener('input', () => {
+        if (searchClearBtn) {
+            searchClearBtn.style.display = searchInput.value ? 'block' : 'none';
+        }
         renderSetlist();
     });
 
@@ -2049,6 +2162,7 @@ if (isProjector) {
         const song = getActiveSong();
         if (!song) return;
         song.fontSize = fontSizeSlider.value;
+        if (fontSizeVal) fontSizeVal.textContent = fontSizeSlider.value + 'vw';
         saveSetlist();
         if (liveIndex !== -1 && Number(activeSongId) === Number(liveSongId)) {
             const slide = liveSlides[liveIndex];
@@ -2343,6 +2457,17 @@ if (isProjector) {
         });
     }
 
+    if (openShortcutsBtn) {
+        openShortcutsBtn.onclick = () => {
+            if (shortcutsModal) shortcutsModal.style.display = 'flex';
+        };
+    }
+    if (closeShortcutsBtn) {
+        closeShortcutsBtn.onclick = () => {
+            if (shortcutsModal) shortcutsModal.style.display = 'none';
+        };
+    }
+
     openMediaBinBtn.onclick = () => {
         modal.style.display = 'flex';
         renderLocalMediaGrid();
@@ -2522,7 +2647,10 @@ if (isProjector) {
 
     blackoutBtn.onclick = toggleBlackout;
     clearScreenBtn.onclick = clearScreen;
-    toggleTuneBtn.onclick = () => tuneToolbar.classList.toggle('show-drawer');
+    toggleTuneBtn.onclick = () => {
+        const isShown = tuneToolbar.classList.toggle('show-drawer');
+        toggleTuneBtn.classList.toggle('active', isShown);
+    };
 
     const enterRemoteBtn = document.getElementById('enter-remote-btn');
     const continueAnywayBtn = document.getElementById('continue-anyway-btn');

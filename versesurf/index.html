@@ -30,9 +30,9 @@
 </head>
 <body>
     <!-- MULTI-DIGIT ON-SCREEN HUD -->
-    <div id="jump-hud">
+    <div id="jump-hud" aria-live="polite">
         <span>⚡ Jump:</span>
-        <span id="jump-hud-num" style="color: var(--accent); font-family: var(--font-mono); font-size: 1.2rem;">-</span>
+        <span id="jump-hud-num" style="color: var(--accent-light); font-family: var(--font-mono); font-size: 1.2rem;">-</span>
     </div>
 
     <!-- DATA RECOVERY SCREEN (Only shown on real JSON corruption) -->
@@ -65,7 +65,7 @@
     </div>
 
     <!-- MOBILE STAGE REMOTE UI (WEBRTC P2P) -->
-    <div id="mobile-remote-ui">
+    <div id="mobile-remote-ui" role="region" aria-label="Wireless Stage Remote">
         <div class="remote-hud">
             <div>
                 <span id="remote-room-label" class="remote-room-tag">ROOM: Connecting...</span>
@@ -98,23 +98,28 @@
             <button id="remote-next-song-btn" class="btn-small btn-secondary" title="Next Song">⏭️</button>
         </div>
 
-        <div id="remote-live-card" class="remote-card-live">
+        <!-- Current Live Slide Card -->
+        <div id="remote-live-card" class="remote-card-live" title="Swipe Left for Next, Swipe Right for Prev">
             <div class="remote-card-label" id="remote-live-card-label">🔴 CURRENT LIVE SLIDE</div>
             <div id="remote-live-text" class="remote-card-text">Screen is clear</div>
         </div>
 
+        <!-- Next Slide Preview Peek -->
         <div class="remote-next-peek">
             <div class="remote-next-label" id="remote-next-card-label">👁️ UP NEXT (PREVIEW)</div>
             <div id="remote-next-text" class="remote-next-text">-</div>
         </div>
 
+        <!-- Quick Section Chips -->
         <div id="remote-chips-bar" class="remote-chips-scroll"></div>
 
+        <!-- Giant Touch Pad -->
         <div class="remote-big-pad">
             <button id="remote-prev-btn" class="btn-touch-large btn-touch-prev">◀ PREV</button>
             <button id="remote-next-btn" class="btn-touch-large btn-touch-next">NEXT ▶</button>
         </div>
 
+        <!-- Touch Actions -->
         <div class="remote-action-row">
             <button id="remote-live-btn" class="btn-touch-action primary">🔴 GO LIVE</button>
             <button id="remote-clear-btn" class="btn-touch-action btn-warning">🚫 CLEAR</button>
@@ -124,22 +129,77 @@
 
     <!-- P2P REMOTE QR PAIRING MODAL -->
     <div id="remote-pairing-modal" class="modal-overlay" style="display: none;" role="dialog" aria-modal="true" aria-label="Mobile Stage Remote">
-        <div class="modal-content" style="max-width: 380px; text-align: center; padding: 22px;">
+        <div class="modal-content" style="max-width: 420px; text-align: center; padding: 22px;">
             <div class="modal-header" style="border: none; padding: 0 0 12px 0; justify-content: space-between;">
-                <h3 style="font-size: 1.1rem;">📱 Mobile Stage Remote</h3>
-                <button id="close-pairing-modal-btn" class="close-btn">&times;</button>
+                <h3 class="modal-title">📱 Mobile Stage Remote</h3>
+                <button id="close-pairing-modal-btn" class="close-btn" aria-label="Close dialog">&times;</button>
             </div>
-            <p style="color: var(--text-muted); font-size: 0.82rem; margin-bottom: 14px;">
-                Scan with any phone camera to control slides wirelessly over WebRTC P2P (Zero setup required):
+            <p style="color: var(--text-muted); font-size: 0.84rem; margin-bottom: 14px; line-height: 1.45;">
+                Scan with any phone camera to control slides wirelessly (Zero setup required):
             </p>
-            <div id="qrcode-container" style="display: flex; justify-content: center; margin-bottom: 14px; background: white; padding: 10px; border-radius: 8px; width: fit-content; margin-inline: auto;"></div>
-            <div style="font-size: 0.85rem; color: #888; margin-bottom: 12px;">
-                Room PIN: <strong id="room-code-display" style="color: var(--accent); font-family: var(--font-mono); font-size: 1.15rem; letter-spacing: 0.05em;">...</strong>
+            <div id="qrcode-container" style="display: flex; justify-content: center; margin-bottom: 14px; background: white; padding: 12px; border-radius: 10px; width: fit-content; margin-inline: auto; box-shadow: var(--shadow-md);"></div>
+            <div style="font-size: 0.88rem; color: #888; margin-bottom: 10px;">
+                Room PIN: <strong id="room-code-display" style="color: var(--accent-light); font-family: var(--font-mono); font-size: 1.25rem; letter-spacing: 0.08em; background: rgba(99, 102, 241, 0.12); padding: 2px 8px; border-radius: 6px; border: 1px solid rgba(99, 102, 241, 0.3);">...</strong>
             </div>
-            <div id="connected-remotes-status" style="font-size: 0.8rem; color: var(--success-color); font-weight: 600; margin-bottom: 12px;">
-                📱 0 Stage Remotes Connected
+            <div id="connected-remotes-status" style="font-size: 0.82rem; color: var(--success-color); font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                <span>●</span> 0 Stage Remotes Connected
             </div>
-            <button id="copy-remote-link-btn" class="btn-secondary" style="width: 100%; font-size: 0.85rem; padding: 8px;">📋 Copy Remote Link</button>
+
+            <!-- Transport Relay Configuration -->
+            <div style="margin-bottom: 14px; background: rgba(255, 255, 255, 0.03); padding: 8px 12px; border-radius: var(--radius-md); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
+                <label for="transport-select" style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">Relay Engine:</label>
+                <select id="transport-select" title="Remote Connection Engine" style="padding: 4px 10px; font-size: 0.78rem; background: #181820; color: #f8fafc; border-color: #383848;">
+                    <option value="p2p">📱 P2P Direct (Local Wi-Fi)</option>
+                    <option value="mqtt">☁️ Cloud Relay (Internet)</option>
+                </select>
+            </div>
+
+            <button id="copy-remote-link-btn" class="btn-secondary" style="width: 100%; font-size: 0.86rem; padding: 10px; font-weight: 700;">📋 Copy Remote Link</button>
+        </div>
+    </div>
+
+    <!-- KEYBOARD SHORTCUTS MODAL (Option A Reference) -->
+    <div id="shortcuts-modal" class="modal-overlay" style="display: none;" role="dialog" aria-modal="true" aria-label="Keyboard Shortcuts">
+        <div class="modal-content" style="max-width: 520px;">
+            <div class="modal-header">
+                <h3 class="modal-title">⌨️ Keyboard Shortcuts Reference</h3>
+                <button id="close-shortcuts-modal" class="close-btn" aria-label="Close shortcuts dialog">&times;</button>
+            </div>
+            <div class="shortcuts-body" style="padding: 16px 20px; max-height: 75vh; overflow-y: auto;">
+                <div class="shortcuts-grid">
+                    <div class="shortcut-section">
+                        <div class="shortcut-section-header">🔴 Live Output Control</div>
+                        <div class="shortcut-row"><span>Next Live Slide</span><div class="shortcut-keys"><kbd>Space</kbd> or <kbd>→</kbd></div></div>
+                        <div class="shortcut-row"><span>Previous Live Slide</span><div class="shortcut-keys"><kbd>←</kbd></div></div>
+                        <div class="shortcut-row"><span>Go Live (Cued Slide)</span><div class="shortcut-keys"><kbd>Enter</kbd></div></div>
+                        <div class="shortcut-row"><span>Clear Screen Text</span><div class="shortcut-keys"><kbd>Esc</kbd> or <kbd>Backspace</kbd></div></div>
+                        <div class="shortcut-row"><span>Toggle Blackout</span><div class="shortcut-keys"><kbd>.</kbd> (Period)</div></div>
+                    </div>
+
+                    <div class="shortcut-section">
+                        <div class="shortcut-section-header">👀 Cue & Navigation</div>
+                        <div class="shortcut-row"><span>Browse Slides (Cue)</span><div class="shortcut-keys"><kbd>↑</kbd> <kbd>↓</kbd></div></div>
+                        <div class="shortcut-row"><span>Switch Setlist Song</span><div class="shortcut-keys"><kbd>PgUp</kbd> <kbd>PgDn</kbd></div></div>
+                    </div>
+
+                    <div class="shortcut-section">
+                        <div class="shortcut-section-header">⚡ Section & Numeric Jump</div>
+                        <div class="shortcut-row"><span>Jump to Verse</span><div class="shortcut-keys"><kbd>V</kbd></div></div>
+                        <div class="shortcut-row"><span>Jump to Chorus</span><div class="shortcut-keys"><kbd>C</kbd></div></div>
+                        <div class="shortcut-row"><span>Jump to Bridge</span><div class="shortcut-keys"><kbd>B</kbd></div></div>
+                        <div class="shortcut-row"><span>Jump to Pre-Chorus</span><div class="shortcut-keys"><kbd>P</kbd></div></div>
+                        <div class="shortcut-row"><span>Jump to Ending / Outro</span><div class="shortcut-keys"><kbd>E</kbd></div></div>
+                        <div class="shortcut-row"><span>Jump to Tag / Title</span><div class="shortcut-keys"><kbd>T</kbd></div></div>
+                        <div class="shortcut-row"><span>Direct Slide #</span><div class="shortcut-keys"><kbd>0</kbd>–<kbd>9</kbd></div></div>
+                    </div>
+
+                    <div class="shortcut-section">
+                        <div class="shortcut-section-header">🖥️ Display & General</div>
+                        <div class="shortcut-row"><span>Toggle Fullscreen</span><div class="shortcut-keys"><kbd>F</kbd></div></div>
+                        <div class="shortcut-row"><span>Open Shortcuts Help</span><div class="shortcut-keys"><kbd>?</kbd></div></div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -149,11 +209,15 @@
             <div class="header-left">
                 <div class="brand-wrapper">
                     <a href="#" class="brand">🏄‍♂️ VerseSurf</a>
+                    <span class="brand-badge">STUDIO</span>
                 </div>
 
-                <div style="display: flex; gap: 6px; align-items: center; border-left: 1px solid var(--border-color); padding-left: 12px;">
+                <div class="header-controls-group">
+                    <!-- Typography Icon + Value Badge -->
                     <label class="slider-label" title="Projector Font Size (vw)">
-                        Size: <input type="range" id="font-size-slider" min="2" max="12" step="0.5" value="5">
+                        <span class="type-icon" aria-hidden="true" title="Projector Font Size">Aa</span>
+                        <input type="range" id="font-size-slider" min="2" max="12" step="0.5" value="5" aria-label="Projector Font Size">
+                        <span id="font-size-val" class="font-size-badge">5.0vw</span>
                     </label>
 
                     <select id="theme-select" title="Preset Visual Style">
@@ -181,36 +245,29 @@
             </div>
             
             <div class="header-right">
-                <!-- Connection Status & Engine Toggle -->
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <div id="p2p-status-pill" class="p2p-status-pill" title="Click to view QR Code for Stage Remote">
-                        <span id="p2p-dot" class="p2p-dot offline"></span>
-                        <span id="p2p-pill-text">P2P: Ready</span>
-                    </div>
-                    
-                    <select id="transport-select" title="Remote Connection Engine" style="padding: 2px 6px; font-size: 0.75rem; height: 26px; background: #18181b; color: #94a3b8; border-color: #333;">
-                        <option value="p2p">📱 P2P (Local)</option>
-                        <option value="mqtt">☁️ Cloud Relay</option>
-                    </select>
+                <!-- Clean Stage Remote Status Pill -->
+                <div id="p2p-status-pill" class="p2p-status-pill" title="Click to view QR Code & Connection Settings for Stage Remote">
+                    <span id="p2p-dot" class="p2p-dot offline"></span>
+                    <span id="p2p-pill-text">Remote: Ready</span>
                 </div>
 
                 <button id="blackout-btn" class="btn-blackout" title="Toggle Pure Black Screen [.]">
                     <span>⬛</span> Blackout
                 </button>
                 <button id="clear-screen-btn" class="btn-warning" title="Clear Text from Screen [Esc]">Clear Text</button>
-                <button class="primary" id="cast-btn" title="Open Projector Display Screen">Launch Projector</button>
+                <button class="primary" id="cast-btn" title="Open Projector Display Screen">🖥️ Launch Projector</button>
             </div>
         </header>
 
         <!-- CUSTOM THEME TOOLBAR -->
         <div id="custom-theme-toolbar">
             <div class="toolbar-item">
-                <label for="custom-text-color">Font:</label>
+                <label for="custom-text-color" style="font-weight: 600;">Font:</label>
                 <input type="color" id="custom-text-color" value="#ffffff" title="Text Color">
             </div>
 
             <div class="toolbar-item">
-                <label for="custom-bg-color">Background:</label>
+                <label for="custom-bg-color" style="font-weight: 600;">Background:</label>
                 <input type="color" id="custom-bg-color" value="#000000" title="Background Color">
             </div>
 
@@ -221,29 +278,29 @@
             </div>
 
             <div class="toolbar-item" style="cursor: pointer;">
-                <input type="checkbox" id="dim-bg-checkbox" style="cursor: pointer;">
-                <label for="dim-bg-checkbox" style="cursor: pointer;">Dim Background Overlay</label>
+                <input type="checkbox" id="dim-bg-checkbox" style="cursor: pointer; accent-color: var(--accent);">
+                <label for="dim-bg-checkbox" style="cursor: pointer; user-select: none;">Dim Background Overlay</label>
             </div>
         </div>
 
         <!-- FINE-TUNE MARGIN DRAWER -->
         <div id="tune-toolbar" class="toolbar-drawer">
             <div class="toolbar-item">
-                <label style="width: 48px;">Width:</label>
+                <label style="width: 48px; font-weight: 600;">Width:</label>
                 <input type="range" id="tune-w-slider" min="20" max="100" value="100">
                 <span id="tune-w-val" class="text-micro">100vw</span>
             </div>
             <div class="toolbar-item">
-                <label style="width: 50px;">X Shift:</label>
+                <label style="width: 50px; font-weight: 600;">X Shift:</label>
                 <input type="range" id="tune-x-slider" min="-50" max="50" value="0">
                 <span id="tune-x-val" class="text-micro">0vw</span>
             </div>
             <div class="toolbar-item">
-                <label style="width: 50px;">Y Shift:</label>
+                <label style="width: 50px; font-weight: 600;">Y Shift:</label>
                 <input type="range" id="tune-y-slider" min="-50" max="50" value="0">
                 <span id="tune-y-val" class="text-micro">0vh</span>
             </div>
-            <button id="reset-tune-btn" class="btn-small btn-danger" style="margin-left: auto;">Reset Alignment</button>
+            <button id="reset-tune-btn" class="btn-small btn-secondary" style="margin-left: auto;">↺ Reset Alignment</button>
         </div>
 
         <div class="workspace">
@@ -255,7 +312,11 @@
                 </div>
                 
                 <div class="search-container">
-                    <input type="text" id="search-input" class="search-input" placeholder="Search songs or lyrics...">
+                    <div class="search-input-wrapper">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="search-input" class="search-input" placeholder="Search songs or lyrics...">
+                        <button id="search-clear-btn" class="search-clear-btn" title="Clear search" style="display: none;">&times;</button>
+                    </div>
                 </div>
 
                 <div id="setlist-container" class="setlist-items"></div>
@@ -263,7 +324,7 @@
                 <div class="setlist-footer">
                     <button id="export-btn" class="btn-small btn-secondary" title="Export Setlist to JSON">💾 Export</button>
                     <button id="import-btn" class="btn-small btn-secondary" title="Import Setlist from JSON">📂 Import</button>
-                    <button id="reset-setlist-btn" class="btn-small btn-danger" title="Reset to Sunday sample setlist">⚠️ Samples</button>
+                    <button id="reset-setlist-btn" class="btn-small btn-secondary" title="Reset to Sunday sample setlist">✨ Samples</button>
                     <input type="file" id="import-file" accept=".json" style="display: none;">
                 </div>
             </div>
@@ -271,16 +332,18 @@
             <!-- EDITOR PANE -->
             <div class="editor-pane">
                 <div class="editor-quick-bar">
-                    <button class="quick-tag-btn" data-tag="# Verse 1">+ Verse 1</button>
-                    <button class="quick-tag-btn" data-tag="# Verse 2">+ Verse 2</button>
-                    <button class="quick-tag-btn" data-tag="# Chorus">+ Chorus</button>
-                    <button class="quick-tag-btn" data-tag="# Bridge">+ Bridge</button>
-                    <button class="quick-tag-btn" data-tag="# Pre-Chorus">+ Pre-Chorus</button>
-                    <button class="quick-tag-btn" data-tag="# Ending">+ Ending</button>
-                    <button class="quick-tag-btn" data-tag="# rolling 2">+ Rolling 2</button>
-                    <button class="quick-tag-btn" data-tag="> Citation">+ Citation</button>
+                    <button class="quick-tag-btn tag-verse" data-tag="# Verse 1">+ Verse 1</button>
+                    <button class="quick-tag-btn tag-verse" data-tag="# Verse 2">+ Verse 2</button>
+                    <button class="quick-tag-btn tag-chorus" data-tag="# Chorus">+ Chorus</button>
+                    <button class="quick-tag-btn tag-bridge" data-tag="# Bridge">+ Bridge</button>
+                    <button class="quick-tag-btn tag-pre" data-tag="# Pre-Chorus">+ Pre-Chorus</button>
+                    <button class="quick-tag-btn tag-ending" data-tag="# Ending">+ Ending</button>
+                    <button class="quick-tag-btn tag-rolling" data-tag="# rolling 2">+ Rolling 2</button>
+                    <button class="quick-tag-btn tag-citation" data-tag="> Citation">+ Citation</button>
                 </div>
-                <textarea id="lyric-editor" placeholder="Title of Song or Scripture&#10;&#10;# Verse 1&#10;Amazing grace, how sweet the sound&#10;That saved a wretch like me&#10;&#10;# Chorus&#10;My chains are gone, I've been set free&#10;My God, my Savior has ransomed me"></textarea>
+                <div class="editor-container">
+                    <textarea id="lyric-editor" placeholder="Title of Song or Scripture&#10;&#10;# Verse 1&#10;Amazing grace, how sweet the sound&#10;That saved a wretch like me&#10;&#10;# Chorus&#10;My chains are gone, I've been set free&#10;My God, my Savior has ransomed me"></textarea>
+                </div>
             </div>
 
             <!-- PREVIEW PANE -->
@@ -295,9 +358,9 @@
             <button id="undo-btn" class="btn-small btn-accent">Undo</button>
         </div>
 
-        <!-- 3-TIER HOTKEY HUD FOOTER -->
+        <!-- OPTION A: PRIORITY DISPLAY FOOTER -->
         <div class="hotkey-bar">
-            <div class="hotkey-list">
+            <div class="hotkey-priority-list">
                 <div class="hotkey-group">
                     <span class="hotkey-title">🔴 LIVE:</span>
                     <kbd>Space</kbd> / <kbd>→</kbd> Next &bull; 
@@ -306,28 +369,12 @@
                     <kbd>Esc</kbd> Clear &bull; 
                     <kbd>.</kbd> Blackout
                 </div>
-                
-                <div class="hotkey-group">
-                    <span class="hotkey-title">👀 CUE:</span>
-                    <kbd>↑</kbd> <kbd>↓</kbd> Browse Slides &bull; 
-                    <kbd>PgUp</kbd> <kbd>PgDn</kbd> Song
-                </div>
-
-                <div class="hotkey-group">
-                    <span class="hotkey-title">⚡ JUMP:</span>
-                    <kbd>V</kbd> Verse &bull; 
-                    <kbd>C</kbd> Chorus &bull; 
-                    <kbd>B</kbd> Bridge &bull; 
-                    <kbd>P</kbd> Pre &bull; 
-                    <kbd>E</kbd> End &bull; 
-                    <kbd>T</kbd> Tag &bull; 
-                    <kbd>0</kbd>-<kbd>99</kbd> Num
-                </div>
-
-                <div class="hotkey-group">
-                    <span class="hotkey-title">🖥️ DISPLAY:</span>
-                    <kbd>F</kbd> Fullscreen
-                </div>
+            </div>
+            
+            <div class="hotkey-actions">
+                <button id="open-shortcuts-modal-btn" class="btn-small btn-secondary" title="View all keyboard shortcuts [?]">
+                    ⌨️ Shortcuts <kbd class="hotkey-hint-kbd">?</kbd>
+                </button>
             </div>
         </div>
     </div>
@@ -337,7 +384,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title">🖼️ Media Bin</h3>
-                <button id="close-media-bin" class="close-btn">&times;</button>
+                <button id="close-media-bin" class="close-btn" aria-label="Close media bin">&times;</button>
             </div>
 
             <div class="modal-tabs">
@@ -346,8 +393,8 @@
             </div>
 
             <div id="tab-local" class="tab-content">
-                <div class="upload-zone" style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
-                    <label for="local-image-upload" class="btn-small btn-accent">📥 Upload Image</label>
+                <div class="upload-zone" style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px; background: rgba(255,255,255,0.03); padding: 12px; border-radius: var(--radius-md); border: 1px dashed var(--border-highlight);">
+                    <label for="local-image-upload" class="btn-small btn-accent" style="cursor: pointer;">📥 Upload Image</label>
                     <input type="file" id="local-image-upload" accept="image/*" style="display: none;">
                     <span style="color: #888; font-size: 0.78rem;">Stored in local browser storage (IndexedDB)</span>
                 </div>
