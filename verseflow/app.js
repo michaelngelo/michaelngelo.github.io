@@ -294,8 +294,6 @@ if (isProjector) {
     const urlValidationStatus = document.getElementById('url-validation-status');
 
     const shortcutsModal = document.getElementById('shortcuts-modal');
-    const helpBtn = document.getElementById('help-btn');
-    const quickHelpLink = document.getElementById('quick-help-link');
     const openShortcutsBtn = document.getElementById('open-shortcuts-modal-btn');
     const closeShortcutsModal = document.getElementById('close-shortcuts-modal');
 
@@ -438,7 +436,7 @@ if (isProjector) {
         setlist.forEach((song, index) => {
             const el = document.createElement('div');
             el.className = 'song-item';
-            el.draggable = true;
+            el.draggable = !searchInput.value.trim();
             el.dataset.index = index;
 
             // Drag handle
@@ -675,6 +673,7 @@ if (isProjector) {
         const query = searchInput.value.toLowerCase().trim();
         searchClearBtn.style.display = query ? 'block' : 'none';
         const songItems = setlistContainer.querySelectorAll('.song-item');
+        const isSearching = query.length > 0;
 
         let matchCount = 0;
         setlist.forEach((song, index) => {
@@ -682,6 +681,7 @@ if (isProjector) {
             if (itemEl) {
                 const matches = song.title.toLowerCase().includes(query) || (song.lyrics && song.lyrics.toLowerCase().includes(query));
                 itemEl.style.display = matches ? 'flex' : 'none';
+                itemEl.draggable = !isSearching;
                 if (matches) matchCount++;
             }
         });
@@ -1253,6 +1253,7 @@ if (isProjector) {
 
     openMediaBinBtn.addEventListener('click', () => {
         mediaBinModal.style.display = 'flex';
+        closeMediaBin.focus();
         const activeSong = getActiveSong();
 
         if (activeSong && activeSong.customBg && !activeSong.customBg.startsWith('idb_')) {
@@ -1357,9 +1358,11 @@ if (isProjector) {
     onlineImgUrl.addEventListener('keypress', (e) => { if (e.key === 'Enter') validateAndApplyUrl(onlineImgUrl.value.trim()); });
 
     // Shortcuts Modal
-    function openShortcuts() { shortcutsModal.style.display = 'flex'; }
+    function openShortcuts() { 
+        shortcutsModal.style.display = 'flex'; 
+        closeShortcutsModal.focus();
+    }
     function closeShortcuts() { shortcutsModal.style.display = 'none'; }
-    if (quickHelpLink) quickHelpLink.addEventListener('click', openShortcuts);
     if (openShortcutsBtn) openShortcutsBtn.addEventListener('click', openShortcuts);
     closeShortcutsModal.addEventListener('click', closeShortcuts);
 
@@ -1452,6 +1455,30 @@ if (isProjector) {
     }
 
     document.addEventListener('keydown', (e) => {
+        if (e.key === 'Tab') {
+            const activeModal = document.querySelector('.modal-overlay[style*="display: flex"]');
+            if (activeModal) {
+                const focusableElements = activeModal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+                if (focusableElements.length > 0) {
+                    const firstElement = focusableElements[0];
+                    const lastElement = focusableElements[focusableElements.length - 1];
+
+                    if (e.shiftKey) {
+                        if (document.activeElement === firstElement || document.activeElement === document.body) {
+                            lastElement.focus();
+                            e.preventDefault();
+                        }
+                    } else {
+                        if (document.activeElement === lastElement || document.activeElement === document.body) {
+                            firstElement.focus();
+                            e.preventDefault();
+                        }
+                    }
+                }
+            }
+            return;
+        }
+
         const activeEl = document.activeElement;
         const isInput = activeEl && (['INPUT', 'TEXTAREA', 'SELECT'].includes(activeEl.tagName) || activeEl.isContentEditable);
 

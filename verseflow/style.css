@@ -1757,6 +1757,14 @@ textarea#lyric-editor::placeholder {
     .header-center {
         order: 3;
     }
+    
+    /* HIDE LIVE CONTROLS ON MOBILE */
+    .header-right,
+    #global-live-indicator,
+    .hotkey-bar {
+        display: none !important;
+    }
+    
     .controls-bar {
         flex-wrap: wrap;
         width: 100%;
@@ -1773,22 +1781,14 @@ textarea#lyric-editor::placeholder {
         width: 100%;
         max-width: 100%;
         border-right: none;
-        border-bottom: 2px solid var(--border-default);
+        border-bottom: 4px solid var(--bg-elevated);
         flex: none;
-        height: 50vh;
-        min-height: 380px;
+        height: auto;
+        min-height: 60vh;
     }
 
     .shortcuts-grid {
         grid-template-columns: 1fr;
-    }
-
-    .hotkey-list {
-        display: none;
-    }
-    .hotkey-bar {
-        justify-content: center;
-        padding: 12px;
     }
 }
 
