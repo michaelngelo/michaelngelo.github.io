@@ -3,11 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VerseFlow - Lightweight Presenter</title>
-    <meta name="description" content="A lightweight, offline-ready live presentation tool for lyrics and scripture.">
-    <meta name="theme-color" content="#121212">
+    <title>VerseFlow - Lightweight Live Presenter</title>
+    <meta name="description" content="A lightweight, offline-ready live presentation tool for lyrics, scripture, and slides.">
+    <meta name="theme-color" content="#0d1117">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌊</text></svg>">
     <link rel="manifest" href="./manifest.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Merriweather:wght@400;700&family=Montserrat:wght@500;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.18.4/dist/katex.min.css">
     <link rel="stylesheet" href="./style.css">
     <script>
@@ -21,195 +24,317 @@
 <body>
     <!-- MOBILE WARNING OVERLAY -->
     <div id="mobile-warning">
-        <h2 class="warning-title">🖥️ Desktop Recommended</h2>
-        <p class="warning-text">
-            This presentation tool is designed for dual-screen setups and physical keyboard hotkeys. It is highly recommended to use a laptop or desktop computer.
-        </p>
-        <button id="continue-anyway-btn" class="primary warning-btn">Continue Anyway</button>
+        <div class="warning-card">
+            <div class="warning-icon">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+            </div>
+            <h2 class="warning-title">Desktop Recommended</h2>
+            <p class="warning-text">
+                VerseFlow is optimized for dual-screen setups, live projection, and physical keyboard hotkeys. A laptop or desktop computer provides the best experience.
+            </p>
+            <button id="continue-anyway-btn" class="btn btn-primary warning-btn">
+                <span>Continue on this device</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+        </div>
     </div>
 
+    <!-- RECOVERY OVERLAY -->
     <div id="recovery-ui" class="recovery-screen hidden">
         <div class="recovery-content">
-            <h2>⚠️ Data Corruption Detected</h2>
-            <p>VerseFlow could not load your saved setlist. The data may be corrupted.</p>
-            <button id="emergency-reset-btn" class="btn-warning emergency-btn">
+            <div class="recovery-icon">⚠️</div>
+            <h2>Data Corruption Detected</h2>
+            <p>VerseFlow could not load your saved setlist. The saved data format may have become corrupted.</p>
+            <button id="emergency-reset-btn" class="btn btn-warning emergency-btn">
                 Load Sample Setlist
             </button>
         </div>
     </div>
 
+    <!-- MAIN DASHBOARD -->
     <div id="dashboard-ui" class="dashboard">
-        <header>
-            <div class="header-left">
-                <div class="header-divider">
-                    <div class="flex-col-center">
-                        <div class="flex-row-gap">
-                            <button id="export-btn" class="btn-small" title="Export Setlist">💾 Export</button>
-                            <button id="import-btn" class="btn-small" title="Import Setlist">📂 Import</button>
-                        </div>
-                        <span class="text-micro">*Text only (No local media)</span>
-                    </div>
-                    <input type="file" id="import-file" accept=".json" style="display: none;">
-                </div>
+        <!-- TOP HEADER -->
+        <header class="app-header">
+            <div class="header-section header-left">
+                <a href="#" class="brand" title="VerseFlow Live Presenter • Click to refresh cache">
+                    <span class="brand-title">🌊 VerseFlow</span>
+                </a>
 
-                <div class="controls">
-                    <label class="slider-label">
-                        Text Size: <input type="range" id="font-size-slider" min="2" max="12" step="0.5" value="5">
-                    </label>
-
-                    <select id="theme-select" title="Visual Style">
-                        <option value="theme-dark">Dark (Default)</option>
-                        <option value="theme-blue-wash">Deep Blue Wash</option>
-                        <option value="theme-traditional">Traditional Hymnal</option>
-                        <option value="theme-minimalist">Contemporary Minimalist</option>
-                        <option value="theme-paper">Classic Parchment (Light)</option>
-                        <option value="theme-scripture">Scripture Reading</option>
-                        <option value="theme-custom">🎨 Custom Style & Media...</option>
-                    </select>
-
-                    <select id="layout-select" title="Screen Position">
-                        <option value="layout-center" data-default-w="100">Center</option>
-                        <option value="layout-top-left" data-default-w="65">Top Left</option>
-                        <option value="layout-top-right" data-default-w="65">Top Right</option>
-                        <option value="layout-lower" data-default-w="100">Lower</option>
-                        <option value="layout-top" data-default-w="100">Top</option>
-                        <option value="layout-left" data-default-w="65">Left</option>
-                        <option value="layout-right" data-default-w="65">Right</option>
-                    </select>
-
-                    <button id="toggle-tune-btn" class="btn-secondary" title="Fine-tune position">📏 Adjust</button>
+                <!-- LIVE BROADCAST STATUS BADGE -->
+                <div class="live-status-pill" id="global-live-indicator" title="Projector Output Status">
+                    <span class="status-dot"></span>
+                    <span class="status-label" id="global-live-label">OFF AIR</span>
                 </div>
             </div>
-            
-            <div class="header-right">
-                <button id="clear-screen-btn" class="btn-warning">Clear Live Text</button>
-                <button class="primary" id="cast-btn">Launch Projector</button>
+
+            <!-- CONTROLS IN HEADER -->
+            <div class="header-section header-center">
+                <div class="controls-bar">
+                    <!-- FONT SIZE SLIDER -->
+                    <div class="control-item font-size-control" title="Adjust Projector Text Size">
+                        <span class="control-icon">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg>
+                        </span>
+                        <input type="range" id="font-size-slider" class="range-slider" min="2" max="12" step="0.5" value="5">
+                        <span id="font-size-val" class="slider-badge">5.0vw</span>
+                    </div>
+
+                    <!-- THEME SELECT -->
+                    <div class="control-item select-wrapper" title="Visual Style & Theme">
+                        <select id="theme-select" class="styled-select">
+                            <option value="theme-dark">🌑 Dark (Default)</option>
+                            <option value="theme-blue-wash">🌊 Deep Blue Wash</option>
+                            <option value="theme-traditional">📖 Traditional Hymnal</option>
+                            <option value="theme-minimalist">✨ Contemporary Minimalist</option>
+                            <option value="theme-paper">📜 Classic Parchment (Light)</option>
+                            <option value="theme-scripture">✝️ Scripture Reading</option>
+                            <option value="theme-custom">🎨 Custom Style & Media...</option>
+                        </select>
+                    </div>
+
+                    <!-- LAYOUT SELECT -->
+                    <div class="control-item select-wrapper" title="Screen Placement Layout">
+                        <select id="layout-select" class="styled-select">
+                            <option value="layout-center" data-default-w="100">🎯 Center</option>
+                            <option value="layout-top-left" data-default-w="65">↖️ Top Left</option>
+                            <option value="layout-top-right" data-default-w="65">↗️ Top Right</option>
+                            <option value="layout-lower" data-default-w="100">⬇️ Lower Third</option>
+                            <option value="layout-top" data-default-w="100">⬆️ Top Banner</option>
+                            <option value="layout-left" data-default-w="65">⬅️ Left Column</option>
+                            <option value="layout-right" data-default-w="65">➡️ Right Column</option>
+                        </select>
+                    </div>
+
+                    <!-- FINE TUNE ADJUST BUTTON -->
+                    <button id="toggle-tune-btn" class="btn btn-secondary btn-icon-text" title="Fine-tune position & dimensions">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                        <span>Adjust</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- RIGHT ACTION BUTTONS -->
+            <div class="header-section header-right">
+                <button id="blackout-btn" class="btn-blackout" title="Toggle Pure Black Screen [.]">
+                    <span>⬛</span> Blackout
+                </button>
+
+                <button id="clear-screen-btn" class="btn btn-warning btn-clear-live" title="Clear Projector Screen (Esc)">
+                    <span class="btn-indicator"></span>
+                    <span>Clear Screen</span>
+                    <kbd class="btn-kbd">Esc</kbd>
+                </button>
+
+                <button id="cast-btn" class="btn btn-primary btn-launch-proj" title="Launch Projector Output Window">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 16.1A5 5 0 0 1 5.9 20M2 12.05A9 9 0 0 1 9.95 20M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6"/><line x1="2" y1="20" x2="2.01" y2="20"/></svg>
+                    <span>Launch Projector</span>
+                </button>
             </div>
         </header>
 
-        <div id="custom-theme-toolbar">
-            <div class="toolbar-item">
-                <label for="custom-text-color">Font Color:</label>
-                <input type="color" id="custom-text-color" value="#ffffff">
-            </div>
+        <!-- CUSTOM THEME TOOLBAR -->
+        <div id="custom-theme-toolbar" class="sub-toolbar">
+            <div class="sub-toolbar-inner">
+                <div class="toolbar-group">
+                    <div class="toolbar-item color-item">
+                        <label for="custom-text-color">Font Color</label>
+                        <div class="color-picker-box">
+                            <input type="color" id="custom-text-color" value="#ffffff">
+                            <span id="custom-text-color-hex" class="hex-badge">#ffffff</span>
+                        </div>
+                    </div>
 
-            <div class="toolbar-item">
-                <label for="custom-bg-color">Base Color:</label>
-                <input type="color" id="custom-bg-color" value="#000000">
-            </div>
+                    <div class="toolbar-item color-item">
+                        <label for="custom-bg-color">Base Color</label>
+                        <div class="color-picker-box">
+                            <input type="color" id="custom-bg-color" value="#000000">
+                            <span id="custom-bg-color-hex" class="hex-badge">#000000</span>
+                        </div>
+                    </div>
+                </div>
 
-            <div class="toolbar-item">
-                <div id="toolbar-thumb" class="toolbar-thumb-preview"></div>
-                <button id="open-media-bin-btn" class="btn-small btn-secondary">🖼️ Media Bin</button>
-                <button id="clear-custom-bg-btn" class="btn-small btn-danger" style="display: none;">Remove Image</button>
-            </div>
+                <div class="toolbar-divider"></div>
 
-            <div class="toolbar-item cursor-pointer">
-                <input type="checkbox" id="dim-bg-checkbox" class="cursor-pointer">
-                <label for="dim-bg-checkbox" class="cursor-pointer">Dim Overlay</label>
+                <div class="toolbar-group">
+                    <div class="toolbar-item media-item">
+                        <div id="toolbar-thumb" class="toolbar-thumb-preview" title="Active Background Image"></div>
+                        <button id="open-media-bin-btn" class="btn btn-secondary btn-sm">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                            <span>Media Bin</span>
+                        </button>
+                        <button id="clear-custom-bg-btn" class="btn btn-danger btn-sm" style="display: none;">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                            <span>Remove Image</span>
+                        </button>
+                    </div>
+
+                    <div class="toolbar-item checkbox-item">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="dim-bg-checkbox">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <label for="dim-bg-checkbox" class="toggle-label">Dim Overlay (55% Darken)</label>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div id="tune-toolbar" class="toolbar-drawer">
-            <div class="toolbar-item">
-                <label style="width: 60px;">Width:</label>
-                <input type="range" id="tune-w-slider" min="20" max="100" value="100">
-                <span id="tune-w-val" class="text-micro">100vw</span>
+        <!-- FINE TUNE DRAWER -->
+        <div id="tune-toolbar" class="sub-toolbar toolbar-drawer">
+            <div class="sub-toolbar-inner">
+                <div class="toolbar-group">
+                    <span class="toolbar-label">Positioning:</span>
+                    <div class="toolbar-item slider-tune-item">
+                        <label for="tune-w-slider">Width</label>
+                        <input type="range" id="tune-w-slider" class="range-slider" min="20" max="100" value="100">
+                        <span id="tune-w-val" class="slider-badge">100vw</span>
+                    </div>
+                    <div class="toolbar-item slider-tune-item">
+                        <label for="tune-x-slider">X Shift</label>
+                        <input type="range" id="tune-x-slider" class="range-slider" min="-50" max="50" value="0">
+                        <span id="tune-x-val" class="slider-badge">0vw</span>
+                    </div>
+                    <div class="toolbar-item slider-tune-item">
+                        <label for="tune-y-slider">Y Shift</label>
+                        <input type="range" id="tune-y-slider" class="range-slider" min="-50" max="50" value="0">
+                        <span id="tune-y-val" class="slider-badge">0vh</span>
+                    </div>
+                </div>
+                <button id="reset-tune-btn" class="btn btn-secondary btn-sm" style="margin-left: auto;" title="Reset position to layout defaults">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                    <span>Reset to Defaults</span>
+                </button>
             </div>
-            <div class="toolbar-item">
-                <label style="width: 60px;">X Shift:</label>
-                <input type="range" id="tune-x-slider" min="-50" max="50" value="0">
-                <span id="tune-x-val" class="text-micro">0vw</span>
-            </div>
-            <div class="toolbar-item">
-                <label style="width: 60px;">Y Shift:</label>
-                <input type="range" id="tune-y-slider" min="-50" max="50" value="0">
-                <span id="tune-y-val" class="text-micro">0vh</span>
-            </div>
-            <button id="reset-tune-btn" class="btn-small btn-danger" style="margin-left: auto;">Reset</button>
         </div>
 
-        <div class="workspace">
-            <div class="setlist-pane">
-                <div class="setlist-header">
-                    <span>Setlist</span>
-                    <button id="add-song-btn" class="btn-small">+ New</button>
+        <!-- MAIN THREE-PANE WORKSPACE -->
+        <main class="workspace">
+            <!-- LEFT PANE: SETLIST -->
+            <section class="setlist-pane" aria-label="Setlist Sidebar">
+                <div class="pane-header setlist-header">
+                    <div class="pane-title-group">
+                        <span class="pane-title">Setlist</span>
+                        <span id="setlist-count" class="badge-counter">4</span>
+                    </div>
+                    <button id="add-song-btn" class="btn btn-primary btn-sm" title="Add New Song / Slide Set">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        <span>New Song</span>
+                    </button>
                 </div>
                 
                 <div class="search-container">
-                    <input type="text" id="search-input" class="search-input" placeholder="Filter setlist...">
+                    <div class="search-input-wrapper">
+                        <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        <input type="text" id="search-input" class="search-input" placeholder="Filter songs & lyrics...">
+                        <button id="search-clear-btn" class="search-clear-btn" style="display: none;" title="Clear search">&times;</button>
+                    </div>
                 </div>
 
                 <div id="setlist-container" class="setlist-items"></div>
 
                 <div class="setlist-footer">
-                    <button id="reset-setlist-btn" class="btn-small btn-danger" title="Clear Workspace">⚠️ Clear & Load Samples</button>
+                    <button id="export-btn" class="btn-small btn-secondary" title="Export Setlist to JSON">💾 Export</button>
+                    <button id="import-btn" class="btn-small btn-secondary" title="Import Setlist from JSON">📂 Import</button>
+                    <button id="reset-setlist-btn" class="btn-small btn-secondary" title="Reset to Sunday sample setlist">✨ Samples</button>
+                    <input type="file" id="import-file" accept=".json" style="display: none;">
                 </div>
-            </div>
-            <div class="editor-pane">
-                <div class="editor-header">Top line is Song Title. Double enter = New Slide. # = Section Label (e.g., # Verse 1).</div>
-                <textarea id="lyric-editor"></textarea>
-            </div>
-            <div class="preview-container">
+            </section>
+
+            <!-- MIDDLE PANE: EDITOR -->
+            <section class="editor-pane" aria-label="Lyrics & Content Editor">
+                <div class="pane-header editor-header">
+                    <div class="editor-tips">
+                        <span class="editor-tag">Markdown & Layout</span>
+                        <div class="format-chips">
+                            <button class="chip-btn" data-insert="# Verse " title="Insert Verse Header">+ Verse</button>
+                            <button class="chip-btn" data-insert="# Chorus " title="Insert Chorus Header">+ Chorus</button>
+                            <button class="chip-btn" data-insert="# Bridge " title="Insert Bridge Header">+ Bridge</button>
+                            <button class="chip-btn" data-insert="> 詩篇 23:1" title="Insert Scripture Citation">+ Citation</button>
+                            <button class="chip-btn" data-insert="$$ E = mc^2 $$" title="Insert KaTeX Math Formula">+ Math</button>
+                        </div>
+                    </div>
+                    <div class="editor-stats" id="editor-stats">
+                        <span id="stat-slides">0 slides</span>
+                        <span class="stat-dot">•</span>
+                        <span id="stat-words">0 words</span>
+                    </div>
+                </div>
+                <div class="editor-body">
+                    <textarea id="lyric-editor" spellcheck="false" placeholder="Enter song title on the first line...&#10;&#10;# Verse 1&#10;Type lyrics here...&#10;&#10;# Chorus&#10;Double enter creates a new slide!"></textarea>
+                </div>
+            </section>
+
+            <!-- RIGHT PANE: LIVE & PREVIEW -->
+            <section class="preview-container" aria-label="Slide Deck Preview">
                 <div id="quick-jump-bar" class="quick-jump-bar"></div>
                 <div class="preview-pane" id="slide-list"></div>
+                <div class="preview-footer-hint">
+                    <span class="hint-text">💡 <strong>Click</strong> to preview &bull; <strong>Double-click</strong> or press <kbd>Enter</kbd> to Go Live</span>
+                </div>
+            </section>
+        </main>
+
+        <!-- UNDO NOTIFICATION TOAST -->
+        <div id="undo-toast" class="toast">
+            <div class="toast-content">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <span id="undo-text">Song deleted.</span>
             </div>
+            <button id="undo-btn" class="btn btn-primary btn-sm">Undo</button>
         </div>
 
-        <div id="undo-toast">
-            <span id="undo-text">Song deleted.</span>
-            <button id="undo-btn" class="btn-small">Undo</button>
-        </div>
-
+        <!-- OPTION A: PRIORITY DISPLAY FOOTER -->
         <div class="hotkey-bar">
-            <div class="hotkey-list">
+            <div class="hotkey-priority-list">
                 <div class="hotkey-group">
                     <span class="hotkey-title">🔴 LIVE:</span>
+                    <kbd>Space</kbd> / <kbd>→</kbd> Next &bull; 
+                    <kbd>←</kbd> Prev &bull; 
                     <kbd>Enter</kbd> Go Live &bull; 
-                    <kbd>Space</kbd> <kbd>←</kbd> <kbd>→</kbd> Change Slide &bull; 
-                    <kbd>Esc</kbd> Clear
-                </div>
-                
-                <div class="hotkey-group">
-                    <span class="hotkey-title">👀 PREVIEW:</span>
-                    <kbd>↑</kbd> <kbd>↓</kbd> Move &bull; 
-                    <kbd>PgUp</kbd> <kbd>PgDn</kbd> Change Song
-                </div>
-
-                <div class="hotkey-group">
-                    <span class="hotkey-title">⚡ JUMP:</span>
-                    <kbd>V</kbd> Verse &bull; 
-                    <kbd>C</kbd> Chorus &bull; 
-                    <kbd>B</kbd> Bridge &bull; 
-                    <kbd>P</kbd> Pre &bull; 
-                    <kbd>E</kbd> End &bull; 
-                    <kbd>T</kbd> Top &bull; 
-                    <kbd>0</kbd>-<kbd>99</kbd> Num
+                    <kbd>Esc</kbd> Clear &bull; 
+                    <kbd>.</kbd> Blackout
                 </div>
             </div>
-            <a href="#" class="brand">🌊 VerseFlow</a>
+            
+            <div class="hotkey-actions">
+                <button id="open-shortcuts-modal-btn" class="btn-small btn-secondary" title="View all keyboard shortcuts [?]">
+                    ⌨️ Shortcuts <kbd class="hotkey-hint-kbd">?</kbd>
+                </button>
+            </div>
         </div>
     </div>
 
     <!-- MEDIA BIN MODAL -->
-    <div id="media-bin-modal" class="modal-overlay" style="display: none;">
+    <div id="media-bin-modal" class="modal-overlay" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="media-bin-title">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title">Media Bin</h3>
-                <button id="close-media-bin" class="close-btn">&times;</button>
+                <div class="modal-title-wrap">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    <h3 id="media-bin-title" class="modal-title">Media Bin & Backgrounds</h3>
+                </div>
+                <button id="close-media-bin" class="modal-close-btn" aria-label="Close modal">&times;</button>
             </div>
 
             <div class="modal-tabs">
-                <button class="tab-btn active" data-tab="tab-local">📁 Saved Local Images</button>
-                <button class="tab-btn" data-tab="tab-online">🌐 Online Image Link</button>
+                <button class="tab-btn active" data-tab="tab-local">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                    <span>Saved Local Library</span>
+                </button>
+                <button class="tab-btn" data-tab="tab-online">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span>Online Image Link</span>
+                </button>
             </div>
 
             <!-- Tab 1: Local IndexedDB Library -->
             <div id="tab-local" class="tab-content">
-                <div class="upload-zone">
-                    <label for="local-image-upload" class="btn-small btn-upload">📥 Add Local Image</label>
+                <div class="upload-dropzone">
+                    <label for="local-image-upload" class="btn btn-primary btn-upload">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        <span>Upload Local Image</span>
+                    </label>
                     <input type="file" id="local-image-upload" accept="image/*" style="display: none;">
-                    <span class="upload-note">Permanently saved to this computer's browser storage</span>
+                    <span class="upload-note">Stored offline directly in browser storage</span>
                 </div>
                 <div class="image-grid" id="local-image-grid"></div>
             </div>
@@ -217,20 +342,73 @@
             <!-- Tab 2: Direct Online URL -->
             <div id="tab-online" class="tab-content" style="display: none;">
                 <div class="url-input-container">
-                    <label class="text-muted-small">Paste Direct Image Link (e.g. JPG, PNG, WebP):</label>
+                    <label class="input-label" for="online-img-url">Paste Direct Image URL (JPG, PNG, WebP, AVIF):</label>
                     <div class="url-input-group">
-                        <input type="text" id="online-img-url" class="online-input" placeholder="https://example.com/image.jpg">
-                        <button id="apply-online-url-btn" class="btn-small btn-apply">Apply Link</button>
+                        <input type="url" id="online-img-url" class="styled-input online-input" placeholder="https://images.unsplash.com/photo-...">
+                        <button id="apply-online-url-btn" class="btn btn-primary btn-apply">Apply Background</button>
                     </div>
-                    <div id="url-validation-status"></div>
+                    <div id="url-validation-status" class="validation-status"></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- PROJECTOR UI -->
+    <!-- SHORTCUTS HELP MODAL -->
+    <div id="shortcuts-modal" class="modal-overlay" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="shortcuts-title">
+        <div class="modal-content modal-shortcuts">
+            <div class="modal-header">
+                <div class="modal-title-wrap">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="6" y1="8" x2="6.01" y2="8"/><line x1="10" y1="8" x2="10.01" y2="8"/><line x1="14" y1="8" x2="14.01" y2="8"/><line x1="18" y1="8" x2="18.01" y2="8"/><line x1="6" y1="12" x2="6.01" y2="12"/><line x1="18" y1="12" x2="18.01" y2="12"/><line x1="9" y1="16" x2="15" y2="16"/></svg>
+                    <h3 id="shortcuts-title" class="modal-title">Keyboard Shortcuts Reference</h3>
+                </div>
+                <button id="close-shortcuts-modal" class="modal-close-btn">&times;</button>
+            </div>
+            <div class="modal-body shortcuts-grid">
+                <div class="shortcut-col">
+                    <h4 class="shortcut-section-title">🔴 Live Presentation</h4>
+                    <table class="shortcut-table">
+                        <tr><td><kbd>Enter</kbd></td><td>Go Live with selected preview slide</td></tr>
+                        <tr><td><kbd>Space</kbd> / <kbd>→</kbd></td><td>Advance to next live slide</td></tr>
+                        <tr><td><kbd>←</kbd></td><td>Step back to previous live slide</td></tr>
+                        <tr><td><kbd>Esc</kbd> / <kbd>Backspace</kbd></td><td>Clear projector screen text</td></tr>
+                        <tr><td><kbd>.</kbd> (Period)</td><td>Toggle Blackout screen</td></tr>
+                    </table>
+
+                    <h4 class="shortcut-section-title">👀 Preview Navigation</h4>
+                    <table class="shortcut-table">
+                        <tr><td><kbd>↓</kbd></td><td>Preview next slide</td></tr>
+                        <tr><td><kbd>↑</kbd></td><td>Preview previous slide</td></tr>
+                        <tr><td><kbd>PgDn</kbd></td><td>Next song in setlist</td></tr>
+                        <tr><td><kbd>PgUp</kbd></td><td>Previous song in setlist</td></tr>
+                    </table>
+                </div>
+
+                <div class="shortcut-col">
+                    <h4 class="shortcut-section-title">⚡ Quick Section Jump</h4>
+                    <table class="shortcut-table">
+                        <tr><td><kbd>V</kbd></td><td>Jump to next <strong>Verse</strong></td></tr>
+                        <tr><td><kbd>C</kbd></td><td>Jump to next <strong>Chorus</strong></td></tr>
+                        <tr><td><kbd>B</kbd></td><td>Jump to next <strong>Bridge</strong></td></tr>
+                        <tr><td><kbd>P</kbd></td><td>Jump to next <strong>Pre-Chorus</strong></td></tr>
+                        <tr><td><kbd>E</kbd></td><td>Jump to <strong>Ending / Outro</strong></td></tr>
+                        <tr><td><kbd>T</kbd></td><td>Jump to <strong>Top / First Slide</strong></td></tr>
+                        <tr><td><kbd>0</kbd>–<kbd>99</kbd></td><td>Jump to Verse Number (e.g. press <kbd>23</kbd>)</td></tr>
+                    </table>
+
+                    <h4 class="shortcut-section-title">🖥️ Projector Screen</h4>
+                    <table class="shortcut-table">
+                        <tr><td><kbd>Double Click</kbd></td><td>Toggle Fullscreen Mode</td></tr>
+                        <tr><td><kbd>F</kbd></td><td>Toggle Fullscreen Mode</td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PROJECTOR OUTPUT CANVAS -->
     <div id="projector-ui" class="projector">
         <div id="projector-overlay" class="projector-overlay"></div>
+        <div id="projector-blackout" class="projector-blackout-layer"></div>
         <div id="projector-content" class="projector-text"></div>
     </div>
 </body>

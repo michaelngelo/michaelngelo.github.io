@@ -44,7 +44,7 @@ self.addEventListener('fetch', (event) => {
         caches.open(CACHE_NAME).then((cache) => {
             return cache.match(event.request, { ignoreSearch: true }).then((cachedResponse) => {
                 
-                // The Background Fetch (Revalidate)
+                // Background Fetch (Revalidate)
                 const fetchPromise = fetch(event.request).then((networkResponse) => {
                     // Cache dynamic KaTeX CDN requests OR our core static assets
                     if (requestUrl.hostname === 'cdn.jsdelivr.net' || URLS_TO_CACHE.includes(requestUrl.pathname)) {
@@ -52,11 +52,10 @@ self.addEventListener('fetch', (event) => {
                     }
                     return networkResponse;
                 }).catch(() => {
-                    // Silently fail the background fetch if offline
                     console.log('Offline: Using stale cache for', requestUrl.pathname);
                 });
 
-                // Return the fast cache immediately if it exists, otherwise wait for the network
+                // Return cache immediately if available, otherwise network
                 return cachedResponse || fetchPromise;
             });
         })
