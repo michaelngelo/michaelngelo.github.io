@@ -1731,7 +1731,7 @@ textarea#lyric-editor::placeholder {
     body:not(.mobile-unlocked) #mobile-warning { display: flex; }
     body.mobile-unlocked #mobile-warning { display: none; }
 
-    body {
+    html, body {
         overflow-y: auto;
         overflow-x: hidden;
         height: auto;
@@ -1758,7 +1758,6 @@ textarea#lyric-editor::placeholder {
         order: 3;
     }
     
-    /* HIDE LIVE CONTROLS ON MOBILE */
     .header-right,
     #global-live-indicator,
     .hotkey-bar {
