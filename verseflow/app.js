@@ -477,7 +477,7 @@ if (isProjector) {
             dupBtn.onclick = (e) => {
                 e.stopPropagation();
                 const copy = JSON.parse(JSON.stringify(song));
-                copy.id = Date.now();
+                copy.id = Date.now() + Math.floor(Math.random() * 1000);
                 copy.title = `${song.title} (Copy)`;
                 copy.lyrics = song.lyrics.replace(/^([^\n]+)/, `${copy.title}`);
                 setlist.splice(index + 1, 0, copy);
@@ -547,6 +547,8 @@ if (isProjector) {
         });
 
         updateSelection();
+
+        if (searchInput.value.trim()) applySearchFilter();
     }
 
     function updateCustomToolbarUI() {
@@ -980,6 +982,27 @@ if (isProjector) {
         if (activeEl) activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
+    function broadcastLiveState(slideObj, songObj) {
+        if (!songObj || !slideObj) return;
+        channel.postMessage({
+            type: 'UPDATE_SLIDE',
+            liveIndex: liveIndex,
+            liveSongId: liveSongId,
+            html: formatContent(slideObj.content),
+            theme: songObj.theme,
+            layoutStyle: songObj.layoutStyle,
+            fontSize: (songObj.fontSize || 5) + 'vw',
+            customColor: songObj.customColor,
+            customBgColor: songObj.customBgColor,
+            customBg: liveCachedBgUrl,
+            dimBg: songObj.dimBg,
+            tuneW: songObj.tuneW,
+            tuneX: songObj.tuneX,
+            tuneY: songObj.tuneY,
+            isBlackout: isBlackout
+        });
+    }
+
     function goLive(index) {
         if (slides.length === 0 || index < 0 || index >= slides.length) return;
 
@@ -996,25 +1019,7 @@ if (isProjector) {
 
         const slide = liveSlides[liveIndex];
         const activeSong = getActiveSong();
-        if (!activeSong || !slide) return;
-
-        channel.postMessage({
-            type: 'UPDATE_SLIDE',
-            liveIndex: liveIndex,
-            liveSongId: liveSongId,
-            html: formatContent(slide.content),
-            theme: activeSong.theme,
-            layoutStyle: activeSong.layoutStyle,
-            fontSize: (activeSong.fontSize || 5) + 'vw',
-            customColor: activeSong.customColor,
-            customBgColor: activeSong.customBgColor,
-            customBg: liveCachedBgUrl,
-            dimBg: activeSong.dimBg,
-            tuneW: activeSong.tuneW,
-            tuneX: activeSong.tuneX,
-            tuneY: activeSong.tuneY,
-            isBlackout: false
-        });
+        broadcastLiveState(slide, activeSong);
     }
 
     function stepLive(direction) {
@@ -1031,25 +1036,7 @@ if (isProjector) {
 
         const slide = liveSlides[liveIndex];
         const liveSong = setlist.find(s => s.id === liveSongId);
-        if (!liveSong || !slide) return;
-
-        channel.postMessage({
-            type: 'UPDATE_SLIDE',
-            liveIndex: liveIndex,
-            liveSongId: liveSongId,
-            html: formatContent(slide.content),
-            theme: liveSong.theme,
-            layoutStyle: liveSong.layoutStyle,
-            fontSize: (liveSong.fontSize || 5) + 'vw',
-            customColor: liveSong.customColor,
-            customBgColor: liveSong.customBgColor,
-            customBg: liveCachedBgUrl,
-            dimBg: liveSong.dimBg,
-            tuneW: liveSong.tuneW,
-            tuneX: liveSong.tuneX,
-            tuneY: liveSong.tuneY,
-            isBlackout: isBlackout
-        });
+        broadcastLiveState(slide, liveSong);
     }
 
     function jumpToSection(keywords) {
@@ -1534,25 +1521,7 @@ if (isProjector) {
         } else if (e.data.type === 'PROJECTOR_READY') {
             if (liveIndex !== -1 && liveSlides.length > 0) {
                 const liveSong = setlist.find(s => s.id === liveSongId);
-                if (liveSong) {
-                    channel.postMessage({
-                        type: 'UPDATE_SLIDE',
-                        liveIndex: liveIndex,
-                        liveSongId: liveSongId,
-                        html: formatContent(liveSlides[liveIndex].content),
-                        theme: liveSong.theme,
-                        layoutStyle: liveSong.layoutStyle,
-                        fontSize: (liveSong.fontSize || 5) + 'vw',
-                        customColor: liveSong.customColor,
-                        customBgColor: liveSong.customBgColor,
-                        customBg: liveCachedBgUrl,
-                        dimBg: liveSong.dimBg,
-                        tuneW: liveSong.tuneW,
-                        tuneX: liveSong.tuneX,
-                        tuneY: liveSong.tuneY,
-                        isBlackout: isBlackout
-                    });
-                }
+                broadcastLiveState(liveSlides[liveIndex], liveSong);
             } else {
                 clearScreen();
             }
