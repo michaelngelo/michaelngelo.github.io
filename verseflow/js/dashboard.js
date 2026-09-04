@@ -1,249 +1,10 @@
 // ==========================================================
-// INDEXEDDB STORAGE HELPER FOR LOCAL MEDIA
+// DASHBOARD CONTROL ENGINE
 // ==========================================================
-function openMediaDB() {
-    return new Promise((resolve, reject) => {
-        const req = indexedDB.open('VerseFlowMediaDB', 1);
-        req.onupgradeneeded = (e) => {
-            const db = e.target.result;
-            if (!db.objectStoreNames.contains('images')) {
-                db.createObjectStore('images', { keyPath: 'id' });
-            }
-        };
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => reject(req.error);
-    });
-}
+(function() {
+    // Only run this script if the window is in dashboard mode
+    if (VerseFlow.isProjector) return;
 
-function generateThumbnail(file, maxWidth = 240, maxHeight = 135) {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        const tempUrl = URL.createObjectURL(file);
-
-        img.onload = () => {
-            URL.revokeObjectURL(tempUrl);
-            const canvas = document.createElement('canvas');
-            let width = img.width;
-            let height = img.height;
-
-            const ratio = Math.min(maxWidth / width, maxHeight / height);
-            width = width * ratio;
-            height = height * ratio;
-
-            canvas.width = width;
-            canvas.height = height;
-
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, width, height);
-
-            canvas.toBlob((blob) => {
-                resolve(blob);
-            }, 'image/jpeg', 0.75);
-        };
-
-        img.onerror = () => reject(new Error("Failed to load image for thumbnail generation."));
-        img.src = tempUrl;
-    });
-}
-
-async function saveImageToDB(file) {
-    const db = await openMediaDB();
-    const id = 'idb_' + Date.now();
-    const thumbBlob = await generateThumbnail(file);
-    return new Promise((resolve, reject) => {
-        const tx = db.transaction('images', 'readwrite');
-        const store = tx.objectStore('images');
-        store.put({
-            id,
-            name: file.name,
-            blob: file,
-            thumbnail: thumbBlob,
-            createdAt: Date.now()
-        });
-        tx.oncomplete = () => resolve(id);
-        tx.onerror = () => reject(tx.error);
-    });
-}
-
-async function getAllImagesFromDB() {
-    const db = await openMediaDB();
-    return new Promise((resolve, reject) => {
-        const tx = db.transaction('images', 'readonly');
-        const store = tx.objectStore('images');
-        const req = store.getAll();
-        req.onsuccess = () => resolve(req.result || []);
-        req.onerror = () => reject(req.error);
-    });
-}
-
-async function getImageFromDB(id) {
-    const db = await openMediaDB();
-    return new Promise((resolve, reject) => {
-        const tx = db.transaction('images', 'readonly');
-        const store = tx.objectStore('images');
-        const req = store.get(id);
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => reject(req.error);
-    });
-}
-
-async function deleteImageFromDB(id) {
-    const db = await openMediaDB();
-    return new Promise((resolve, reject) => {
-        const tx = db.transaction('images', 'readwrite');
-        const store = tx.objectStore('images');
-        store.delete(id);
-        tx.oncomplete = () => resolve();
-        tx.onerror = () => reject(tx.error);
-    });
-}
-
-async function resolveBackgroundUrl(bgRef) {
-    if (!bgRef) return '';
-    if (bgRef.startsWith('idb_')) {
-        const record = await getImageFromDB(bgRef);
-        if (record && record.blob) {
-            return new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = () => resolve('');
-                reader.readAsDataURL(record.blob);
-            });
-        }
-        return '';
-    }
-    return bgRef;
-}
-
-// ==========================================================
-// MAIN APPLICATION ENGINE & ROUTING
-// ==========================================================
-const isProjector = new URLSearchParams(window.location.search).get('mode') === 'projector';
-
-let channel;
-if ('BroadcastChannel' in window) {
-    channel = new BroadcastChannel('verseflow_channel');
-} else {
-    console.warn("BroadcastChannel API not supported in this browser.");
-    alert("⚠️ Dual-screen presentation requires BroadcastChannel support. Running in standalone local mode.");
-    channel = { postMessage: () => {}, onmessage: null };
-}
-
-const navKeys = ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'enter', ' ', 'escape', 'backspace', 'pagedown', 'pageup', 'v', 'c', 'b', 'p', 'e', 't', '.'];
-
-let refreshing = false;
-let isInitialInstall = false;
-
-if (isProjector) {
-    // ======================================================
-    // PROJECTOR WINDOW ENGINE
-    // ======================================================
-    document.title = "VerseFlow — Live Projector Display";
-
-    const projUI = document.getElementById('projector-ui');
-    const projOverlay = document.getElementById('projector-overlay');
-    const projBlackout = document.getElementById('projector-blackout');
-    const projContent = document.getElementById('projector-content');
-    let currentLiveState = null;
-
-    function applyProjectorTheme(data) {
-        const themeClass = data.theme || 'theme-dark';
-        const layoutClass = data.layoutStyle || 'layout-center';
-
-        if (themeClass === 'theme-custom') {
-            projUI.className = `projector theme-custom ${layoutClass}`;
-            projUI.style.backgroundColor = data.customBgColor || '#000000';
-            if (data.customBg) {
-                projUI.style.backgroundImage = `url("${data.customBg}")`;
-            } else {
-                projUI.style.backgroundImage = 'none';
-            }
-            projOverlay.style.display = data.dimBg ? 'block' : 'none';
-            projContent.style.color = data.customColor || '#ffffff';
-        } else {
-            projUI.style.backgroundColor = '';
-            projUI.style.backgroundImage = '';
-            projOverlay.style.display = 'none';
-            projContent.style.color = '';
-            projUI.className = `projector ${themeClass} ${layoutClass}`;
-        }
-
-        if (data && data.isBlackout) {
-            if (projBlackout) projBlackout.classList.add('active');
-        } else {
-            if (projBlackout) projBlackout.classList.remove('active');
-        }
-    }
-
-    channel.onmessage = (e) => {
-        if (e.data.type === 'UPDATE_SLIDE') {
-            currentLiveState = { index: e.data.liveIndex, songId: e.data.liveSongId, isBlackout: !!e.data.isBlackout };
-            applyProjectorTheme(e.data);
-            projContent.style.setProperty('--tune-w', (e.data.tuneW || 100) + 'vw');
-            projContent.style.setProperty('--tune-x', (e.data.tuneX || 0) + 'vw');
-            projContent.style.setProperty('--tune-y', (e.data.tuneY || 0) + 'vh');
-            projContent.classList.remove('fade-animation');
-            void projContent.offsetWidth; // Force reflow
-            projContent.innerHTML = e.data.html || '';
-            projContent.style.fontSize = e.data.fontSize || '5vw';
-            projContent.classList.add('fade-animation');
-        } else if (e.data.type === 'UPDATE_TUNE') {
-            projContent.style.setProperty('--tune-w', e.data.w + 'vw');
-            projContent.style.setProperty('--tune-x', e.data.x + 'vw');
-            projContent.style.setProperty('--tune-y', e.data.y + 'vh');
-        } else if (e.data.type === 'CLEAR_SLIDE') {
-            currentLiveState = null;
-            projContent.innerHTML = '';
-            applyProjectorTheme(e.data);
-        } else if (e.data.type === 'SET_BLACKOUT') {
-            if (projBlackout) {
-                if (e.data.blackout) projBlackout.classList.add('active');
-                else projBlackout.classList.remove('active');
-            }
-        } else if (e.data.type === 'DASHBOARD_BOOT') {
-            if (currentLiveState) {
-                channel.postMessage({ type: 'PROJECTOR_SYNC', state: currentLiveState });
-            } else {
-                channel.postMessage({ type: 'PROJECTOR_READY' });
-            }
-        }
-    };
-
-    window.addEventListener('DOMContentLoaded', () => {
-        channel.postMessage({ type: 'PROJECTOR_READY' });
-    });
-
-    // Fullscreen toggle on double click
-    projUI.addEventListener('dblclick', () => {
-        toggleFullscreen();
-    });
-
-    function toggleFullscreen() {
-        if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen().catch(err => console.log(err));
-        } else {
-            document.exitFullscreen().catch(err => console.log(err));
-        }
-    }
-
-    // Keyboard navigation from projector window forwarded to dashboard
-    document.addEventListener('keydown', (e) => {
-        const key = e.key.toLowerCase();
-        if (key === 'f') {
-            toggleFullscreen();
-            e.preventDefault();
-            return;
-        }
-        if (navKeys.includes(key) || (key >= '0' && key <= '9')) {
-            channel.postMessage({ type: 'PROJECTOR_KEYPRESS', key: key });
-            e.preventDefault();
-        }
-    });
-
-} else {
-    // ======================================================
-    // DASHBOARD CONTROL ENGINE
-    // ======================================================
     const editor = document.getElementById('lyric-editor');
     const slideList = document.getElementById('slide-list');
     const setlistContainer = document.getElementById('setlist-container');
@@ -319,7 +80,7 @@ if (isProjector) {
     async function updateCachedBg() {
         const activeSong = getActiveSong();
         if (activeSong) {
-            cachedBgUrl = await resolveBackgroundUrl(activeSong.customBg);
+            cachedBgUrl = await VerseFlow.resolveBackgroundUrl(activeSong.customBg);
         }
     }
 
@@ -443,7 +204,7 @@ if (isProjector) {
             const handle = document.createElement('span');
             handle.className = 'drag-handle';
             handle.title = "Drag to reorder";
-            handle.innerHTML = `<svg width="12" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="9" cy="6" r="1.5" fill="currentColor"/><circle cx="15" cy="6" r="1.5" fill="currentColor"/><circle cx="9" cy="12" r="1.5" fill="currentColor"/><circle cx="15" cy="12" r="1.5" fill="currentColor"/><circle cx="9" cy="18" r="1.5" fill="currentColor"/><circle cx="15" cy="18" r="1.5" fill="currentColor"/></svg>`;
+            handle.innerHTML = `<svg width="12" height="14" stroke-width="2.5"><use href="#icon-drag"></use></svg>`;
 
             // Song Info (Title + Slide count subtitle)
             const info = document.createElement('div');
@@ -473,7 +234,7 @@ if (isProjector) {
             const dupBtn = document.createElement('button');
             dupBtn.className = 'song-action-btn';
             dupBtn.title = 'Duplicate Song';
-            dupBtn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+            dupBtn.innerHTML = `<svg width="13" height="13" stroke-width="2"><use href="#icon-copy"></use></svg>`;
             dupBtn.onclick = (e) => {
                 e.stopPropagation();
                 const copy = JSON.parse(JSON.stringify(song));
@@ -489,7 +250,7 @@ if (isProjector) {
             const delBtn = document.createElement('button');
             delBtn.className = 'song-action-btn delete-btn';
             delBtn.title = 'Delete Song';
-            delBtn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`;
+            delBtn.innerHTML = `<svg width="13" height="13" stroke-width="2"><use href="#icon-trash"></use></svg>`;
             delBtn.onclick = (e) => {
                 e.stopPropagation();
 
@@ -599,7 +360,7 @@ if (isProjector) {
         tuneYVal.textContent = tuneY.value + 'vh';
 
         if (liveIndex !== -1 && activeSongId === liveSongId) {
-            channel.postMessage({ type: 'UPDATE_TUNE', w: tuneW.value, x: tuneX.value, y: tuneY.value });
+            VerseFlow.channel.postMessage({ type: 'UPDATE_TUNE', w: tuneW.value, x: tuneX.value, y: tuneY.value });
         }
     }
 
@@ -670,7 +431,6 @@ if (isProjector) {
         importFile.value = '';
     });
 
-    // Search filter
     function applySearchFilter() {
         const query = searchInput.value.toLowerCase().trim();
         searchClearBtn.style.display = query ? 'block' : 'none';
@@ -713,7 +473,7 @@ if (isProjector) {
         if (blackoutBtn) blackoutBtn.classList.remove('active');
         const liveSong = setlist.find(s => s.id === liveSongId) || getActiveSong();
         if (liveSong) {
-            channel.postMessage({
+            VerseFlow.channel.postMessage({
                 type: 'CLEAR_SLIDE',
                 theme: liveSong.theme,
                 layoutStyle: liveSong.layoutStyle,
@@ -809,11 +569,9 @@ if (isProjector) {
 
         slides = parseTextToSlides(text);
 
-        // Update stats
         if (statSlides) statSlides.textContent = `${slides.length} slide${slides.length === 1 ? '' : 's'}`;
         if (statWords) statWords.textContent = `${countWords(text)} words`;
 
-        // Update active song meta in setlist
         const activeSongMeta = setlistContainer.querySelector('.song-item.active .song-meta');
         if (activeSongMeta) activeSongMeta.textContent = `${slides.length} slide${slides.length === 1 ? '' : 's'}`;
 
@@ -950,7 +708,6 @@ if (isProjector) {
     function updateSelection() {
         const isCurrentlyLive = (liveIndex !== -1 && liveSongId !== null);
 
-        // Update Global Live Indicator in Header
         if (globalLiveIndicator) {
             globalLiveIndicator.classList.toggle('is-live', isCurrentlyLive);
             globalLiveLabel.textContent = isCurrentlyLive ? 'ON AIR' : 'OFF AIR';
@@ -959,13 +716,11 @@ if (isProjector) {
             clearScreenBtn.classList.toggle('is-active-live', isCurrentlyLive);
         }
 
-        // Update Slide Cards
         Array.from(slideList.children).forEach((el, index) => {
             el.classList.toggle('preview', index === previewIndex);
             el.classList.toggle('live', index === liveIndex && activeSongId === liveSongId);
         });
 
-        // Update Setlist Active and Live Items
         Array.from(setlistContainer.children).forEach((el, index) => {
             const songId = setlist[index]?.id;
             if (el.classList) {
@@ -984,7 +739,7 @@ if (isProjector) {
 
     function broadcastLiveState(slideObj, songObj) {
         if (!songObj || !slideObj) return;
-        channel.postMessage({
+        VerseFlow.channel.postMessage({
             type: 'UPDATE_SLIDE',
             liveIndex: liveIndex,
             liveSongId: liveSongId,
@@ -1057,7 +812,6 @@ if (isProjector) {
         }
     }
 
-    // Toggle Tune Drawer
     toggleTuneBtn.addEventListener('click', () => {
         tuneToolbar.classList.toggle('show-drawer');
         toggleTuneBtn.classList.toggle('active', tuneToolbar.classList.contains('show-drawer'));
@@ -1150,7 +904,6 @@ if (isProjector) {
         }
     });
 
-    // Editor Format Chips Helper
     document.querySelectorAll('.format-chips .chip-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const insertStr = btn.getAttribute('data-insert');
@@ -1160,8 +913,6 @@ if (isProjector) {
 
             const before = text.substring(0, start);
             const after = text.substring(end);
-
-            // Add leading newline if needed
             const prefix = (before.length > 0 && !before.endsWith('\n\n')) ? (before.endsWith('\n') ? '\n' : '\n\n') : '';
             const newText = before + prefix + insertStr + '\n' + after;
 
@@ -1175,14 +926,13 @@ if (isProjector) {
         });
     });
 
-    // Media Bin Modal
     let activeThumbUrls = [];
     async function renderLocalMediaGrid() {
         activeThumbUrls.forEach(url => URL.revokeObjectURL(url));
         activeThumbUrls = [];
 
         localImageGrid.innerHTML = '<span style="color:#777; font-size:0.85rem;">Loading stored images...</span>';
-        const items = await getAllImagesFromDB();
+        const items = await VerseFlow.getAllImagesFromDB();
         localImageGrid.innerHTML = '';
 
         if (items.length === 0) {
@@ -1210,7 +960,7 @@ if (isProjector) {
             del.onclick = async (e) => {
                 e.stopPropagation();
                 if (confirm(`Delete "${item.name}" from local storage?`)) {
-                    await deleteImageFromDB(item.id);
+                    await VerseFlow.deleteImageFromDB(item.id);
                     if (activeSong && activeSong.customBg === item.id) {
                         activeSong.customBg = '';
                         saveSetlist();
@@ -1279,7 +1029,7 @@ if (isProjector) {
         const file = e.target.files[0];
         if (file) {
             try {
-                const id = await saveImageToDB(file);
+                const id = await VerseFlow.saveImageToDB(file);
                 const activeSong = getActiveSong();
                 if (activeSong) {
                     activeSong.customBg = id;
@@ -1344,7 +1094,6 @@ if (isProjector) {
     applyOnlineUrlBtn.addEventListener('click', () => { validateAndApplyUrl(onlineImgUrl.value.trim()); });
     onlineImgUrl.addEventListener('keypress', (e) => { if (e.key === 'Enter') validateAndApplyUrl(onlineImgUrl.value.trim()); });
 
-    // Shortcuts Modal
     function openShortcuts() { 
         shortcutsModal.style.display = 'flex'; 
         closeShortcutsModal.focus();
@@ -1356,12 +1105,11 @@ if (isProjector) {
     function toggleBlackout() {
         isBlackout = !isBlackout;
         if (blackoutBtn) blackoutBtn.classList.toggle('active', isBlackout);
-        channel.postMessage({ type: 'SET_BLACKOUT', blackout: isBlackout });
+        VerseFlow.channel.postMessage({ type: 'SET_BLACKOUT', blackout: isBlackout });
     }
     if (blackoutBtn) blackoutBtn.addEventListener('click', toggleBlackout);
     shortcutsModal.addEventListener('click', (e) => { if (e.target === shortcutsModal) closeShortcuts(); });
 
-    // Debounced text input
     let debounceTimer;
     editor.addEventListener('input', () => {
         clearTimeout(debounceTimer);
@@ -1491,13 +1239,13 @@ if (isProjector) {
         if (isInput) return;
 
         const key = e.key.toLowerCase();
-        if (navKeys.includes(key) || (key >= '0' && key <= '9')) {
+        if (VerseFlow.navKeys.includes(key) || (key >= '0' && key <= '9')) {
             e.preventDefault();
             handleNavigationKey(key);
         }
     });
 
-    channel.onmessage = (e) => {
+    VerseFlow.channel.onmessage = (e) => {
         if (e.data.type === 'PROJECTOR_KEYPRESS') {
             handleNavigationKey(e.data.key);
 
@@ -1510,7 +1258,7 @@ if (isProjector) {
             const liveSong = setlist.find(s => s.id === liveSongId);
             if (liveSong) {
                 liveSlides = parseTextToSlides(liveSong.lyrics);
-                resolveBackgroundUrl(liveSong.customBg).then(url => {
+                VerseFlow.resolveBackgroundUrl(liveSong.customBg).then(url => {
                     liveCachedBgUrl = url;
                     updateSelection();
                 });
@@ -1532,7 +1280,7 @@ if (isProjector) {
         e.preventDefault();
 
         if (e.currentTarget.classList.contains('update-ready')) {
-            refreshing = true;
+            VerseFlow.refreshing = true;
             window.location.reload();
             return;
         }
@@ -1568,36 +1316,6 @@ if (isProjector) {
 
     renderSetlist();
     loadSong(activeSongId).then(() => {
-        channel.postMessage({ type: 'DASHBOARD_BOOT' });
+        VerseFlow.channel.postMessage({ type: 'DASHBOARD_BOOT' });
     });
-}
-
-// ==========================================================
-// SERVICE WORKER REGISTRATION & UPDATE NOTIFIER
-// ==========================================================
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-            .then((registration) => {
-                console.log('VerseFlow ServiceWorker active:', registration.scope);
-            })
-            .catch((error) => {
-                console.warn('VerseFlow ServiceWorker failed:', error);
-            });
-    });
-
-    isInitialInstall = !navigator.serviceWorker.controller;
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (refreshing) return;
-
-        if (isInitialInstall) {
-            isInitialInstall = false;
-            return;
-        }
-
-        const brandLink = document.querySelector('.brand');
-        if (brandLink) {
-            brandLink.classList.add('update-ready');
-        }
-    });
-}
+})();

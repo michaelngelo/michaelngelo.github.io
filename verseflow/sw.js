@@ -1,11 +1,17 @@
-const CACHE_NAME = 'verseflow-cache-v2';
+const CACHE_NAME = 'verseflow-cache-v3'; // Bumped version to force update
 const URLS_TO_CACHE = [
     './',
     './index.html',
-    './style.css',
-    './app.js',
     './manifest.json',
-    './default-bg.avif'
+    './default-bg.avif',
+    './css/variables.css',
+    './css/base.css',
+    './css/layout.css',
+    './css/components.css',
+    './js/core.js',
+    './js/storage.js',
+    './js/projector.js',
+    './js/dashboard.js'
 ];
 
 // Install Event - Cache Files

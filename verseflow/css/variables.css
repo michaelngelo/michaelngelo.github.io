@@ -1,0 +1,66 @@
+/* ========================================================================== */
+/* 1. IMPORTS & DESIGN SYSTEM VARIABLES                                       */
+/* ========================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Merriweather:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@500;700;900&display=swap');
+
+:root {
+    /* Modern Neutral Dark Palette (Zinc/Slate inspired) */
+    --bg-base: #09090b;          /* Ultra dark app background */
+    --bg-surface: #121215;       /* Panes and sidebar */
+    --bg-card: #18181b;          /* Buttons, inputs, standard cards */
+    --bg-card-hover: #27272a;
+    --bg-elevated: #27272a;      /* Modals */
+    --bg-overlay: rgba(0, 0, 0, 0.75);
+
+    /* Delicate Borders */
+    --border-subtle: rgba(255, 255, 255, 0.05);
+    --border-default: rgba(255, 255, 255, 0.09);
+    --border-hover: rgba(255, 255, 255, 0.15);
+    --border-focus: #6366f1;
+
+    /* High Contrast Text */
+    --text-main: #f8fafc;
+    --text-muted: #a1a1aa;
+    --text-dim: #71717a;
+
+    /* Accents (Indigo/Violet) */
+    --accent: #6366f1;
+    --accent-hover: #4f46e5;
+    --accent-subtle: rgba(99, 102, 241, 0.15);
+    --accent-border: rgba(99, 102, 241, 0.4);
+    --accent-glow: rgba(99, 102, 241, 0.5);
+    --accent-light: #818cf8;
+
+    /* Live & Warning States */
+    --live-color: #ef4444;
+    --live-hover: #dc2626;
+    --live-subtle: rgba(239, 68, 68, 0.12);
+    --live-border: rgba(239, 68, 68, 0.3);
+    --live-glow: rgba(239, 68, 68, 0.4);
+    --warning-color: #f59e0b;
+    --success-color: #10b981;
+
+    /* Typography */
+    --font-ui: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    --font-sans: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-serif: "Merriweather", Georgia, serif;
+    --font-display: "Montserrat", var(--font-sans);
+    --font-lyric: var(--font-sans);
+
+    /* Shape & Physics */
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --radius-full: 9999px;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.6);
+    --shadow-glow: 0 0 20px var(--accent-glow);
+    --shadow-live: 0 0 24px var(--live-glow);
+
+    --transition-fast: 0.12s cubic-bezier(0.2, 0, 0, 1);
+    --transition-normal: 0.25s cubic-bezier(0.2, 0, 0, 1);
+}

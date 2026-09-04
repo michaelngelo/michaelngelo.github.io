@@ -1,0 +1,70 @@
+/* ========================================================================== */
+/* 2. BASE, RESETS & SCROLLBARS                                               */
+/* ========================================================================== */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    height: 100%;
+    width: 100%;
+    background-color: var(--bg-base);
+    color: var(--text-main);
+    font-family: var(--font-ui);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow: hidden;
+    user-select: none;
+}
+
+/* Minimalist Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-full);
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+a { color: var(--accent-light); text-decoration: none; }
+button { font-family: inherit; border: none; outline: none; cursor: pointer; user-select: none; }
+input, select, textarea { font-family: inherit; outline: none; }
+
+kbd {
+    background: #1f1f22;
+    color: #e2e8f0;
+    border: 1px solid var(--border-default);
+    border-radius: 4px;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.5);
+    font-family: var(--font-ui);
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 2px 6px;
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+}
+
+/* ========================================================================== */
+/* ANIMATIONS                                                                 */
+/* ========================================================================== */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.fade-animation { animation: fadeIn 0.25s ease-out forwards; }
+@keyframes pulseText { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+/* ========================================================================== */
+/* UI ROUTING & FOUC PREVENTION                                               */
+/* ========================================================================== */
+html.is-projector #dashboard-ui, html.is-projector #mobile-warning, html.is-projector #recovery-ui { display: none !important; }
+html:not(.is-projector) #projector-ui { display: none !important; }
