@@ -251,6 +251,25 @@ textarea#lyric-editor::placeholder { color: var(--text-dim); opacity: 0.5; }
         height: 60vh;
     }
     .shortcuts-grid { grid-template-columns: 1fr; }
+
+    .sub-toolbar.show-toolbar, .sub-toolbar.show-drawer {
+        max-height: 300px;
+    }
+    
+    .sub-toolbar-inner {
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 12px 16px;
+    }
+    
+    .toolbar-group {
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+    
+    .toolbar-divider {
+        display: none;
+    }
 }
 
 /* ========================================================================== */
