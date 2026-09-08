@@ -27,6 +27,7 @@
     </script>
     
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.18.4/dist/katex.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
     <script defer src="./js/core.js"></script>
     <script defer src="./js/storage.js"></script>
@@ -315,7 +316,7 @@
                     <button id="export-btn" class="btn-small btn-secondary" title="Export Setlist to JSON">💾 Export</button>
                     <button id="import-btn" class="btn-small btn-secondary" title="Import Setlist from JSON">📂 Import</button>
                     <button id="reset-setlist-btn" class="btn-small btn-secondary" title="Reset to Sunday sample setlist">✨ Samples</button>
-                    <input type="file" id="import-file" accept=".json" style="display: none;">
+                    <input type="file" id="import-file" accept=".json, .zip" style="display: none;">
                 </div>
             </section>
 

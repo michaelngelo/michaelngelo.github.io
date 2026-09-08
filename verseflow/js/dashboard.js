@@ -423,43 +423,159 @@
         loadSong(newSong.id);
     });
 
-    document.getElementById('export-btn').addEventListener('click', () => {
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(setlist, null, 2));
-        const downloadNode = document.createElement('a');
-        downloadNode.setAttribute("href", dataStr);
-        downloadNode.setAttribute("download", `verseflow_setlist_${new Date().toISOString().slice(0, 10)}.json`);
-        document.body.appendChild(downloadNode);
-        downloadNode.click();
-        downloadNode.remove();
+    // ==========================================================
+    // EXPORT & ZIP GENERATION PIPELINE
+    // ==========================================================
+    document.getElementById('export-btn').addEventListener('click', async (e) => {
+        const btn = e.currentTarget;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '⏳ Exporting...';
+        btn.disabled = true;
+
+        try {
+            const zip = new JSZip();
+            
+            // 1. Pack the setlist JSON
+            const setlistJson = JSON.stringify(setlist, null, 2);
+            zip.file("setlist.json", setlistJson);
+            
+            // 2. Discover local media dependencies
+            const mediaFolder = zip.folder("media");
+            const manifest = {};
+            const uniqueMediaIds = [...new Set(setlist.map(s => s.customBg).filter(bg => bg && bg.startsWith('idb_')))];
+            
+            // 3. Fetch specific active background blobs from IndexedDB
+            for (const id of uniqueMediaIds) {
+                const record = await VerseFlow.getImageFromDB(id);
+                if (record && record.blob) {
+                    const ext = record.name ? record.name.split('.').pop() : 'jpg';
+                    const filename = `${id}.${ext}`;
+                    mediaFolder.file(filename, record.blob);
+                    manifest[id] = record.name || "imported_bg.jpg";
+                }
+            }
+            
+            // 4. Record original filenames for reconstruction during import
+            zip.file("media_manifest.json", JSON.stringify(manifest, null, 2));
+            
+            // 5. Generate Archive and trigger download safely
+            const zipBlob = await zip.generateAsync({ type: "blob" });
+            const downloadUrl = URL.createObjectURL(zipBlob);
+            const downloadNode = document.createElement('a');
+            downloadNode.href = downloadUrl;
+            downloadNode.download = `verseflow_setlist_${new Date().toISOString().slice(0, 10)}.zip`;
+            document.body.appendChild(downloadNode);
+            downloadNode.click();
+            
+            // Clean up memory
+            document.body.removeChild(downloadNode);
+            setTimeout(() => URL.revokeObjectURL(downloadUrl), 5000);
+            
+        } catch (error) {
+            console.error("Export failed:", error);
+            alert("Error assembling export archive. Please ensure your storage is accessible.");
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
     });
 
+    // ==========================================================
+    // IMPORT, EXTRACTION & RESTORATION PIPELINE
+    // ==========================================================
     const importBtn = document.getElementById('import-btn');
     const importFile = document.getElementById('import-file');
     importBtn.addEventListener('click', () => importFile.click());
 
-    importFile.addEventListener('change', (e) => {
+    importFile.addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            try {
-                const importedSetlist = JSON.parse(event.target.result);
+
+        try {
+            if (file.name.toLowerCase().endsWith('.zip')) {
+                // Handle ZIP Archive Extraction
+                const buffer = await file.arrayBuffer();
+                const zip = await JSZip.loadAsync(buffer);
+                
+                if (!zip.file("setlist.json")) {
+                    alert("Invalid zip file: setlist.json not found.");
+                    return;
+                }
+                
+                // Read and parse setlist JSON
+                const setlistText = await zip.file("setlist.json").async("string");
+                const importedSetlist = JSON.parse(setlistText);
+                
+                // Read manifest mapping to restore original filenames
+                let manifest = {};
+                if (zip.file("media_manifest.json")) {
+                    const manifestText = await zip.file("media_manifest.json").async("string");
+                    manifest = JSON.parse(manifestText);
+                }
+                
+                // Extract media blobs and pass them to our SHA-256 ID generator pipeline
+                const mediaFiles = Object.keys(zip.files).filter(name => name.startsWith('media/') && !zip.files[name].dir);
+                
+                for (const mediaPath of mediaFiles) {
+                    const blob = await zip.files[mediaPath].async("blob");
+                    const filename = mediaPath.split('/').pop();
+                    const oldId = filename.split('.')[0]; 
+                    
+                    const originalName = manifest[oldId] || filename;
+                    
+                    // Reconstruct mime type from extension
+                    let mimeType = 'image/jpeg';
+                    const lowerName = originalName.toLowerCase();
+                    if (lowerName.endsWith('.png')) mimeType = 'image/png';
+                    else if (lowerName.endsWith('.webp')) mimeType = 'image/webp';
+                    
+                    // Wrap as a File so VerseFlow.generateThumbnail and metadata storage work properly
+                    const imageFile = new File([blob], originalName, { type: mimeType });
+                    
+                    // Content hashing automatically guarantees deduplication and matching IDs
+                    await VerseFlow.saveImageToDB(imageFile);
+                }
+                
+                // Finalize Import
                 if (Array.isArray(importedSetlist) && importedSetlist.length > 0) {
-                    if (confirm("Replace current setlist with imported JSON data?")) {
+                    if (confirm("Replace current setlist and background media with imported archive data?")) {
                         setlist = sanitizeSetlist(importedSetlist);
                         saveSetlist();
                         renderSetlist();
                         loadSong(setlist[0].id);
                     }
                 } else {
-                    alert("Invalid setlist file format: JSON must be an array of songs.");
+                    alert("The imported setlist array is empty or invalid.");
                 }
-            } catch (err) {
-                alert("Error parsing JSON file. Ensure it is a valid VerseFlow export file.");
+
+            } else {
+                // Legacy JSON-only Import Support
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const importedSetlist = JSON.parse(event.target.result);
+                        if (Array.isArray(importedSetlist) && importedSetlist.length > 0) {
+                            if (confirm("Replace current setlist with imported JSON data? (Background images may disconnect)")) {
+                                setlist = sanitizeSetlist(importedSetlist);
+                                saveSetlist();
+                                renderSetlist();
+                                loadSong(setlist[0].id);
+                            }
+                        } else {
+                            alert("Invalid setlist file format: JSON must be an array of songs.");
+                        }
+                    } catch (err) {
+                        alert("Error parsing JSON file. Ensure it is a valid VerseFlow export file.");
+                    }
+                };
+                reader.readAsText(file);
             }
-        };
-        reader.readAsText(file);
-        importFile.value = '';
+        } catch (err) {
+            console.error("Import processing error:", err);
+            alert("Error processing the import file. Ensure it is a valid VerseFlow export.");
+        } finally {
+            importFile.value = ''; // Reset input to allow re-uploading the same file
+        }
     });
 
     function applySearchFilter() {

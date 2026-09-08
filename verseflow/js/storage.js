@@ -48,16 +48,34 @@ VerseFlow.generateThumbnail = function(file, maxWidth = 240, maxHeight = 135) {
     });
 };
 
+/**
+ * Generates a unique SHA-256 hash based on the file's binary content.
+ * This ensures deduplication and consistent IDs across device exports.
+ */
+VerseFlow.generateImageHash = async function(file) {
+    const buffer = await file.arrayBuffer();
+    const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    return `idb_${hashHex}`;
+};
+
 VerseFlow.saveImageToDB = async function(file) {
     const db = await VerseFlow.openMediaDB();
-    const id = 'idb_' + Date.now();
+    
+    // Generate content-based ID instead of Date.now()
+    const id = await VerseFlow.generateImageHash(file);
     const thumbBlob = await VerseFlow.generateThumbnail(file);
+    
+    // Provide a fallback name for extracted JSZip Blobs that lack the .name property
+    const fileName = file.name || "imported_bg.jpg";
+
     return new Promise((resolve, reject) => {
         const tx = db.transaction('images', 'readwrite');
         const store = tx.objectStore('images');
         store.put({
             id,
-            name: file.name,
+            name: fileName,
             blob: file,
             thumbnail: thumbBlob,
             createdAt: Date.now()
