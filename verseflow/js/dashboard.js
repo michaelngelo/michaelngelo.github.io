@@ -14,6 +14,9 @@
     const fontSizeSlider = document.getElementById('font-size-slider');
     const fontSizeVal = document.getElementById('font-size-val');
 
+    const modeStudioBtn = document.getElementById('mode-studio-btn');
+    const modeLiveBtn = document.getElementById('mode-live-btn');
+
     const globalLiveIndicator = document.getElementById('global-live-indicator');
     const globalLiveLabel = document.getElementById('global-live-label');
     const blackoutBtn = document.getElementById('blackout-btn');
@@ -66,7 +69,35 @@
         });
     }
 
-    // Engine States
+    // ==========================================================
+    // UI MODE TOGGLE (STUDIO vs LIVE)
+    // ==========================================================
+    const savedMode = localStorage.getItem('verseflow_ui_mode');
+    if (savedMode === 'live') {
+        document.body.classList.add('mode-live');
+        modeStudioBtn.classList.remove('active');
+        modeLiveBtn.classList.add('active');
+    }
+
+    modeStudioBtn.addEventListener('click', () => {
+        document.body.classList.remove('mode-live');
+        modeStudioBtn.classList.add('active');
+        modeLiveBtn.classList.remove('active');
+        localStorage.setItem('verseflow_ui_mode', 'studio');
+        setTimeout(scrollToPreview, 50); // Delay allows CSS Grid reflow before scroll
+    });
+
+    modeLiveBtn.addEventListener('click', () => {
+        document.body.classList.add('mode-live');
+        modeLiveBtn.classList.add('active');
+        modeStudioBtn.classList.remove('active');
+        localStorage.setItem('verseflow_ui_mode', 'live');
+        setTimeout(scrollToPreview, 50);
+    });
+
+    // ==========================================================
+    // ENGINE STATES
+    // ==========================================================
     let slides = [];
     let previewIndex = 0;
     let cachedBgUrl = '';
@@ -206,7 +237,7 @@
             handle.title = "Drag to reorder";
             handle.innerHTML = `<svg width="12" height="14" stroke-width="2.5"><use href="#icon-drag"></use></svg>`;
 
-            // Song Info (Title + Slide count subtitle)
+            // Song Info
             const info = document.createElement('div');
             info.className = 'song-info';
 

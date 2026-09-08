@@ -135,6 +135,24 @@ textarea#lyric-editor::placeholder { color: var(--text-dim); opacity: 0.5; }
 .preview-footer-hint strong { color: var(--text-muted); font-weight: 600; }
 
 /* ========================================================================== */
+/* MODE: LIVE EXECUTION (GRID VIEW OVERRIDES)                                 */
+/* ========================================================================== */
+body.mode-live .editor-pane {
+    display: none;
+}
+
+body.mode-live .preview-pane {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    align-items: start;
+    align-content: start;
+}
+
+body.mode-live .controls-bar {
+    display: none;
+}
+
+/* ========================================================================== */
 /* BOTTOM HOTKEY BAR & STATUS                                                 */
 /* ========================================================================== */
 .hotkey-bar {
@@ -238,7 +256,15 @@ textarea#lyric-editor::placeholder { color: var(--text-dim); opacity: 0.5; }
     .app-header { flex-direction: column; align-items: stretch; gap: 16px; padding: 16px; height: auto; }
     .header-section { flex-wrap: wrap; width: 100%; justify-content: space-between; }
     .header-center { order: 3; }
-    .header-right, #global-live-indicator, .hotkey-bar { display: none !important; }
+    
+    /* MOBILE UI INSULATION - HIDE LIVE CONTROLS & TOGGLE */
+    .header-right, #global-live-indicator, .hotkey-bar, .mode-toggle { display: none !important; }
+    
+    /* FORCE STUDIO LAYOUT ON MOBILE REGARDLESS OF LIVE MODE STATE */
+    body.mode-live .editor-pane { display: flex !important; }
+    body.mode-live .preview-pane { display: flex !important; }
+    body.mode-live .controls-bar { display: flex !important; }
+
     .controls-bar { flex-wrap: wrap; width: 100%; gap: 8px; justify-content: space-between; }
     
     .workspace { flex-direction: column; height: auto; overflow: visible; }

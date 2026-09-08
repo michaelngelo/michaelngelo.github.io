@@ -161,6 +161,72 @@
 }
 .styled-select option { background-color: var(--bg-surface); color: var(--text-main); }
 
+/* Button Groups */
+.btn-group {
+    display: inline-flex;
+    align-items: center;
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+.btn-group .btn {
+    border: none;
+    border-radius: 0;
+    border-right: 1px solid var(--border-subtle);
+}
+.btn-group .btn:last-child {
+    border-right: none;
+}
+
+/* Studio/Live Mode Segmented Toggle */
+.mode-toggle {
+    position: relative;
+    display: inline-flex;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-full);
+    padding: 4px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+}
+.mode-btn {
+    position: relative;
+    z-index: 2;
+    background: transparent;
+    color: var(--text-dim);
+    border: none;
+    padding: 6px 16px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+.mode-btn.active {
+    color: #ffffff;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+/* The Animated Sliding Background */
+.mode-slider {
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    left: 4px;
+    width: calc(50% - 4px);
+    background: linear-gradient(180deg, var(--accent) 0%, #4f46e5 100%);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius-full);
+    box-shadow: 0 2px 8px var(--accent-glow);
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.3s ease, box-shadow 0.3s ease;
+    z-index: 1;
+}
+/* Move the slider and turn it Red when Live Mode is active */
+body.mode-live .mode-slider {
+    transform: translateX(100%);
+    background: linear-gradient(180deg, var(--live-color) 0%, #b91c1c 100%);
+    box-shadow: 0 2px 8px var(--live-glow);
+}
+
 /* Styled Range Sliders */
 .range-slider {
     -webkit-appearance: none;
@@ -299,6 +365,9 @@
     border-bottom: 1px solid var(--border-subtle);
     pointer-events: auto;
 }
+/* LIVE MODE OVERRIDE: Hide Sub-toolbars entirely */
+body.mode-live .sub-toolbar { display: none !important; }
+
 .sub-toolbar-inner { display: flex; align-items: center; gap: 20px; padding: 10px 20px; font-size: 0.82rem; }
 .toolbar-group { display: flex; align-items: center; gap: 16px; }
 .toolbar-label { font-weight: 700; color: var(--text-dim); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; }
@@ -364,6 +433,9 @@
 
 .song-actions { display: flex; align-items: center; gap: 4px; opacity: 0; transition: opacity var(--transition-fast); }
 .song-item:hover .song-actions { opacity: 1; }
+/* LIVE MODE OVERRIDE: Protect operators by hiding setlist mutations */
+body.mode-live .song-actions { display: none !important; }
+
 .song-action-btn { background: transparent; color: var(--text-dim); border-radius: 4px; padding: 4px; transition: all var(--transition-fast); }
 .song-action-btn:hover { background: rgba(255,255,255,0.1); color: var(--text-main); }
 .delete-btn:hover { background: rgba(239,68,68,0.15); color: #ff6b6b; }
@@ -397,6 +469,9 @@
     display: flex;
     flex-direction: column;
 }
+/* LIVE MODE OVERRIDE: Force uniform grid card stretching */
+body.mode-live .slide-card { height: 100%; }
+
 .slide-card:hover { 
     border-color: var(--border-hover); 
     transform: translateY(-2px); 
